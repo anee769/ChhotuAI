@@ -1431,5 +1431,89 @@
     },
     "event_id": "evt_0078",
     "recorded_at": "2026-07-26T16:11:11"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "credit",
+    "customer_id": "cust_0001",
+    "payment_deadline": "2026-08-02",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "दस बोरी cement"
+    },
+    "event_id": "evt_0079",
+    "recorded_at": "2026-07-26T16:19:25"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 1000,
+    "payment": "credit",
+    "customer_id": "cust_0001",
+    "payment_deadline": "2026-08-02",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "एक टन सरिया बेचा है"
+    },
+    "event_id": "evt_0080",
+    "recorded_at": "2026-07-26T16:19:25"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "दस बोरी cement"
+    },
+    "event_id": "evt_0081",
+    "recorded_at": "2026-07-26T16:26:47"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 1000,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "एक ton सरिया बेचा है"
+    },
+    "event_id": "evt_0082",
+    "recorded_at": "2026-07-26T16:26:47"
   }
 ]

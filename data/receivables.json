@@ -64,5 +64,17 @@
     ],
     "created_at": "2026-07-15T11:30:00",
     "status": "open"
+  },
+  {
+    "receivable_id": "recv_0007",
+    "customer_id": "cust_0001",
+    "amount": 1001000.0,
+    "deadline": "2026-08-02",
+    "sale_event_ids": [
+      "evt_0079",
+      "evt_0080"
+    ],
+    "created_at": "2026-07-26T16:19:25",
+    "status": "open"
   }
 ]

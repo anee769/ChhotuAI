@@ -15,11 +15,16 @@ ONES = {"ek": 1, "do": 2, "teen": 3, "char": 4, "chaar": 4, "paanch": 5,
         "terah": 13, "chaudah": 14, "pandrah": 15, "solah": 16, "satrah": 17,
         "atharah": 18, "unnees": 19, "bees": 20, "bis": 20, "pachees": 25,
         "tees": 30, "chalis": 40, "pachaas": 50, "pachas": 50, "saath": 60,
-        "sattar": 70, "assi": 80, "nabbe": 90, "sau": 100}
+        "sattar": 70, "assi": 80, "nabbe": 90, "sau": 100,
+        "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "छह": 6,
+        "सात": 7, "आठ": 8, "नौ": 9, "दस": 10, "बारह": 12,
+        "सोलह": 16, "बीस": 20, "पच्चीस": 25, "तीस": 30,
+        "चालीस": 40, "पचास": 50, "साठ": 60, "सौ": 100}
 
 UNIT_WORDS = ["kg", "kilo", "ton", "tonne", "tan", "bori", "bora", "bag",
               "piece", "pcs", "nag", "adad", "bundle", "litre", "liter",
-              "bucket", "box", "feet", "metre", "meter"]
+              "bucket", "box", "feet", "metre", "meter", "किलो", "टन",
+              "बोरी", "बोरा", "बैग", "पीस", "नग"]
 
 _NEG = re.compile(r"\bnah?in?\b|\bnahi+\b|\bnahin\b")
 
@@ -52,10 +57,14 @@ def _find_qty(segment: str):
 
 def _find_unit(segment: str):
     for w in UNIT_WORDS:
-        if re.search(rf"\b{w}\b", segment):
+        found = (w in segment) if re.search(r"[\u0900-\u097f]", w) else \
+            bool(re.search(rf"\b{re.escape(w)}\b", segment))
+        if found:
             return {"kilo": "kg", "ton": "tonne", "tan": "tonne", "bora": "bori",
                     "bag": "bori", "pcs": "piece", "nag": "piece", "adad": "piece",
-                    "liter": "litre", "meter": "metre"}.get(w, w)
+                    "liter": "litre", "meter": "metre", "किलो": "kg",
+                    "टन": "tonne", "बोरी": "bori", "बोरा": "bori",
+                    "बैग": "bori", "पीस": "piece", "नग": "piece"}.get(w, w)
     return None
 
 
@@ -67,7 +76,7 @@ def parse_sale_utterance(transcript: str) -> list:
     t = transcript.lower().strip()
     payment = "credit" if re.search(r"\budhaar|udhar|credit\b", t) else \
         ("cash" if re.search(r"\bcash|nagad\b", t) else None)
-    segments = re.split(r"\baur\b|,|\+", t)
+    segments = re.split(r"\baur\b|और|,|\+", t)
     items = []
     for seg in segments:
         seg = seg.strip()

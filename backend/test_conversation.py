@@ -118,6 +118,25 @@ class ConversationStateTests(unittest.TestCase):
         self.assertEqual(chat.call_args.kwargs["timeout"], 18)
         self.assertEqual(result["items"][0]["sku_id"], "CEM_ULTRATECH_PPC")
 
+    def test_explicit_two_item_speech_cannot_be_collapsed_by_model(self):
+        spoken = "5 बोरी cement और 1 ton सरिया becha cash"
+        state = {"said": [spoken], "history": [{"role": "user", "content": spoken}]}
+        collapsed_output = {
+            "intent": "sale", "metric": None,
+            "items": [{"sku_id": "CEM_ULTRATECH_PPC", "family": "cement",
+                       "name": "cement", "in_catalogue": True, "qty": 5,
+                       "unit": "tonne", "rate": 500, "payment": "cash"}],
+        }
+        with patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=collapsed_output):
+            result = conversation._extract(state, self.repo)
+        self.assertEqual(len(result["items"]), 2)
+        self.assertEqual([row["qty"] for row in result["items"]], [5.0, 1.0])
+        self.assertEqual([row["unit"] for row in result["items"]],
+                         ["bori", "tonne"])
+        self.assertEqual([row["family"] for row in result["items"]],
+                         ["cement", "tmt"])
+
     def test_credit_asks_deadline_but_cash_does_not(self):
         credit = [dict(self.extracted["items"][0], rate=450, payment="credit")]
         cash = [dict(self.extracted["items"][0], rate=450, payment="cash")]
@@ -150,11 +169,32 @@ class ConversationStateTests(unittest.TestCase):
                 out_cash["state"], "confirm", "live_sale", self.repo)
             self.assertTrue(out_cash["done"])
 
+    def test_credit_deadline_keeps_every_order_item(self):
+        items = [
+            dict(self.extracted["items"][0], rate=500, payment="credit"),
+            dict(self.extracted["items"][1], rate=65, payment="credit"),
+        ]
+        state = {"flow": "live_sale", "said": [], "history": [],
+                 "locked_intent": "sale", "draft_items": items}
+        out = conversation._order_flow(state, "sale", items, self.repo)
+        out = conversation._apply_customer_slot(
+            out["state"], "customer_phone", "9876543210", self.repo)
+        out = conversation._apply_customer_slot(
+            out["state"], "customer_name", "Ravi Builder", self.repo)
+        out = conversation._apply_customer_slot(
+            out["state"], "deadline", "ek mahine baad", self.repo)
+        self.assertTrue(out["confirmation_required"])
+        self.assertEqual(len(out["confirmation"]["items"]), 2)
+        self.assertEqual(out["confirmation"]["payment_deadline"], "2026-08-25")
+
     def test_native_hindi_followup_values_are_understood(self):
         self.assertEqual(conversation._answer_number("पचास बोरी"), 50)
         self.assertEqual(conversation._detect_payment("नकद"), "cash")
         self.assertEqual(conversation._detect_payment("उधार"), "credit")
         self.assertEqual(conversation.parse_deadline("कल"), "2026-07-27")
+        self.assertEqual(conversation.parse_deadline("ek mahine baad"), "2026-08-25")
+        self.assertEqual(conversation.parse_deadline("do hafte baad"), "2026-08-09")
+        self.assertEqual(conversation.parse_deadline("15 August"), "2026-08-15")
 
 
 if __name__ == "__main__":

@@ -37,6 +37,14 @@ import sarvam_client
 
 TODAY = date(2026, 7, 26)
 _FAMILIES = ("tmt", "cement", "pipe", "fitting", "fastener", "paint")
+_HINDI_NUMBERS = {
+    "ek": 1, "do": 2, "teen": 3, "char": 4, "chaar": 4, "paanch": 5,
+    "das": 10, "barah": 12, "pandrah": 15, "solah": 16, "bees": 20,
+    "pachees": 25, "tees": 30, "pachaas": 50, "sau": 100,
+    "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "दस": 10,
+    "बारह": 12, "पंद्रह": 15, "सोलह": 16, "बीस": 20,
+    "पच्चीस": 25, "तीस": 30, "पचास": 50, "सौ": 100,
+}
 
 # 'low' = fast (~8s/turn), great when Saaras returns numbers as digits (usual).
 # 'medium' = slower (~30s/turn) but firmer on spelled-out Hindi number WORDS.
@@ -46,6 +54,17 @@ _EFFORT = os.environ.get("CHHOTU_REASONING", "low")
 def parse_phone(text: str):
     digits = "".join(ch for ch in str(text or "") if ch.isdigit())
     return digits[-10:] if len(digits) >= 10 else None
+
+
+def _number_in_text(text: str):
+    m = re.search(r"\d+(?:\.\d+)?", text or "")
+    if m:
+        return float(m.group(0))
+    t = (text or "").lower()
+    for word, value in _HINDI_NUMBERS.items():
+        if re.search(rf"(?<!\w){re.escape(word)}(?!\w)", t):
+            return float(value)
+    return None
 
 
 def parse_deadline(text: str):
@@ -66,11 +85,35 @@ def parse_deadline(text: str):
             return None
     if re.search(r"agle hafte|next week|ek hafta|अगले हफ्ते|एक हफ्ता", t):
         return (TODAY + timedelta(days=7)).isoformat()
+    if re.search(r"agle mahine|next month|ek mahina|एक महीना|अगले महीने", t):
+        return (TODAY + timedelta(days=30)).isoformat()
     if re.search(r"kal|tomorrow|कल", t):
         return (TODAY + timedelta(days=1)).isoformat()
-    m = re.search(r"(\d+)\s*(din|day|दिन)", t)
-    if m:
-        return (TODAY + timedelta(days=int(m.group(1)))).isoformat()
+    if re.search(r"parso|परसों|परसो|day after tomorrow", t):
+        return (TODAY + timedelta(days=2)).isoformat()
+    relative = re.search(
+        r"([\w\u0900-\u097f.]+)\s*(din|days?|दिन|hafte|weeks?|हफ्ते|"
+        r"mahine|months?|महीने|महीना)", t)
+    if relative:
+        number = _number_in_text(relative.group(1))
+        if number is not None:
+            unit = relative.group(2)
+            multiplier = 30 if re.search(r"mahine|month|मही", unit) else \
+                (7 if re.search(r"hafte|week|हफ्ते", unit) else 1)
+            return (TODAY + timedelta(days=int(number * multiplier))).isoformat()
+    months = {
+        "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3,
+        "april": 4, "may": 5, "june": 6, "july": 7, "august": 8,
+        "aug": 8, "september": 9, "october": 10, "november": 11,
+        "december": 12,
+    }
+    named = re.search(r"\b(\d{1,2})\s+([a-z]+)\b", t)
+    if named and named.group(2) in months:
+        try:
+            return date(TODAY.year, months[named.group(2)],
+                        int(named.group(1))).isoformat()
+        except ValueError:
+            return None
     return None
 
 
@@ -192,6 +235,12 @@ def _extract(state, repo) -> dict:
         })
     raw_intent = out.get("intent")
     intent = raw_intent if raw_intent in _VALID_INTENTS else "unknown"
+    # Never let the model collapse an explicit "X aur Y" order into one item.
+    # The local segment parser is authoritative for item count; the LLM remains
+    # authoritative for richer attributes when it found every spoken segment.
+    segmented = _fallback_extract(joined, repo)
+    if len(segmented["items"]) > len(items):
+        items = segmented["items"]
     return {"intent": intent, "metric": out.get("metric"), "items": items}
 
 
@@ -351,19 +400,7 @@ def _answer_number(text):
     value, _ = nlp._find_qty((text or "").lower())
     if value is not None:
         return float(value)
-    m = re.search(r"-?\d+(?:\.\d+)?", text or "")
-    if m:
-        return float(m.group(0))
-    hindi = {
-        "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "छह": 6,
-        "सात": 7, "आठ": 8, "नौ": 9, "दस": 10, "बारह": 12,
-        "सोलह": 16, "बीस": 20, "पच्चीस": 25, "तीस": 30,
-        "चालीस": 40, "पचास": 50, "साठ": 60, "सौ": 100,
-    }
-    for word, number in hindi.items():
-        if word in (text or ""):
-            return float(number)
-    return None
+    return _number_in_text(text)
 
 
 def _sku_from_answer(text, family, repo):
