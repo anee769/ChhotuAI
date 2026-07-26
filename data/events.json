@@ -1309,5 +1309,110 @@
       "transcript": "aaj gina to 38 bori nikla"
     },
     "event_id": "evt_0069"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 20.0,
+    "unit": "bori",
+    "rate": 423.5,
+    "payment": "cash",
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "ultratech ppc bees bori"
+    },
+    "event_id": "evt_0070",
+    "recorded_at": "2026-07-26T15:04:45"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 40.0,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "confidence": 0.81,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "ultratech ppc chalis bori"
+    },
+    "event_id": "evt_0071",
+    "recorded_at": "2026-07-26T15:04:45"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 65.9,
+    "payment": "cash",
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-24",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.68,
+    "source": "voice_recall",
+    "evidence": {
+      "transcript": "parso ek ton barah mm"
+    },
+    "event_id": "evt_0072",
+    "recorded_at": "2026-07-26T15:04:45"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 456.5,
+    "payment": "cash",
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "week",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.63,
+    "source": "voice_recall",
+    "evidence": {
+      "transcript": "pichle hafte cement"
+    },
+    "event_id": "evt_0073",
+    "recorded_at": "2026-07-26T15:04:47"
+  },
+  {
+    "type": "unknown",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 100.0,
+    "unit": "bori",
+    "rate": 50,
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "OPC 53"
+    },
+    "event_id": "evt_0074",
+    "recorded_at": "2026-07-26T15:11:04"
   }
 ]
