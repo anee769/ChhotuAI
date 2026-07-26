@@ -1,0 +1,54 @@
+[
+  {
+    "kind": "deadline_2_day",
+    "receivable_id": "recv_0001",
+    "customer_id": "cust_0001",
+    "phone": "+919876543210",
+    "message": "Namaste Pankaj Sharma, Sharma Building Materials par aapka Rs 33,500 udhaar 2026-07-28 tak dena hai. Payment ho gaya ho to is message ko ignore karein.",
+    "scheduled_for": "2026-07-26",
+    "status": "queued",
+    "provider": "outbox",
+    "detail": "SMSGATE_ENDPOINT not configured",
+    "notification_id": "note_0001",
+    "created_at": "2026-07-26T14:43:10"
+  },
+  {
+    "kind": "deadline_2_day",
+    "receivable_id": "recv_0004",
+    "customer_id": "cust_0004",
+    "phone": "+919999001122",
+    "message": "Namaste Rakesh Hardware, Sharma Building Materials par aapka Rs 12,600 udhaar 2026-07-27 tak dena hai. Payment ho gaya ho to is message ko ignore karein.",
+    "scheduled_for": "2026-07-26",
+    "status": "queued",
+    "provider": "outbox",
+    "detail": "SMSGATE_ENDPOINT not configured",
+    "notification_id": "note_0002",
+    "created_at": "2026-07-26T14:43:10"
+  },
+  {
+    "kind": "deadline_2_day",
+    "receivable_id": "recv_0002",
+    "customer_id": "cust_0002",
+    "phone": "+919810234567",
+    "message": "Namaste Manoj Sutar, Sharma Building Materials par aapka Rs 10,000 udhaar 2026-07-24 tak dena hai. Payment ho gaya ho to is message ko ignore karein.",
+    "scheduled_for": "2026-07-26",
+    "status": "queued",
+    "provider": "outbox",
+    "detail": "SMSGATE_ENDPOINT not configured",
+    "notification_id": "note_0003",
+    "created_at": "2026-07-26T14:43:10"
+  },
+  {
+    "kind": "deadline_2_day",
+    "receivable_id": "recv_0006",
+    "customer_id": "cust_0006",
+    "phone": "+919650778899",
+    "message": "Namaste Deepak Contractor, Sharma Building Materials par aapka Rs 9,400 udhaar 2026-07-23 tak dena hai. Payment ho gaya ho to is message ko ignore karein.",
+    "scheduled_for": "2026-07-26",
+    "status": "queued",
+    "provider": "outbox",
+    "detail": "SMSGATE_ENDPOINT not configured",
+    "notification_id": "note_0004",
+    "created_at": "2026-07-26T14:43:10"
+  }
+]

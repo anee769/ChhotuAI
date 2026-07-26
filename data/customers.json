@@ -1,0 +1,38 @@
+[
+  {
+    "customer_id": "cust_0001",
+    "name": "Pankaj Sharma",
+    "phone": "+919876543210",
+    "created_at": "2026-06-18T11:20:00"
+  },
+  {
+    "customer_id": "cust_0002",
+    "name": "Manoj Sutar",
+    "phone": "+919810234567",
+    "created_at": "2026-06-22T16:05:00"
+  },
+  {
+    "customer_id": "cust_0003",
+    "name": "Amit Construction",
+    "phone": "+919560112233",
+    "created_at": "2026-07-02T10:10:00"
+  },
+  {
+    "customer_id": "cust_0004",
+    "name": "Rakesh Hardware",
+    "phone": "+919999001122",
+    "created_at": "2026-07-09T14:35:00"
+  },
+  {
+    "customer_id": "cust_0005",
+    "name": "Sunita Traders",
+    "phone": "+919811223344",
+    "created_at": "2026-07-14T12:00:00"
+  },
+  {
+    "customer_id": "cust_0006",
+    "name": "Deepak Contractor",
+    "phone": "+919650778899",
+    "created_at": "2026-07-20T17:15:00"
+  }
+]

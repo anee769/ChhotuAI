@@ -15,7 +15,7 @@ stays stateless.
 from __future__ import annotations
 
 import re
-from datetime import date
+from datetime import date, timedelta
 
 import matcher as M
 import nlp
@@ -77,6 +77,37 @@ def parse_number(text: str):
     return total if found else None
 
 
+def parse_phone(text: str):
+    digits = "".join(ch for ch in str(text or "") if ch.isdigit())
+    return digits[-10:] if len(digits) >= 10 else None
+
+
+def parse_deadline(text: str):
+    """Accept YYYY-MM-DD, DD/MM[/YYYY], or a relative number of days."""
+    t = (text or "").lower().strip()
+    iso = re.search(r"\b(20\d{2}-\d{1,2}-\d{1,2})\b", t)
+    if iso:
+        try:
+            return date.fromisoformat(iso.group(1)).isoformat()
+        except ValueError:
+            return None
+    dm = re.search(r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](20\d{2}))?\b", t)
+    if dm:
+        try:
+            return date(int(dm.group(3) or TODAY.year), int(dm.group(2)),
+                        int(dm.group(1))).isoformat()
+        except ValueError:
+            return None
+    n = parse_number(t)
+    if n and re.search(r"din|day", t):
+        return (TODAY + timedelta(days=int(n))).isoformat()
+    if re.search(r"agle hafte|next week|ek hafta", t):
+        return (TODAY + timedelta(days=7)).isoformat()
+    if re.search(r"kal|tomorrow", t):
+        return (TODAY + timedelta(days=1)).isoformat()
+    return None
+
+
 # ---------------------------------------------------------------------------
 # Ingest first utterance
 # ---------------------------------------------------------------------------
@@ -136,7 +167,8 @@ def _ingest(text: str, flow: str, repo) -> dict:
     # Normalize Devanagari units/aur/digits, segment into products (LLM), then
     # parse qty/unit per item DETERMINISTICALLY; product id via the matcher.
     norm = _norm_deva(text)
-    spoken_pay = parse_payment(norm)
+    # Sale payment is confirmed once for the whole sale after customer identity.
+    spoken_pay = parse_payment(norm) if flow != "live_sale" else None
     items = []
     for seg in _segment(norm, repo):
         qty, corrected = nlp._find_qty(seg)
@@ -304,7 +336,10 @@ def _stock_answer_for(sku, repo):
 def _apply_answer(state, text, repo):
     aw = state.get("awaiting")
     it = _cur(state)
-    if not aw or it is None:
+    if not aw:
+        return
+    if aw in {"disambiguate", "confirm_product", "pick_candidate", "qty",
+              "rate", "confirm_rate", "unit"} and it is None:
         return
     ctx = state.get("ctx", {})
 
@@ -384,11 +419,36 @@ def _apply_answer(state, text, repo):
 
     elif aw == "payment":
         p = parse_payment(text)
-        if p:
-            it["payment"] = p
-        else:
-            yn = parse_yes_no(text)  # "haan cash" fallback
-            it["payment"] = "cash"
+        state["payment"] = p or "cash"
+        for row in state.get("items", []):
+            row["payment"] = state["payment"]
+        state["awaiting"] = None
+
+    elif aw == "customer_phone":
+        phone = parse_phone(text)
+        if phone:
+            customer = repo.customer_by_phone(phone)
+            state["customer"] = {
+                "phone": repo.normalize_phone(phone),
+                "customer_id": customer.get("customer_id") if customer else None,
+                "name": customer.get("name") if customer else None,
+            }
+        state["awaiting"] = None
+
+    elif aw == "customer_name":
+        name = (text or "").strip()
+        if name:
+            customer = repo.upsert_customer(state["customer"]["phone"], name)
+            state["customer"] = {
+                "phone": customer["phone"], "customer_id": customer["customer_id"],
+                "name": customer["name"],
+            }
+        state["awaiting"] = None
+
+    elif aw == "deadline":
+        deadline = parse_deadline(text)
+        if deadline:
+            state["payment_deadline"] = deadline
         state["awaiting"] = None
 
     elif aw == "unit":
@@ -551,11 +611,6 @@ def _advance(state, repo):
             state["awaiting"] = "rate"
             return _say(state, f"Rate kya laga, per {it['unit']}?", listen=True, done=False)
 
-        # 4) payment (sale only)
-        if flow == "live_sale" and not it.get("payment"):
-            state["awaiting"] = "payment"
-            return _say(state, "Cash ya udhaar?", listen=True, done=False)
-
         state["cursor"] += 1  # item complete
 
     # 5) date (once, after items)
@@ -568,6 +623,33 @@ def _advance(state, repo):
         friendly = _friendly_date(T["date"])
         return _say(state, f"{T.get('marker','')} — {friendly}, theek?", listen=True, done=False)
 
+    # Customer identity and payment are transaction-level slots.
+    if flow == "live_sale":
+        customer = state.get("customer") or {}
+        if not customer.get("phone"):
+            state["awaiting"] = "customer_phone"
+            return _say(state, "Customer ka 10 digit contact number bataiye.",
+                        listen=True, done=False)
+        if not customer.get("customer_id"):
+            known = repo.customer_by_phone(customer["phone"])
+            if known:
+                state["customer"] = {
+                    "phone": known["phone"], "customer_id": known["customer_id"],
+                    "name": known["name"],
+                }
+            else:
+                state["awaiting"] = "customer_name"
+                return _say(state, "Naya customer hai. Naam kya hai?",
+                            listen=True, done=False)
+        if not state.get("payment"):
+            state["awaiting"] = "payment"
+            return _say(state, f"{state['customer']['name']} — cash ya udhaar?",
+                        listen=True, done=False)
+        if state["payment"] == "credit" and not state.get("payment_deadline"):
+            state["awaiting"] = "deadline"
+            return _say(state, "Payment ki deadline kab hai? Date ya kitne din baad bataiye.",
+                        listen=True, done=False)
+
     # DONE -> commit
     return _commit(state, repo)
 
@@ -579,12 +661,22 @@ def _commit(state, repo):
     precision = "week" if T.get("precision") == "week" else \
         ("exact" if not T.get("ask") else "day")
     etype = "sale" if state["flow"] == "live_sale" else state["flow"]
+    customer = state.get("customer") or {}
+    payment = state.get("payment", "cash")
     items = [{"sku_id": it["sku_id"], "qty": it["qty"], "unit": it["unit"],
-              "rate": it.get("rate"), "payment": it.get("payment", "cash"),
+              "rate": it.get("rate"), "payment": payment,
+              "customer_id": customer.get("customer_id"),
+              "payment_deadline": state.get("payment_deadline"),
               "spoken": it["phrase"], "was_tap": False}
              for it in state["items"] if it.get("sku_id")]
     source = "voice_live" if occurred_on == TODAY.isoformat() else "voice_recall"
     result = main._write_events(etype, items, occurred_on, precision, source)
+    if etype == "sale" and payment == "credit" and customer.get("customer_id"):
+        total = sum(float(c.get("amount") or 0) for c in result["committed"])
+        result["receivable"] = repo.add_receivable(
+            customer["customer_id"], total, state["payment_deadline"],
+            [c["event_id"] for c in result["committed"]],
+        )
     # spoken summary
     parts = []
     for it in state["items"]:
@@ -593,7 +685,11 @@ def _commit(state, repo):
         sku = repo.sku(it["sku_id"])
         parts.append(f"{_num(it['qty'])} {it['unit']} {_speak_name(sku)}")
     summ = ", ".join(parts)
-    say = f"Theek hai. {summ} likh diya. Aaj ka margin update ho gaya."
+    if payment == "credit":
+        say = (f"Theek hai. {summ} {customer.get('name')} ke udhaar mein likh diya. "
+               f"Deadline {state.get('payment_deadline')} hai.")
+    else:
+        say = f"Theek hai. {summ} cash mein likh diya. Aaj ka margin update ho gaya."
     out = _say(state, say, listen=False, done=True)
     out["committed"] = result
     return out
@@ -618,7 +714,9 @@ def _summary(state):
             "active": idx == state["cursor"],
         })
     return {"items": rows, "temporal": state.get("temporal"),
-            "awaiting": state.get("awaiting")}
+            "awaiting": state.get("awaiting"), "customer": state.get("customer"),
+            "payment": state.get("payment"),
+            "payment_deadline": state.get("payment_deadline")}
 
 
 def _speak_name(sku):

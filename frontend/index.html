@@ -207,6 +207,7 @@
   <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="delivery" onclick="showTab('delivery')">📦 Delivery</button>
   <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="invoice" onclick="showTab('invoice')">🧾 Invoice</button>
   <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="stock" onclick="showTab('stock')">📊 Stock &amp; Count</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="customers" onclick="showTab('customers')">👥 Customers</button>
   <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="today" onclick="showTab('today')">📅 Today</button>
   <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="dashboard" onclick="showTab('dashboard')">📈 Dashboard</button>
 </nav>
@@ -283,6 +284,22 @@
         </select>
       </div>
       <div id="stockList" class="grid md:grid-cols-2 gap-2"></div>
+    </div>
+  </section>
+
+  <!-- CUSTOMERS -->
+  <section id="tab-customers" class="tabpane hidden">
+    <div class="card p-6">
+      <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Credit ledger</div>
+          <h2 class="mt-2 text-2xl font-bold">Customers</h2>
+          <p class="mt-1 text-sm text-slate-500">Outstanding credit, deadlines and received payments.</p>
+        </div>
+        <button onclick="runReminders()" class="btn-secondary px-4 py-2 text-sm font-semibold">Check reminders</button>
+      </div>
+      <div id="customerSummary" class="mb-4"></div>
+      <div id="customerBody"></div>
     </div>
   </section>
 
@@ -397,7 +414,8 @@ async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'da
 function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock'){loadStock();loadRecon();} }
+  if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock'){loadStock();loadRecon();}
+  if(t==='customers') loadCustomers(); }
 
 // ---------- Voice UI (sale / delivery / count) ----------
 function renderVoiceUI(tab, flow){
@@ -856,6 +874,48 @@ async function loadRecon(){
     r.reconciliations.map(x=>`<div class="mb-2">${x.canonical}: <b>Ledger mein ${x.derived} ${x.unit}, aapne ${x.observed} gina.</b>
     <span class="text-rose-300">${Math.abs(x.delta)} ${x.unit} ka farak</span> — bina record bikri / wastage / churri.
     <div class="text-xs text-slate-400">History overwrite nahi hui — ledger yahan se aage khud sahi ho gaya.</div></div>`).join('')+`</div>`;
+}
+
+// ---------- Customers / credit ----------
+async function loadCustomers(){
+  const r=await api('/api/customers'); const rows=r.customers||[];
+  const outstanding=rows.reduce((n,c)=>n+c.outstanding,0);
+  const open=rows.filter(c=>c.outstanding>0).length;
+  document.getElementById('customerSummary').innerHTML=`
+    <div class="ledger-table-wrap"><table class="ledger-table"><tbody>
+      <tr><td>Customers</td><td class="amount">${rows.length}</td></tr>
+      <tr><td>Open credit accounts</td><td class="amount">${open}</td></tr>
+      <tr><td class="font-semibold text-slate-900">Total outstanding</td><td class="amount text-amber-300">₹${outstanding.toLocaleString('en-IN')}</td></tr>
+    </tbody></table></div>`;
+  const body=rows.map(c=>{
+    const due=c.next_deadline?dayLabel(c.next_deadline):'—';
+    const payment=c.outstanding>0?`<div class="flex min-w-[260px] gap-2">
+      <input id="pay-${c.customer_id}" type="number" min="1" max="${c.outstanding}" class="min-w-0 w-32 px-3 py-2 text-sm" placeholder="Amount">
+      <button onclick="recordCustomerPayment('${c.customer_id}')" class="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white">Record payment</button>
+    </div>`:'<span class="text-emerald-400 font-semibold">Paid</span>';
+    return `<tr>
+      <td><div class="font-semibold text-slate-900">${c.name||'Unnamed'}</div><div class="muted">${c.phone}</div></td>
+      <td class="amount">${c.outstanding?`₹${c.outstanding.toLocaleString('en-IN')}`:'₹0'}</td>
+      <td>${due}</td><td>${payment}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('customerBody').innerHTML=`<div class="ledger-table-wrap"><table class="ledger-table">
+    <thead><tr><th>Customer</th><th class="amount">Outstanding</th><th>Next deadline</th><th>Payment</th></tr></thead>
+    <tbody>${body||'<tr><td colspan="4" class="muted">Sale ke baad customer yahan dikhai denge.</td></tr>'}</tbody>
+  </table></div>`;
+}
+async function recordCustomerPayment(customerId){
+  const input=document.getElementById('pay-'+customerId); const amount=Number(input.value);
+  if(!amount){ toast('Payment amount daaliye',false); return; }
+  try{
+    await api('/api/customers/'+customerId+'/payments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amount,paid_on:STATE.today})});
+    toast('Payment record ho gaya'); loadCustomers();
+  }catch(e){ toast((''+e).includes('exceeds')?'Outstanding se zyada payment hai':'Payment record nahi hua',false); }
+}
+async function runReminders(){
+  const r=await api('/api/reminders/run',{method:'POST'});
+  toast(r.due_count?`${r.due_count} reminder ready`:'Koi naya reminder due nahi hai');
 }
 
 // ---------- Today ----------

@@ -13,6 +13,7 @@ import json
 import os
 import re
 import sys
+import asyncio
 from datetime import date, datetime
 from pathlib import Path
 
@@ -26,6 +27,8 @@ import matcher as M
 import ledger as L
 import learning as LEARN
 import nlp
+import crm
+import notifications as NOTIFY
 from repo import JsonRepo
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -283,20 +286,85 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
             "type": etype, "sku_id": sku_id,
             "qty": float(it["qty"]), "unit": it.get("unit", sku["default_unit"]),
             "rate": rate, "payment": it.get("payment") if etype == "sale" else None,
+            "customer_id": it.get("customer_id") if etype == "sale" else None,
+            "payment_deadline": it.get("payment_deadline") if etype == "sale" else None,
             "occurred_on": occurred_on, "precision": precision,
             "count_precision": it.get("count_precision"),
             "occurred_at": None, "confidence": conf, "source": source,
             "evidence": {"transcript": it.get("spoken", "")},
         }
         eid = repo.append_event(ev)
+        amount = (float(rate) * L.to_base(float(it["qty"]), ev["unit"], sku)
+                  if rate is not None else 0)
         committed.append({"event_id": eid, "sku_id": sku_id, "rate": rate,
-                          "rate_assumed": rate_assumed})
+                          "rate_assumed": rate_assumed, "amount": round(amount, 2)})
     events = repo.all_events()
     affected = {}
     for c in committed:
         sku = catalogue_by[c["sku_id"]]
         affected[c["sku_id"]] = _stock_view(sku, L._stock_detail(sku, events))
     return {"committed": committed, "affected_stock": affected}
+
+
+# ---------------------------------------------------------------------------
+# Customers / credit / payments / reminders
+# ---------------------------------------------------------------------------
+@app.get("/api/customers")
+def customers():
+    return {"customers": crm.accounts(repo)}
+
+
+@app.post("/api/customers")
+def save_customer(payload: dict = Body(...)):
+    try:
+        return repo.upsert_customer(payload.get("phone", ""), payload.get("name", ""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/customers/{customer_id}/payments")
+def record_payment(customer_id: str, payload: dict = Body(...)):
+    customer = repo.customer(customer_id)
+    if not customer:
+        raise HTTPException(404, "customer not found")
+    try:
+        amount = float(payload.get("amount", 0))
+    except (TypeError, ValueError):
+        amount = 0
+    account = crm.account(repo, customer_id)
+    if amount <= 0:
+        raise HTTPException(400, "payment amount must be positive")
+    if not account or amount > account["outstanding"] + 0.01:
+        raise HTTPException(400, "payment exceeds outstanding credit")
+    row = repo.add_payment(
+        customer_id, amount, payload.get("paid_on") or TODAY.isoformat(),
+        payload.get("note", ""),
+    )
+    return {"payment": row, "account": crm.account(repo, customer_id)}
+
+
+@app.get("/api/notifications")
+def notification_log():
+    return {"notifications": repo.notifications()}
+
+
+@app.post("/api/reminders/run")
+def run_reminders():
+    return NOTIFY.run_due_reminders(repo, TODAY)
+
+
+async def _reminder_loop():
+    while True:
+        try:
+            NOTIFY.run_due_reminders(repo, TODAY)
+        except Exception as e:
+            print("reminder check failed:", repr(e)[:200])
+        await asyncio.sleep(3600)
+
+
+@app.on_event("startup")
+async def start_reminder_worker():
+    asyncio.create_task(_reminder_loop())
 
 
 def _stock_view(sku: dict, det: dict) -> dict:
