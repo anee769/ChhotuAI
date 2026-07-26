@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LohaLedger - Inventory Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#d3e4fe",
+                    "primary-container": "#131b2e",
+                    "secondary-container": "#6cf8bb",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-container": "#00714d",
+                    "background": "#f7f9fb",
+                    "tertiary-container": "#0b1c30",
+                    "surface-container-highest": "#e0e3e5",
+                    "tertiary": "#000000",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-fixed-dim": "#bec6e0",
+                    "primary-fixed": "#dae2fd",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "secondary": "#006c49",
+                    "outline": "#76777d",
+                    "surface-tint": "#565e74",
+                    "on-primary-container": "#7c839b",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-variant": "#e0e3e5",
+                    "outline-variant": "#c6c6cd",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-surface": "#191c1e",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#191c1e",
+                    "on-secondary-fixed": "#002113",
+                    "secondary-fixed-dim": "#4edea3",
+                    "on-tertiary-container": "#75859d",
+                    "on-secondary-fixed-variant": "#005236",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-primary-fixed": "#131b2e",
+                    "inverse-primary": "#bec6e0",
+                    "primary": "#000000",
+                    "surface-dim": "#d8dadc",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#eceef0",
+                    "on-primary-fixed-variant": "#3f465c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter-grid": "1.5rem",
+                    "margin-page": "2rem",
+                    "stack-xl": "3rem",
+                    "stack-md": "1.5rem",
+                    "stack-sm": "0.75rem",
+                    "inset-component": "1rem 1.25rem"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .zebra-stripe:nth-child(even) {
+            background-color: #f2f4f6;
+        }
+        .action-green-pulse {
+            box-shadow: 0 0 0 0 rgba(0, 108, 73, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(0, 108, 73, 0.4); }
+            70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(0, 108, 73, 0); }
+            100% { transform: scale(0.98); box-shadow: 0 0 0 0 rgba(0, 108, 73, 0); }
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #c6c6cd; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-x-hidden selection:bg-secondary-container selection:text-on-secondary-container">
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface-container-lowest/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-8">
+<span class="text-headline-md text-primary tracking-tight font-extrabold">LohaLedger</span>
+<div class="hidden md:flex bg-surface-container-low rounded-xl px-4 py-2 border border-outline-variant items-center gap-2 w-96 group focus-within:ring-2 focus-within:ring-primary/10 transition-all">
+<span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-label-md placeholder:text-outline" placeholder="Search products, SKUs, or commands..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-surface-container-high transition-colors text-on-surface-variant relative">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full"></span>
+</button>
+<button class="flex items-center gap-2 pl-2 pr-1 py-1 rounded-full border border-outline-variant hover:bg-surface-container-low transition-colors">
+<div class="w-8 h-8 rounded-full bg-primary-fixed-dim flex items-center justify-center text-on-primary-fixed text-[11px] font-bold">BH</div>
+<span class="material-symbols-outlined text-on-surface-variant">keyboard_arrow_down</span>
+</button>
+</div>
+</header>
+<aside class="hidden lg:flex flex-col fixed left-0 top-0 h-full w-64 p-4 bg-surface-container-low border-r border-outline-variant pt-20">
+<div class="px-4 mb-8">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-on-primary font-bold shadow-md">L</div>
+<div>
+<p class="text-label-md font-bold text-on-surface">Bharat Hardware</p>
+<p class="text-label-sm text-on-surface-variant">Admin Console</p>
+</div>
+</div>
+</div>
+<nav class="flex-1 flex flex-col gap-1.5">
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+<a class="flex items-center gap-3 px-4 py-2.5 bg-primary text-on-primary shadow-sm rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined">inventory_2</span> Inventory
+        </a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined">groups</span> Customers
+        </a>
+<a class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined">analytics</span> Analytics
+        </a>
+</nav>
+<div class="border-t border-outline-variant pt-4 pb-6 flex flex-col gap-1.5">
+<button class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-xl font-label-md">
+<span class="material-symbols-outlined">help</span> Support
+        </button>
+<button class="flex items-center gap-3 px-4 py-2.5 text-on-surface-variant hover:bg-surface-container-high transition-all rounded-xl font-label-md">
+<span class="material-symbols-outlined">settings</span> Settings
+        </button>
+</div>
+</aside>
+<main class="pt-24 pb-24 lg:pl-64 lg:pb-12 px-6">
+<div class="max-w-7xl mx-auto space-y-8">
+<!-- Refined Voice Assistant Bar -->
+<div class="bg-surface-container-low/50 border border-outline-variant rounded-2xl p-4 flex items-center justify-between group hover:border-primary/20 transition-colors">
+<div class="flex items-center gap-5">
+<div class="flex items-center gap-1 h-5">
+<div class="w-0.5 bg-primary rounded-full h-2 animate-bounce" style="animation-delay: 0s"></div>
+<div class="w-0.5 bg-primary rounded-full h-4 animate-bounce" style="animation-delay: 0.1s"></div>
+<div class="w-0.5 bg-primary rounded-full h-3 animate-bounce" style="animation-delay: 0.2s"></div>
+<div class="w-0.5 bg-primary rounded-full h-5 animate-bounce" style="animation-delay: 0.3s"></div>
+<div class="w-0.5 bg-primary rounded-full h-2.5 animate-bounce" style="animation-delay: 0.4s"></div>
+</div>
+<div class="flex flex-col">
+<span class="text-label-sm uppercase tracking-widest text-outline">Voice Command Active</span>
+<p class="text-body-md text-on-surface font-medium italic">"Sariya stock check..."</p>
+</div>
+</div>
+<button class="text-label-sm font-bold text-primary px-4 py-1.5 rounded-full bg-primary/5 hover:bg-primary/10 transition-all">
+                Change Command
+            </button>
+</div>
+<!-- Page Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+<div>
+<h1 class="text-headline-lg text-on-surface leading-tight">Inventory Ledger</h1>
+<p class="text-on-surface-variant mt-1">Industrial-grade precision for stock monitoring and auditing.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-surface-container-high rounded-xl p-1 border border-outline-variant">
+<button class="px-4 py-1.5 text-label-md font-bold bg-surface-container-lowest text-primary rounded-lg shadow-sm transition-all" id="toggle-current">
+                        Current Stock
+                    </button>
+<button class="px-4 py-1.5 text-label-md text-on-surface-variant hover:text-on-surface transition-all" id="toggle-history">
+                        Movement History
+                    </button>
+</div>
+<button class="bg-primary text-on-primary px-5 py-2.5 rounded-xl flex items-center gap-2 font-bold hover:shadow-lg active:scale-95 transition-all" onclick="document.getElementById('voice-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-xl">mic</span>
+<span>Quick Adjust</span>
+</button>
+</div>
+</div>
+<!-- Updated KPI Cards -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-on-surface-variant text-label-md font-semibold">Total SKU Value</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">payments</span>
+</div>
+<p class="text-headline-md text-on-surface tracking-tight">₹14,50,200</p>
+<div class="mt-2 flex items-center gap-1 text-label-sm text-secondary">
+<span class="material-symbols-outlined text-sm">trending_up</span>
+<span>+4.2% vs last month</span>
+</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow group border-l-4 border-l-error">
+<div class="flex justify-between items-start mb-4">
+<span class="text-on-surface-variant text-label-md font-semibold">Low Stock Items</span>
+<span class="material-symbols-outlined text-error transition-colors">warning</span>
+</div>
+<p class="text-headline-md text-on-surface tracking-tight">08 <span class="text-label-md text-on-surface-variant font-normal">Items</span></p>
+<div class="mt-2 text-label-sm text-error font-medium">Attention required</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-on-surface-variant text-label-md font-semibold">Inventory Turnover</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">refresh</span>
+</div>
+<p class="text-headline-md text-on-surface tracking-tight">12.4x</p>
+<div class="mt-2 text-label-sm text-on-surface-variant">Avg. 30 Days</div>
+</div>
+<div class="bg-surface-container-lowest border border-outline-variant p-6 rounded-2xl shadow-sm hover:shadow-md transition-shadow group">
+<div class="flex justify-between items-start mb-4">
+<span class="text-on-surface-variant text-label-md font-semibold">Active Orders</span>
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors">local_shipping</span>
+</div>
+<p class="text-headline-md text-on-surface tracking-tight">24 <span class="text-label-md text-on-surface-variant font-normal">Pending</span></p>
+<div class="mt-2 text-label-sm text-on-surface-variant">8 out for delivery</div>
+</div>
+</div>
+<!-- Modernized Table -->
+<div class="bg-surface-container-lowest border border-outline-variant rounded-2xl overflow-hidden shadow-sm">
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface-container-low border-b border-outline-variant">
+<tr>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Product &amp; SKU</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px] text-right">In-Stock Level</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Recent Activity</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px] text-right">Unit Profit</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px] text-center">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="zebra-stripe group hover:bg-primary/[0.02] transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-low border border-outline-variant flex items-center justify-center rounded-xl text-on-surface-variant group-hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">architecture</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-body-md">UltraTech Cement (PPC)</p>
+<p class="text-label-sm text-on-surface-variant font-medium">CEM-001 • 50kg Bag</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-body-lg font-extrabold text-primary">450 <span class="text-label-sm font-medium text-outline">BAGS</span></p>
+</td>
+<td class="px-6 py-5">
+<p class="text-label-md text-on-surface">2 hours ago</p>
+<p class="text-[11px] text-secondary font-medium">-20 Bags (Sale)</p>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-label-md font-bold text-on-surface">₹34.50</p>
+</td>
+<td class="px-6 py-5 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold bg-secondary-container/30 text-on-secondary-container border border-on-secondary-container/20">STABLE</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="zebra-stripe group hover:bg-primary/[0.02] transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-low border border-outline-variant flex items-center justify-center rounded-xl text-on-surface-variant group-hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">straighten</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-body-md">Steel Pipes (3-inch GI)</p>
+<p class="text-label-sm text-on-surface-variant font-medium">STL-442 • 20ft Length</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-body-lg font-extrabold text-error">12 <span class="text-label-sm font-medium text-outline">PCS</span></p>
+</td>
+<td class="px-6 py-5">
+<p class="text-label-md text-on-surface">Yesterday</p>
+<p class="text-[11px] text-primary-fixed-variant font-medium">+50 Pcs (Restock)</p>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-label-md font-bold text-on-surface">₹112.00</p>
+</td>
+<td class="px-6 py-5 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold bg-error-container text-on-error-container border border-error/20">CRITICAL</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="zebra-stripe group hover:bg-primary/[0.02] transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-low border border-outline-variant flex items-center justify-center rounded-xl text-on-surface-variant group-hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">door_front</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-body-md">Brass Door Hinges</p>
+<p class="text-label-sm text-on-surface-variant font-medium">HNG-099 • 4-inch Prem.</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-body-lg font-extrabold text-primary">2,140 <span class="text-label-sm font-medium text-outline">UNITS</span></p>
+</td>
+<td class="px-6 py-5">
+<p class="text-label-md text-on-surface">45 mins ago</p>
+<p class="text-[11px] text-secondary font-medium">-4 Units (Sale)</p>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-label-md font-bold text-on-surface">₹8.20</p>
+</td>
+<td class="px-6 py-5 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold bg-primary-container text-on-primary-container border border-outline-variant">OVERSTOCK</span>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="zebra-stripe group hover:bg-primary/[0.02] transition-colors cursor-default">
+<td class="px-6 py-5">
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-surface-container-low border border-outline-variant flex items-center justify-center rounded-xl text-on-surface-variant group-hover:bg-primary/5 transition-colors">
+<span class="material-symbols-outlined">rebase_edit</span>
+</div>
+<div>
+<p class="font-bold text-on-surface text-body-md">TMT Bars (Sariya) - 12mm</p>
+<p class="text-label-sm text-on-surface-variant font-medium">STL-TMT • Fe500D Grade</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-body-lg font-extrabold text-primary">85 <span class="text-label-sm font-medium text-outline">MT</span></p>
+</td>
+<td class="px-6 py-5">
+<p class="text-label-md text-on-surface">3 hours ago</p>
+<p class="text-[11px] text-primary-fixed-variant font-medium">+12 MT (Purchase)</p>
+</td>
+<td class="px-6 py-5 text-right">
+<p class="text-label-md font-bold text-on-surface">₹1,450.00</p>
+</td>
+<td class="px-6 py-5 text-center">
+<span class="inline-flex items-center px-3 py-1 rounded-full text-[11px] font-extrabold bg-secondary-container/30 text-on-secondary-container border border-on-secondary-container/20">STABLE</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bg-surface-container-low px-6 py-4 flex items-center justify-between">
+<p class="text-label-sm font-medium text-on-surface-variant">Showing 1-10 of 248 items</p>
+<div class="flex items-center gap-4">
+<button class="w-10 h-10 flex items-center justify-center rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors text-on-surface-variant disabled:opacity-30" disabled="">
+<span class="material-symbols-outlined">chevron_left</span>
+</button>
+<span class="text-label-md font-bold text-on-surface">Page 1 <span class="text-outline font-medium">of 25</span></span>
+<button class="w-10 h-10 flex items-center justify-center rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors text-on-surface-variant">
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Floating Voice FAB -->
+<button class="fixed bottom-8 right-8 w-16 h-16 bg-primary text-on-primary rounded-2xl shadow-xl flex items-center justify-center action-green-pulse z-40 lg:bottom-12 lg:right-12 hover:scale-105 active:scale-95 transition-all" onclick="document.getElementById('voice-modal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-3xl">mic</span>
+</button>
+<!-- Voice Modal Overlay -->
+<div class="hidden fixed inset-0 z-[100] flex items-center justify-center p-6" id="voice-modal">
+<div class="absolute inset-0 bg-primary-container/60 backdrop-blur-md" onclick="this.parentElement.classList.add('hidden')"></div>
+<div class="relative bg-surface-container-lowest border border-outline-variant w-full max-w-md p-8 rounded-3xl shadow-2xl flex flex-col items-center overflow-hidden">
+<button class="absolute top-4 right-4 p-2 text-on-surface-variant hover:bg-surface-container-high rounded-full transition-colors" onclick="document.getElementById('voice-modal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+<div class="w-24 h-24 bg-primary text-on-primary rounded-3xl flex items-center justify-center mb-8 action-green-pulse shadow-lg">
+<span class="material-symbols-outlined text-5xl">mic</span>
+</div>
+<h3 class="text-headline-md text-on-surface mb-3">Listening...</h3>
+<p class="text-center text-on-surface-variant mb-10 leading-relaxed font-medium italic">"Sariya ka stock 5 quintal kam karo"</p>
+<!-- Waveform Simulation -->
+<div class="flex items-center justify-center gap-1.5 h-16 w-full mb-10">
+<div class="w-1.5 bg-primary/20 h-4 rounded-full animate-pulse"></div>
+<div class="w-1.5 bg-primary/40 h-10 rounded-full animate-pulse" style="animation-delay: 0.1s"></div>
+<div class="w-1.5 bg-primary h-16 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+<div class="w-1.5 bg-primary/60 h-8 rounded-full animate-pulse" style="animation-delay: 0.3s"></div>
+<div class="w-1.5 bg-primary/30 h-12 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+<div class="w-1.5 bg-primary/50 h-6 rounded-full animate-pulse" style="animation-delay: 0.5s"></div>
+</div>
+<div class="w-full bg-surface-container border border-outline-variant p-4 rounded-2xl flex flex-col gap-1">
+<span class="text-label-sm font-bold text-outline uppercase tracking-wider">Drafting Action</span>
+<p class="text-on-surface font-semibold text-body-md">Update Inventory SKU STL-TMT (-500kg)</p>
+</div>
+</div>
+</div>
+<!-- Mobile Bottom Navigation -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-2 bg-surface-container-lowest border-t border-outline-variant shadow-lg backdrop-blur-md">
+<button class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary">
+<span class="material-symbols-outlined">home</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Home</span>
+</button>
+<button class="flex flex-col items-center justify-center text-primary p-2">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Stock</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary">
+<span class="material-symbols-outlined">history</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Logs</span>
+</button>
+<button class="flex flex-col items-center justify-center text-outline p-2 hover:text-primary">
+<span class="material-symbols-outlined">person</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Profile</span>
+</button>
+</nav>
+<script>
+    const btnCurrent = document.getElementById('toggle-current');
+    const btnHistory = document.getElementById('toggle-history');
+
+    const activeClass = 'px-4 py-1.5 text-label-md font-bold bg-surface-container-lowest text-primary rounded-lg shadow-sm transition-all';
+    const inactiveClass = 'px-4 py-1.5 text-label-md text-on-surface-variant hover:text-on-surface transition-all';
+
+    btnCurrent.addEventListener('click', () => {
+        btnCurrent.className = activeClass;
+        btnHistory.className = inactiveClass;
+    });
+
+    btnHistory.addEventListener('click', () => {
+        btnHistory.className = activeClass;
+        btnCurrent.className = inactiveClass;
+    });
+
+    // Row hover effect refinement
+    document.querySelectorAll('tr.zebra-stripe').forEach(row => {
+        row.addEventListener('mouseenter', () => {
+            row.style.transform = 'translateY(-1px)';
+            row.style.transition = 'all 0.15s ease-out';
+        });
+        row.addEventListener('mouseleave', () => {
+            row.style.transform = 'translateY(0)';
+        });
+    });
+</script>
+</body></html>

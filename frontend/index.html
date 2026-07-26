@@ -6,61 +6,242 @@
 <title>ChhotuAI — Awaaz se hisaab</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <style>
-  body { background:#0b1220; color:#e5edff; font-family:system-ui,'Segoe UI',sans-serif; }
-  .tab-btn.active { background:#2563eb; color:#fff; }
-  .card { background:#131c33; border:1px solid #24304f; border-radius:14px; }
-  .chip { background:#1e2a47; border:1px solid #3a4a72; }
-  .chip:hover { background:#2b3a63; }
+  :root {
+    --surface:#f7f9fb;
+    --surface-strong:#ffffff;
+    --surface-muted:#f2f4f6;
+    --text:#191c1e;
+    --text-muted:#45464d;
+    --primary:#0f172a;
+    --primary-soft:#131b2e;
+    --accent:#10b981;
+    --accent-soft:#d1fae5;
+    --border:rgba(15,23,42,0.08);
+  }
+  body {
+    background:linear-gradient(180deg,#f7f9fb 0%,#f2f4f6 100%);
+    color:var(--text);
+    font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  }
+  .tab-btn.active {
+    background:linear-gradient(135deg,var(--primary),var(--primary-soft));
+    color:#fff;
+    box-shadow:0 10px 24px -12px rgba(15,23,42,.35);
+  }
+  .card {
+    background:rgba(255,255,255,.9);
+    border:1px solid var(--border);
+    border-radius:22px;
+    box-shadow:0 18px 40px -24px rgba(15,23,42,.28);
+    backdrop-filter:blur(12px);
+  }
+  .chip {
+    background:var(--surface-muted);
+    border:1px solid rgba(15,23,42,.06);
+    color:var(--text-muted);
+    transition:all .2s ease;
+  }
+  .chip:hover { background:#e6eaef; color:var(--text); }
+  .btn-primary {
+    background:linear-gradient(135deg,var(--accent),#059669);
+    color:white;
+    border-radius:999px;
+    font-weight:700;
+    box-shadow:0 12px 25px -14px rgba(5,150,105,.45);
+  }
+  .btn-secondary { background:var(--surface-strong); border:1px solid var(--border); color:var(--text); border-radius:999px; }
   .pulse { animation:pulse 1.2s infinite; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.55} }
   .flash { animation:flash 1.1s ease; }
-  @keyframes flash { 0%{background:#153a2a} 40%{background:#1c6b45} 100%{background:transparent} }
-  .conf-bar { height:8px; border-radius:6px; background:#24304f; overflow:hidden; }
+  @keyframes flash { 0%{background:#ecfdf5} 40%{background:#d1fae5} 100%{background:transparent} }
+  .conf-bar { height:8px; border-radius:999px; background:#e5e7eb; overflow:hidden; }
   .conf-fill { height:100%; }
-  input,select { color:#0b1220; }
-  ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#2b3a63;border-radius:6px}
+  input,select { color:#0f172a; background:white; }
+  ::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:6px}
+  .material-symbols-outlined { font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24; }
+
+  /* Stitch-inspired ledger shell: quiet, direct, and task-first. */
+  body { background:#f7f9fb; }
+  .app-header {
+    position:fixed; inset:0 auto 0 0; width:268px; height:100vh;
+    padding:28px 22px; background:#f1f3f5; border-right:1px solid #dde1e5;
+    display:block; z-index:30;
+  }
+  .app-header > div { display:block; }
+  .app-header > div > div:first-child {
+    max-width:220px; font-size:20px !important; line-height:1.2 !important;
+    letter-spacing:-.02em;
+  }
+  .app-header #shopName {
+    display:block; margin-top:9px; max-width:220px;
+    font-size:16px !important; line-height:1.35 !important;
+    font-weight:650; color:#334155;
+  }
+  .app-header > div > div:first-child > div {
+    margin-top:7px; max-width:220px;
+    font-size:12px !important; line-height:1.5 !important;
+  }
+  .app-header .header-tools { position:absolute; left:20px; right:20px; bottom:24px; }
+  .learning-counters, .wake-control { display:none !important; }
+  .day-control {
+    justify-content:space-between; width:100%; padding:11px 12px !important;
+    border-radius:10px !important; background:#fff !important;
+  }
+  .app-nav {
+    position:fixed; z-index:40; left:10px; top:164px; width:248px;
+    display:flex; flex-direction:column; gap:5px; padding:0;
+  }
+  .app-nav .tab-btn {
+    width:100%; padding:12px 14px; border-radius:9px;
+    display:flex; align-items:center; text-align:left; font-size:14px;
+    color:#45464d; background:transparent; box-shadow:none;
+  }
+  .app-nav .tab-btn.active {
+    color:#006c49; background:#6cf8bb; box-shadow:none;
+  }
+  .app-main { max-width:none; margin-left:268px; padding:40px 40px 96px; }
+  .intro-hero, .utility-aside { display:none !important; }
+  .workspace-shell { display:block !important; max-width:1180px; margin:0 auto; }
+  .main-column { width:100%; }
+  .card {
+    background:#fff; border:1px solid rgba(15,23,42,.07);
+    border-radius:12px; box-shadow:0 6px 18px -12px rgba(15,23,42,.18);
+    backdrop-filter:none;
+  }
+  .btn-primary {
+    background:#006c49; border-radius:9px; box-shadow:none;
+  }
+  .btn-secondary, .chip { border-radius:9px; }
+  input, select {
+    border:1px solid #d8dde2 !important; border-radius:9px !important;
+    background:#f7f9fb !important;
+  }
+  input:focus, select:focus { outline:2px solid #10b981; outline-offset:0; }
+  .central-mic {
+    width:58px; padding:0 !important; border-radius:50% !important;
+    background:#006c49 !important; color:#fff;
+    box-shadow:0 10px 28px -10px rgba(0,108,73,.5);
+  }
+  .text-blue-300, .text-sky-300, .text-sky-200 { color:#006c49 !important; }
+  .text-emerald-400 { color:#00714d !important; }
+  .text-amber-300 { color:#9a5b00 !important; }
+  .text-rose-300 { color:#ba1a1a !important; }
+  .bg-blue-600, .bg-rose-600 { background:#0f172a !important; }
+  .border-\[\#24304f\] { border-color:#e5e7eb !important; }
+  .ledger-table-wrap {
+    overflow-x:auto; border:1px solid #e5e7eb; border-radius:10px; background:#fff;
+  }
+  .ledger-table { width:100%; border-collapse:collapse; text-align:left; }
+  .ledger-table th {
+    padding:11px 14px; background:#f7f9fb; border-bottom:1px solid #e5e7eb;
+    color:#64748b; font-size:11px; line-height:1.3; font-weight:700;
+    letter-spacing:.08em; text-transform:uppercase; white-space:nowrap;
+  }
+  .ledger-table td {
+    padding:13px 14px; border-bottom:1px solid #eef0f2;
+    color:#334155; font-size:14px; vertical-align:middle;
+  }
+  .ledger-table tbody tr:last-child td { border-bottom:0; }
+  .ledger-table .amount { text-align:right; font-weight:700; white-space:nowrap; }
+  .ledger-table .muted { color:#64748b; font-size:12px; }
+
+  @media (max-width: 900px) {
+    .app-header {
+      position:sticky; top:0; width:100%; height:auto; padding:14px 16px;
+      display:flex; border-right:0; border-bottom:1px solid #dde1e5;
+    }
+    .app-header > div { display:flex; }
+    .app-header .header-tools { position:static; margin-left:auto; }
+    .day-control { width:auto; min-width:190px; }
+    .app-nav {
+      position:sticky; top:76px; left:auto; width:100%; overflow-x:auto;
+      flex-direction:row; padding:10px 16px; background:rgba(247,249,251,.96);
+      border-bottom:1px solid #e5e7eb;
+    }
+    .app-nav .tab-btn { width:auto; flex:0 0 auto; padding:9px 13px; }
+    .app-main { margin-left:0; padding:24px 16px 88px; }
+  }
+  @media (max-width: 560px) {
+    .app-header .header-tools { display:none; }
+    .app-nav { top:69px; }
+    .app-main { padding-top:18px; }
+  }
 </style>
 </head>
-<body class="min-h-screen">
+<body class="min-h-screen bg-[var(--surface)] text-slate-900">
 
 <!-- HEADER -->
-<header class="sticky top-0 z-20 bg-[#0b1220]/95 border-b border-[#24304f] px-5 py-3">
-  <div class="flex items-center justify-between flex-wrap gap-3">
+<header class="app-header">
+  <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
     <div>
-      <div class="text-2xl font-black tracking-tight">🧱 ChhotuAI <span class="text-blue-400">·</span> <span id="shopName" class="text-blue-300"></span></div>
-      <div class="text-xs text-slate-400">Awaaz se stock aur margin — bhoolne ke liye banaya gaya</div>
+      <div class="text-2xl font-black tracking-tight text-slate-900">🧱 ChhotuAI <span class="text-emerald-500">·</span> <span id="shopName" class="text-slate-700"></span></div>
+      <div class="text-xs text-slate-500">Awaaz se stock aur margin — bhoolne ke liye banaya gaya</div>
     </div>
-    <div class="flex items-center gap-5">
-      <div class="flex gap-4 text-center">
-        <div><div id="cAlias" class="text-xl font-bold text-emerald-400">0</div><div class="text-[10px] text-slate-400 uppercase">aliases</div></div>
-        <div><div id="cPrior" class="text-xl font-bold text-emerald-400">0</div><div class="text-[10px] text-slate-400 uppercase">priors</div></div>
-        <div><div id="cCorr" class="text-xl font-bold text-emerald-400">0</div><div class="text-[10px] text-slate-400 uppercase">corrections</div></div>
+    <div class="header-tools flex flex-wrap items-center gap-3">
+      <div class="learning-counters flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
+        <div><div id="cAlias" class="text-lg font-bold text-emerald-600">0</div><div class="text-[10px] uppercase text-slate-500">aliases</div></div>
+        <div><div id="cPrior" class="text-lg font-bold text-emerald-600">0</div><div class="text-[10px] uppercase text-slate-500">priors</div></div>
+        <div><div id="cCorr" class="text-lg font-bold text-emerald-600">0</div><div class="text-[10px] uppercase text-slate-500">corrections</div></div>
       </div>
-      <div class="flex items-center gap-2 bg-[#131c33] px-3 py-2 rounded-xl border border-[#24304f]">
-        <span class="text-sm font-semibold" id="dayLabel">Day 1</span>
-        <button id="dayToggle" onclick="toggleDay()" class="relative w-14 h-7 bg-slate-600 rounded-full transition">
-          <span id="dayKnob" class="absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition"></span>
+      <div class="day-control flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
+        <span class="text-sm font-semibold text-slate-700" id="dayLabel">Day 1</span>
+        <button id="dayToggle" onclick="toggleDay()" class="relative h-7 w-14 rounded-full bg-slate-200 transition">
+          <span id="dayKnob" class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition"></span>
         </button>
-        <span class="text-xs text-slate-400">Day 60</span>
+        <span class="text-xs text-slate-500">Day 60</span>
       </div>
-      <button id="wakeBtn" onclick="toggleWake()" class="px-3 py-2 rounded-xl border border-[#24304f] bg-[#131c33] text-sm font-semibold">
-        🎙️ "Hey Chhotu": <span id="wakeState" class="text-slate-400">OFF</span></button>
+      <button id="wakeBtn" onclick="toggleWake()" class="wake-control rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
+        🎙️ "Hey Chhotu": <span id="wakeState" class="text-slate-500">OFF</span></button>
     </div>
   </div>
 </header>
 
 <!-- TABS -->
-<nav class="flex gap-2 px-5 py-3 flex-wrap">
-  <button class="tab-btn active px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="sale" onclick="showTab('sale')">🗣️ Sale</button>
-  <button class="tab-btn px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="delivery" onclick="showTab('delivery')">📦 Delivery</button>
-  <button class="tab-btn px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="invoice" onclick="showTab('invoice')">🧾 Invoice</button>
-  <button class="tab-btn px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="stock" onclick="showTab('stock')">📊 Stock &amp; Count</button>
-  <button class="tab-btn px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="today" onclick="showTab('today')">📅 Today</button>
-  <button class="tab-btn px-5 py-2 rounded-lg font-semibold bg-[#131c33]" data-tab="dashboard" onclick="showTab('dashboard')">📈 Dashboard</button>
+<nav class="app-nav">
+  <button class="tab-btn active rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="sale" onclick="showTab('sale')">🗣️ Sale</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="delivery" onclick="showTab('delivery')">📦 Delivery</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="invoice" onclick="showTab('invoice')">🧾 Invoice</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="stock" onclick="showTab('stock')">📊 Stock &amp; Count</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="today" onclick="showTab('today')">📅 Today</button>
+  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="dashboard" onclick="showTab('dashboard')">📈 Dashboard</button>
 </nav>
 
-<main class="px-5 pb-24 max-w-6xl mx-auto">
+<main class="app-main">
+  <section class="intro-hero mb-6 rounded-[28px] border border-slate-200/80 bg-white/85 p-6 shadow-[0_24px_60px_-26px_rgba(15,23,42,0.3)] backdrop-blur">
+    <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+      <div class="max-w-2xl">
+        <div class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Voice-first ledger</div>
+        <h2 class="mt-3 text-3xl font-black tracking-tight text-slate-900">From invoice to margin, all in one calm workspace.</h2>
+        <p class="mt-2 text-sm text-slate-600">Speak in Hindi or English, confirm the match, and let the ledger recompute automatically with every entry.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <button onclick="showTab('sale')" class="btn-primary px-4 py-2.5">Open voice entry</button>
+        <button onclick="showTab('invoice')" class="btn-secondary px-4 py-2.5">Scan invoice</button>
+      </div>
+    </div>
+    <div class="mt-6 grid gap-3 md:grid-cols-3">
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Learning mode</div>
+        <div id="heroMode" class="mt-2 text-xl font-bold text-slate-900">Day 1</div>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Live shop</div>
+        <div id="heroShop" class="mt-2 text-xl font-bold text-slate-900">Sharma Building Materials</div>
+      </div>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Today</div>
+        <div id="heroToday" class="mt-2 text-xl font-bold text-slate-900">Ready</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="workspace-shell grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
+    <div class="main-column space-y-6">
 
   <!-- SALE / DELIVERY (shared voice UI) -->
   <section id="tab-sale" class="tabpane">
@@ -74,11 +255,11 @@
   <section id="tab-invoice" class="tabpane hidden">
     <div class="card p-5">
       <h2 class="text-xl font-bold mb-1">Invoice photo → catalogue + landed cost</h2>
-      <p class="text-sm text-slate-400 mb-4">Purchase invoices build the catalogue and the cost basis. <b class="text-amber-300">No stock quantities are created</b> — a running shop has purchases but no sales history.</p>
+      <p class="text-sm text-slate-500 mb-4">Purchase invoices build the catalogue and the cost basis. <b class="text-amber-600">No stock quantities are created</b> — a running shop has purchases but no sales history.</p>
       <div class="flex gap-3 flex-wrap items-center">
-        <input type="file" id="invoiceFile" accept="image/*,application/pdf" class="text-sm bg-white rounded px-2 py-1">
-        <button onclick="ingestInvoice(true)" class="bg-blue-600 px-4 py-2 rounded-lg font-semibold">Parse uploaded</button>
-        <button onclick="ingestInvoice(false)" class="chip px-4 py-2 rounded-lg font-semibold">Use sample hard invoice</button>
+        <input type="file" id="invoiceFile" accept="image/*,application/pdf" class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm">
+        <button onclick="ingestInvoice(true)" class="btn-primary px-4 py-2.5">Parse uploaded</button>
+        <button onclick="ingestInvoice(false)" class="chip px-4 py-2.5 rounded-full font-semibold">Use sample hard invoice</button>
       </div>
       <div id="invoiceResult" class="mt-5"></div>
     </div>
@@ -94,7 +275,7 @@
     <div class="card p-5">
       <div class="flex items-center justify-between mb-3">
         <h2 class="text-xl font-bold">Stock (derived from event log)</h2>
-        <select id="stockFamily" onchange="loadStock()" class="rounded px-2 py-1 text-sm">
+        <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
           <option value="">All families</option><option value="tmt">TMT</option>
           <option value="cement">Cement</option><option value="pipe">Pipe</option>
           <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
@@ -110,7 +291,7 @@
     <div class="card p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold">Aaj ka hisaab</h2>
-        <button onclick="speakToday()" class="bg-blue-600 px-4 py-2 rounded-lg font-semibold">🔊 Bolo (Hindi)</button>
+        <button onclick="speakToday()" class="btn-primary px-4 py-2.5">🔊 Bolo (Hindi)</button>
       </div>
       <div id="todayBody"></div>
       <audio id="todayAudio" class="hidden"></audio>
@@ -121,7 +302,7 @@
   <section id="tab-dashboard" class="tabpane hidden">
     <div class="card p-5 mb-4">
       <h2 class="text-xl font-bold mb-1">Margin trend — last 30 days</h2>
-      <p class="text-xs text-slate-400 mb-3">Gross margin per day. Steel price rise marked.</p>
+      <p class="text-xs text-slate-500 mb-3">Gross margin per day. Steel price rise marked.</p>
       <canvas id="trendChart" height="90"></canvas>
     </div>
     <div class="grid md:grid-cols-2 gap-4">
@@ -130,16 +311,54 @@
     </div>
     <div class="card p-5 mt-4">
       <h2 class="text-xl font-bold mb-1">⚙️ GST rates</h2>
-      <p class="text-xs text-slate-400 mb-3">Bills aur landed-cost isi rate se bante hain. Family-wise set karo.</p>
+      <p class="text-xs text-slate-500 mb-3">Bills aur landed-cost isi rate se bante hain. Family-wise set karo.</p>
       <div id="gstBody" class="grid md:grid-cols-3 gap-3"></div>
-      <button onclick="saveGst()" class="mt-3 bg-emerald-600 px-4 py-2 rounded-lg font-semibold">Save GST rates</button>
+      <button onclick="saveGst()" class="mt-3 btn-primary px-4 py-2.5">Save GST rates</button>
     </div>
   </section>
+    </div>
+
+    <aside class="utility-aside space-y-4">
+      <div class="card p-5">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span class="material-symbols-outlined text-emerald-600">bolt</span>
+          Quick actions
+        </div>
+        <div class="mt-4 space-y-2">
+          <button onclick="showTab('sale')" class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm font-semibold text-slate-700">
+            <span>Open voice assistant</span><span class="material-symbols-outlined">arrow_forward</span>
+          </button>
+          <button onclick="showTab('stock')" class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm font-semibold text-slate-700">
+            <span>Review stock count</span><span class="material-symbols-outlined">inventory_2</span>
+          </button>
+          <button onclick="showTab('dashboard')" class="flex w-full items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-left text-sm font-semibold text-slate-700">
+            <span>See margin trend</span><span class="material-symbols-outlined">bar_chart</span>
+          </button>
+        </div>
+      </div>
+      <div class="card p-5">
+        <div class="flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <span class="material-symbols-outlined text-amber-600">schedule</span>
+          Recent flow
+        </div>
+        <div class="mt-4 space-y-3 text-sm text-slate-600">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div class="font-semibold text-slate-800">Voice entry active</div>
+            <div class="mt-1">Sale, delivery, count and recall all run from one surface.</div>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50 p-3">
+            <div class="font-semibold text-slate-800">Audit trail stays reliable</div>
+            <div class="mt-1">Every new entry recomputes the ledger from the event log.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
 </main>
 
 <button onclick="centralAssistant()" title="Hey Chhotu — kuch bhi bolo"
-  class="fixed bottom-6 right-6 z-40 bg-rose-600 hover:bg-rose-500 shadow-xl rounded-full px-5 h-14 font-bold flex items-center gap-2">
-  🎙️ Hey Chhotu</button>
+  class="central-mic fixed bottom-6 right-6 z-40 bg-rose-600 hover:bg-rose-500 shadow-xl rounded-full px-5 h-14 font-bold flex items-center justify-center gap-2">
+  <span class="material-symbols-outlined text-[28px]">mic</span></button>
 
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-700 px-5 py-3 rounded-xl font-semibold hidden z-50"></div>
 
@@ -159,13 +378,16 @@ async function boot(){
   STATE.catalogue=s.catalogue; STATE.byId={}; s.catalogue.forEach(x=>STATE.byId[x.sku_id]=x);
   STATE.today=s.today; STATE.learning_state=s.learning_state;
   document.getElementById('shopName').textContent=s.shop;
+  document.getElementById('heroShop').textContent=s.shop;
+  document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   setCounts(s.learning_counts); setDayUI(s.learning_state);
   renderVoiceUI('sale','auto'); renderVoiceUI('delivery','delivery'); renderVoiceUI('count','count');
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
 function setDayUI(st){ const on=st==='day60'; document.getElementById('dayLabel').textContent=on?'Day 60':'Day 1';
-  document.getElementById('dayToggle').classList.toggle('bg-blue-600',on);
+  document.getElementById('heroMode').textContent=on?'Day 60':'Day 1';
+  document.getElementById('dayToggle').classList.toggle('bg-emerald-500',on);
   document.getElementById('dayKnob').style.transform=on?'translateX(28px)':'translateX(0)'; }
 async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'day60';
   const r=await api('/api/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({which:next})});
@@ -190,23 +412,35 @@ function renderVoiceUI(tab, flow){
   const title = flow==='auto' ? 'Chhotu se baat karo — bolo, likho, ya poochho'
     : (flow==='delivery'?'Delivery':isCount?'Count':'Sale')+' — Chhotu se baat karo';
   const subtitle = flow==='auto'
-    ? 'Sale/delivery likhwao, ya poochho — "kitna stock hai", "aaj ka margin". Chhotu rate/unit/cash sab awaaz mein poochhega.'
-    : 'Bol ke batao. Chhotu rate, unit, cash/udhaar — sab awaaz mein poochhega. Guess nahi karega.';
-  const countMode = isCount ? `<div class="mb-3"><label class="text-sm mr-2">Count type:</label>
+    ? 'Sale likhwao ya stock aur margin poochho.'
+    : 'Ek baar bolo. Zaroorat hui to Chhotu sawaal poochhega.';
+  const countMode = isCount ? `<div class="mb-5 flex flex-wrap gap-3"><label class="text-sm mr-2">Count type:</label>
       <select id="countType" class="rounded px-2 py-1 text-sm"><option value="opening_balance">Opening balance</option><option value="stock_take">Stock take</option></select>
       <select id="countPrec" class="rounded px-2 py-1 text-sm ml-2"><option value="exact">exact count</option><option value="estimated">estimated (~)</option></select></div>` : '';
   document.getElementById('voiceUI-'+tab).innerHTML = `
-    <div class="card p-5">
-      <h2 class="text-xl font-bold mb-1">${title}</h2>
-      <p class="text-sm text-slate-400 mb-4">${subtitle}</p>
-      ${countMode}
-      <div class="flex gap-3 flex-wrap items-center mb-3">
-        <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="bg-rose-600 px-6 h-16 rounded-2xl text-lg font-bold flex items-center gap-2">🎤 Bolo</button>
-        <label class="chip px-3 py-2 rounded-lg text-sm cursor-pointer">📁 Upload audio<input type="file" accept="audio/*" class="hidden" onchange="micUpload(event,'${tab}','${flow}')"></label>
-        <input id="txt-${tab}" class="flex-1 min-w-[240px] rounded-lg px-3 py-3 text-lg" placeholder="…ya likho (fallback)" onkeydown="if(event.key==='Enter')convStartText('${tab}','${flow}')">
-        <button onclick="convStartText('${tab}','${flow}')" class="bg-blue-600 px-5 py-3 rounded-lg font-bold text-lg">Sun lo →</button>
+    <div class="card p-6 md:p-8">
+      <div class="mb-7">
+        <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">${flow==='delivery'?'Stock in':isCount?'Physical stock':'Voice entry'}</div>
+        <h2 class="mt-2 text-2xl font-bold tracking-tight">${title}</h2>
+        <p class="mt-1 text-sm text-slate-500">${subtitle}</p>
       </div>
-      <div class="flex gap-2 flex-wrap mb-2">${examples.map(e=>`<button class="chip px-3 py-1 rounded-full text-xs" onclick="document.getElementById('txt-${tab}').value='${e}';convStartText('${tab}','${flow}')">${e}</button>`).join('')}</div>
+      ${countMode}
+      <div class="rounded-xl bg-slate-50 p-5 md:p-6">
+        <div class="flex flex-col items-center text-center">
+          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="h-20 w-20 rounded-full bg-slate-950 text-3xl text-white shadow-lg transition active:scale-95">🎤</button>
+          <div class="mt-4 font-semibold text-slate-900">Boliye, main sun raha hoon</div>
+          <div class="mt-1 text-xs text-slate-500">Tap the microphone and speak naturally</div>
+        </div>
+        <div class="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-slate-400"><span class="h-px flex-1 bg-slate-200"></span>or type<span class="h-px flex-1 bg-slate-200"></span></div>
+        <div class="flex gap-2">
+          <input id="txt-${tab}" class="min-w-0 flex-1 px-4 py-3 text-base" placeholder="Type an entry…" onkeydown="if(event.key==='Enter')convStartText('${tab}','${flow}')">
+          <button onclick="convStartText('${tab}','${flow}')" class="rounded-lg bg-slate-950 px-5 py-3 font-semibold text-white">Continue</button>
+        </div>
+        <div class="mt-3 flex items-center justify-between gap-3">
+          <div class="truncate text-xs text-slate-500">Try: “${examples[0]}”</div>
+          <label class="cursor-pointer text-xs font-semibold text-slate-600">Upload audio<input type="file" accept="audio/*" class="hidden" onchange="micUpload(event,'${tab}','${flow}')"></label>
+        </div>
+      </div>
       <div id="proc-${tab}" class="text-sm text-blue-300 hidden"></div>
       <div id="conv-${tab}" class="mt-4"></div>
       <div id="res-${tab}" class="mt-4 space-y-3"></div>
@@ -627,15 +861,31 @@ async function loadRecon(){
 // ---------- Today ----------
 async function loadToday(){
   const m=await api('/api/today');
+  const saleRows=m.lines.map(l=>`<tr>
+      <td><div class="font-semibold text-slate-900">${l.canonical}</div></td>
+      <td>${l.qty} ${l.unit}</td>
+      <td><span class="${l.payment==='credit'?'text-amber-300':'text-emerald-400'} font-semibold">${l.payment==='credit'?'Udhaar':'Cash'}</span></td>
+      <td class="amount">₹${(l.margin||0).toLocaleString('en-IN')}</td>
+    </tr>`).join('');
   document.getElementById('todayBody').innerHTML=`
-    <div class="grid grid-cols-3 gap-4 text-center">
-      <div class="card p-5"><div class="text-4xl font-black text-emerald-400">₹${m.margin.toLocaleString('en-IN')}</div><div class="text-slate-400 mt-1">Aaj ka margin <span class="text-xs">(abhi tak ka)</span></div></div>
-      <div class="card p-5"><div class="text-3xl font-bold text-sky-300">₹${m.cash.toLocaleString('en-IN')}</div><div class="text-slate-400 mt-1">Cash aaya</div></div>
-      <div class="card p-5"><div class="text-3xl font-bold text-amber-300">₹${m.credit.toLocaleString('en-IN')}</div><div class="text-slate-400 mt-1">Udhaar gaya</div></div>
+    <div class="ledger-table-wrap">
+      <table class="ledger-table">
+        <thead><tr><th>Summary</th><th class="amount">Amount</th></tr></thead>
+        <tbody>
+          <tr><td><div class="font-semibold text-slate-900">Aaj ka margin</div><div class="muted">Abhi tak ka</div></td><td class="amount text-emerald-400">₹${m.margin.toLocaleString('en-IN')}</td></tr>
+          <tr><td>Cash aaya</td><td class="amount text-emerald-400">₹${m.cash.toLocaleString('en-IN')}</td></tr>
+          <tr><td>Udhaar gaya</td><td class="amount text-amber-300">₹${m.credit.toLocaleString('en-IN')}</td></tr>
+        </tbody>
+      </table>
     </div>
-    <div class="text-sm text-slate-400 mt-3">⚠️ Yeh <b>margin</b> hai, profit nahi — rent, salary, bijli isme nahi. ${m.provisional_extra?`<span class="text-amber-300">Plus ${m.provisional_extra} purani/week-precision entries baaki hain.</span>`:''}</div>
-    <div class="mt-4"><div class="text-sm font-semibold mb-2">Aaj ki bikri:</div>
-    ${m.lines.map(l=>`<div class="card p-2 mb-1 flex justify-between text-sm"><span>${l.canonical} · ${l.qty}${l.unit} · ${l.payment}</span><span class="${l.payment==='credit'?'text-amber-300':'text-emerald-400'}">margin ₹${(l.margin||0).toLocaleString('en-IN')}</span></div>`).join('')}</div>`;
+    <div class="mt-3 text-sm text-slate-500">Yeh margin hai, profit nahi—rent, salary aur bijli isme nahi hain. ${m.provisional_extra?`<span class="text-amber-300">Plus ${m.provisional_extra} purani entries baaki hain.</span>`:''}</div>
+    <div class="mt-6">
+      <div class="mb-2 text-sm font-semibold">Aaj ki bikri</div>
+      <div class="ledger-table-wrap"><table class="ledger-table">
+        <thead><tr><th>Item</th><th>Quantity</th><th>Payment</th><th class="amount">Margin</th></tr></thead>
+        <tbody>${saleRows||'<tr><td colspan="4" class="muted">Aaj koi sale entry nahi hai.</td></tr>'}</tbody>
+      </table></div>
+    </div>`;
 }
 async function speakToday(){
   const proc=document.getElementById('todayBody');
@@ -665,8 +915,20 @@ async function loadDashboard(){
     <div class="mb-3"><div class="text-3xl font-bold text-amber-300">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div><div class="text-slate-400 text-sm">Outstanding udhaar (contractors)</div></div>
     <div class="mb-2"><div class="text-3xl font-bold text-sky-300">₹${mp.inventory_value.toLocaleString('en-IN')}</div><div class="text-slate-400 text-sm">Inventory value at landed cost</div></div>
     <div class="text-xs text-slate-500">${mp.uncounted_excluded} uncounted SKUs excluded (gina nahi — value pata nahi)</div>`;
-  document.getElementById('frozenBody').innerHTML=`<div class="text-sm text-slate-400 mb-2">Total locked: <b class="text-rose-300">₹${d.frozen_total.toLocaleString('en-IN')}</b></div>`+
-    d.frozen_capital.map(f=>`<div class="flex justify-between text-sm py-1 border-b border-[#24304f]"><span>${f.canonical} <span class="text-xs text-slate-500">(${f.stock})</span></span><b class="text-rose-300">₹${f.value.toLocaleString('en-IN')}</b></div>`).join('');
+  const frozenRows=d.frozen_capital.map(f=>`<tr>
+      <td><div class="font-semibold text-slate-900">${f.canonical}</div></td>
+      <td>${f.stock}</td>
+      <td class="amount text-rose-300">₹${f.value.toLocaleString('en-IN')}</td>
+    </tr>`).join('');
+  document.getElementById('frozenBody').innerHTML=`
+    <div class="mb-3 flex items-center justify-between text-sm">
+      <span class="text-slate-500">Total locked capital</span>
+      <b class="text-rose-300">₹${d.frozen_total.toLocaleString('en-IN')}</b>
+    </div>
+    <div class="ledger-table-wrap"><table class="ledger-table">
+      <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
+      <tbody>${frozenRows||'<tr><td colspan="3" class="muted">No frozen stock.</td></tr>'}</tbody>
+    </table></div>`;
   loadGst();
 }
 let GSTCFG=null;
