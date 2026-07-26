@@ -961,7 +961,7 @@ function renderVoiceConfirmation(C, preview){
   const payment=[...new Set((preview.items||[]).map(x=>x.payment).filter(Boolean))].join(' + ')||preview.flow;
   const lines=(preview.items||[]).map(it=>`<div class="confirmation-line">
     <div><div class="name">${it.canonical}</div>
-      <div class="meta">${fmtNum(it.qty)} ${it.unit}${it.rate!=null?` · ₹${fmtNum(it.rate)} rate`:''}${it.payment?` · ${it.payment}`:''}</div></div>
+      <div class="meta">${fmtNum(it.qty)} ${it.unit}${it.rate!=null?` · ₹${fmtNum(it.rate)}/${it.rate_unit||it.unit}`:''}${it.payment?` · ${it.payment}`:''}</div></div>
     <div class="amount">${it.amount!=null?'₹'+it.amount.toLocaleString('en-IN'):''}</div>
   </div>`).join('');
   const deadline=preview.payment_deadline?` · Due ${dayLabel(preview.payment_deadline)}`:'';
@@ -1029,7 +1029,8 @@ async function convFinish(tab, r){
   const billItems=committed.map((c,i)=>{
     const candidates=C.summary.items||[];
     const it=candidates[i]||candidates.find(x=>x.sku_id===c.sku_id)||{};
-    return {sku_id:c.sku_id,qty:it.qty,unit:it.unit,rate:c.rate,payment:it.payment||'cash'};
+    return {sku_id:c.sku_id,qty:it.qty,unit:it.unit,rate:c.rate,
+      rate_unit:c.rate_unit||it.rate_unit||null,payment:it.payment||'cash'};
   });
   const billCustomer=(r.committed&&r.committed.customer)||null;
   const bills=billItems.length
@@ -1144,7 +1145,8 @@ async function commit(tab){
   if(P.flow==='count') type=document.getElementById('countType').value;
   const count_precision = P.flow==='count'?document.getElementById('countPrec').value:null;
   const items=P.items.filter(it=>it.chosen).map(it=>({sku_id:it.chosen,qty:it.qty,unit:it.unit,
-    rate:it.rate, payment:it.payment||'cash', spoken:it.phrase, rejected:it.rejected||[], was_tap:it.was_tap||false, count_precision}));
+    rate:it.rate, rate_unit:it.rate!=null?it.unit:null, payment:it.payment||'cash',
+    spoken:it.phrase, rejected:it.rejected||[], was_tap:it.was_tap||false, count_precision}));
   const backdated = occurred_on!==STATE.today;
   // snapshot prior stock for affected SKUs (to show recompute)
   let before={}; if(backdated){ for(const it of items){ before[it.sku_id]=await stockDisplay(it.sku_id); } }

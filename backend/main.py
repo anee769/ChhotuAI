@@ -271,19 +271,29 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
         sku = catalogue_by.get(sku_id)
         if not sku:
             continue
-        rate = it.get("rate")
+        quoted_rate = it.get("rate")
+        rate_unit = it.get("rate_unit")
         rate_assumed = False
-        if etype == "sale" and rate is None:
+        if etype == "sale" and quoted_rate is None:
             cost = L.landed_cost_as_of(sku, repo.all_events(), L._d(occurred_on))
-            rate = round((cost or 0) * 1.10, 1)  # assumed markup, flagged
+            quoted_rate = round((cost or 0) * 1.10, 1)
+            rate_unit = L.base_unit(sku)
             rate_assumed = True
+        base_rate = (L.rate_to_base(float(quoted_rate), rate_unit, sku)
+                     if quoted_rate is not None and rate_unit
+                     else quoted_rate)
         conf = L.compute_confidence(0.9, occurred_on,
                                     datetime.now().isoformat(timespec="seconds"),
                                     precision)
         ev = {
             "type": etype, "sku_id": sku_id,
             "qty": float(it["qty"]), "unit": it.get("unit", sku["default_unit"]),
-            "rate": rate, "payment": it.get("payment") if etype == "sale" else None,
+            # `rate` remains per base unit for all ledger math. Preserve the
+            # owner's quoted rate/unit separately for bills and audit display.
+            "rate": base_rate,
+            "quoted_rate": quoted_rate if rate_unit else None,
+            "rate_unit": rate_unit,
+            "payment": it.get("payment") if etype == "sale" else None,
             "customer_id": it.get("customer_id") if etype == "sale" else None,
             "payment_deadline": it.get("payment_deadline") if etype == "sale" else None,
             "occurred_on": occurred_on, "precision": precision,
@@ -292,12 +302,16 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
             "evidence": {"transcript": it.get("spoken", "")},
         }
         eid = repo.append_event(ev)
-        # Rates are stored per catalogue base unit (₹/kg for TMT, ₹/bori for
-        # cement), matching margin and invoice calculations.
-        base_qty = L.to_base(float(it["qty"]), it.get("unit", sku["default_unit"]), sku)
-        amount = float(rate) * base_qty if rate is not None else 0
-        committed.append({"event_id": eid, "sku_id": sku_id, "rate": rate,
-                          "rate_assumed": rate_assumed, "amount": round(amount, 2)})
+        amount = (L.line_amount(
+            float(it["qty"]), it.get("unit", sku["default_unit"]),
+            float(quoted_rate), rate_unit, sku)
+            if quoted_rate is not None else 0)
+        committed.append({
+            "event_id": eid, "sku_id": sku_id,
+            "rate": quoted_rate, "rate_unit": rate_unit,
+            "base_rate": base_rate, "rate_assumed": rate_assumed,
+            "amount": round(amount, 2),
+        })
     events = repo.all_events()
     affected = {}
     for c in committed:
@@ -753,14 +767,19 @@ def bill(payload: dict = Body(...)):
     subtotal = gst_total = 0.0
     for it in items:
         sku = catalogue_by.get(it["sku_id"], {})
-        base_qty = L.to_base(float(it["qty"]), it.get("unit", "unit"), sku) if sku else float(it["qty"])
-        amount = float(it["rate"]) * base_qty
+        amount = (L.line_amount(
+            float(it["qty"]), it.get("unit", "unit"), float(it["rate"]),
+            it.get("rate_unit"), sku)
+            if sku else float(it["rate"]) * float(it["qty"]))
         gst = amount * repo.gst_rate_for(sku) / 100
         subtotal += amount
         gst_total += gst
         c.drawString(15 * mm, y, (sku.get("canonical", it["sku_id"]))[:42])
         c.drawString(90 * mm, y, f'{it["qty"]}{it.get("unit","")}')
-        c.drawString(105 * mm, y, f'{it["rate"]}')
+        rate_label = f'{it["rate"]}'
+        if it.get("rate_unit"):
+            rate_label += f'/{it["rate_unit"]}'
+        c.drawString(105 * mm, y, rate_label)
         c.drawRightString(w - 15 * mm, y, f"{amount:,.0f}")
         y -= 5 * mm
     y -= 2 * mm

@@ -1,14 +1,18 @@
 """
 conversation.py — voice dialogue for "Hey Chhotu".
 
-Design: the LLM does ALL the understanding, every turn; a thin voice controller
-only decides which follow-up to ask so nothing commits half-filled.
+Design: the LLM performs the rich extraction once; deterministic guards verify
+transaction verbs, item boundaries, catalogue membership, units, and amounts.
+A thin voice controller then retains that structured draft until the bill is
+confirmed, so nothing commits half-filled.
 
-  • Each turn the Sarvam chat model re-reads the WHOLE conversation so far and
-    returns a single structured understanding of it (intent + items, each with an
-    exact sku_id when it can be pinned down, qty, rate, payment). Follow-up
-    answers are understood by the model too — there is no deterministic parsing of
-    what the owner says.
+  • The first turn sends the conversation history to Sarvam and receives a
+    structured understanding (intent + items, each with sku_id/family, qty,
+    rate, and payment). Deterministic parsing protects explicit words such as
+    bechi/बेची and prevents absent products from being remapped to stocked SKUs.
+  • Follow-up answers update the same structured draft locally. The original
+    transcript, history, accepted lines, and rejected lines stay in state through
+    product/rate/customer questions, confirmation, commit, and bill creation.
   • A small controller then looks at that understanding and asks — by voice — for
     the ONE thing still missing (which product / kitna / rate / cash-or-udhaar),
     or commits when everything is there. This guarantees Chhotu always asks the
@@ -21,8 +25,9 @@ reasoning short — important because sarvam-30b is a reasoning model capped at
 Exact figures (stock on hand, margin, udhaar) are computed by the backend and
 spoken by Chhotu — never invented by the model.
 
-State is a plain dict passed between client and server each turn:
-  {"flow": ..., "said": ["<owner utterance 1>", "<owner utterance 2>", ...]}
+State is a plain dict passed between client and server each turn and includes
+`history`, `original_transcript`, `draft_items`, `skipped_items`, and the current
+awaiting slot.
 """
 from __future__ import annotations
 
@@ -144,7 +149,8 @@ def _extract_prompt(repo) -> str:
         '"items":[{"sku_id":"<exact sku_id, or null if not pinned to ONE>",'
         '"family":"tmt|cement|null","name":"<what he called it>",'
         '"in_catalogue":true|false,"qty":<number or null>,"unit":"<unit or empty>",'
-        '"rate":<number or null>,"payment":"cash|credit|null"}]}\n\n'
+        '"rate":<number or null>,"rate_unit":"kg|tonne|bori|piece|null",'
+        '"payment":"cash|credit|null"}]}\n\n'
         "RULES:\n"
         "- Combine EVERYTHING said across the whole text (later lines answer earlier "
         "questions). Keep the owner's self-corrections ('do nahi teen' -> 3).\n"
@@ -157,13 +163,18 @@ def _extract_prompt(repo) -> str:
         "fittings): in_catalogue=false, sku_id null, family null. NEVER substitute.\n"
         "- qty = number of units (ton/bori/piece). A size like '12mm'/'barah mm' is "
         "NOT a quantity.\n"
-        "- rate: only if a price was actually spoken (rupaye/rs/@). payment: only if "
-        "spoken (cash/nagad->cash; udhaar/credit/baaki->credit). Else null.\n"
+        "- rate: only if a price was actually spoken (rupaye/rs/@). rate_unit is "
+        "the unit the price applies to ('₹65 per kg' -> kg, '₹1000 per tonne' -> "
+        "tonne). If no separate price unit was spoken, use the item's quantity "
+        "unit. payment: only if spoken (cash/nagad->cash; "
+        "udhaar/credit/baaki->credit). Else null.\n"
         "- stock question ('kitna bacha/stock hai') -> intent stock_query. "
         "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric.\n"
-        "- intent=delivery when the owner RECEIVED/BOUGHT stock: 'kharida/khareeda', "
+        "- intent=delivery when the owner RECEIVED/BOUGHT stock: "
+        "'kharida/khareeda/khareedi/खरीदा/खरीदी', "
         "'hamne liya', 'mangwaya', 'aaya', 'delivery aayi'. intent=sale when the owner "
-        "SOLD/GAVE stock to a customer: 'becha/bech diya', 'diya', 'bika'. Do not "
+        "SOLD/GAVE stock to a customer: "
+        "'becha/bechi/bech diya/बेचा/बेची', 'diya', 'bika'. Do not "
         "confuse the two — 'kharida' is ALWAYS delivery, never sale.\n"
         "- intent MUST be exactly one of: sale, delivery, count, stock_query, "
         "analytics_query, unknown. Never invent another word.\n"
@@ -190,8 +201,70 @@ def _detect_payment(text: str):
     return None
 
 
+_DELIVERY_INTENT_RE = re.compile(
+    r"\b(?:kharid(?:a|i|e)?|khareed(?:a|i|e)?|mangwaya|delivery|aaya|liya)\b"
+    r"|खरीद[ाीे]?|मंगवाया|आया|लिया",
+    re.I,
+)
+_SALE_INTENT_RE = re.compile(
+    r"\b(?:bech(?:a|i|ee|e|na)?|bik(?:a|i|ee|e)?|sold|sale|diya)\b"
+    r"|बेच[ाीे]?|बिक[ाीे]?|दिया",
+    re.I,
+)
+_COUNT_INTENT_RE = re.compile(
+    r"\b(?:count|ginti|gina|stock|opening)\b|गिनती|गिना|स्टॉक",
+    re.I,
+)
+
+
+def _detect_transaction_intent(text: str) -> str:
+    """Detect explicit transaction verbs before asking the model."""
+    text = text or ""
+    if _DELIVERY_INTENT_RE.search(text):
+        return "delivery"
+    if _SALE_INTENT_RE.search(text):
+        return "sale"
+    if _COUNT_INTENT_RE.search(text):
+        return "count"
+    return "unknown"
+
+
+def _clean_unavailable_name(text: str) -> str:
+    """Reduce a rejected utterance fragment to a useful product label."""
+    original = (text or "").strip()
+    cleaned = _DELIVERY_INTENT_RE.sub(" ", original.lower())
+    cleaned = _SALE_INTENT_RE.sub(" ", cleaned)
+    cleaned = re.sub(
+        r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur)\b"
+        r"|है|हैं|था|थी|नकद|उधार|और",
+        " ",
+        cleaned,
+        flags=re.I,
+    )
+    number_words = set(nlp.ONES)
+    unit_words = set(nlp.UNIT_WORDS)
+    words = []
+    for word in re.findall(r"[\w.]+", cleaned, flags=re.UNICODE):
+        if re.fullmatch(r"\d+(?:\.\d+)?", word):
+            continue
+        if word in number_words or word in unit_words:
+            continue
+        words.append(word)
+    return " ".join(words).strip() or original
+
+
 def _extract(state, repo) -> dict:
     joined = " . ".join(s for s in state["said"] if s)
+    segmented = _fallback_extract(joined, repo)
+
+    # A fully out-of-catalogue order needs no model call. The catalogue is an
+    # allow-list, so "5 tiles" can be rejected immediately and can never be
+    # semantically remapped to the nearest stocked SKU.
+    if segmented["items"] and all(
+            not _catalogue_evidence(row.get("name", ""), repo)["in_catalogue"]
+            for row in segmented["items"]):
+        return segmented
+
     history = state.get("history") or [{"role": "user", "content": joined}]
     messages = [{"role": "system", "content": _extract_prompt(repo)}, *history]
     out = {}
@@ -207,38 +280,62 @@ def _extract(state, repo) -> dict:
         out = {}
     payment = _detect_payment(joined)
     items = []
-    for r in out.get("items", []) or []:
+    model_rows = out.get("items", []) or []
+    for idx, r in enumerate(model_rows):
         if not isinstance(r, dict):
             continue
         fam = r.get("family") if r.get("family") in _FAMILIES else None
         unit = (r.get("unit") or "").strip().lower() or None
         if unit:
             unit = M.UNIT_WORDS.get(unit, unit)
-        name = r.get("name") or ""
+        # Positional reconciliation is safe only when both extractors found
+        # the same number of spoken items. Otherwise an omitted separator can
+        # shift every later product onto the wrong model row.
+        aligned = len(model_rows) == len(segmented["items"])
+        local = segmented["items"][idx] if aligned and idx < len(segmented["items"]) else None
+        source_phrase = ((local or {}).get("name") or
+                         (joined if len(model_rows) == 1 else r.get("name")) or "")
+        evidence = _catalogue_evidence(source_phrase, repo)
+        name = source_phrase
         name_l = name.lower()
         stocked_family = ("cement" if re.search(r"cement|सीमेंट", name_l)
                           else "tmt" if re.search(r"sari?ya|sariya|सरिया|tmt", name_l)
                           else None)
-        # A generic stocked family is ambiguous, not "out of catalogue".
-        # This prevents "50 bori cement" being rejected before we can ask OPC/PPC.
-        if stocked_family:
-            fam = fam or stocked_family
+        candidate_ids = evidence["candidate_ids"]
+        proposed_sid = r.get("sku_id") if _valid_sku(r.get("sku_id"), repo) else None
+        # A generic stocked family is ambiguous, not a licence for the model to
+        # choose a variant. Only a single deterministic candidate may auto-pin.
+        sid = candidate_ids[0] if len(candidate_ids) == 1 else None
+        if proposed_sid in candidate_ids and len(candidate_ids) == 1:
+            sid = proposed_sid
+        fam = evidence.get("family") or stocked_family or fam
+        if not evidence["in_catalogue"]:
+            sid = None
+            fam = None
         items.append({
-            "sku_id": r.get("sku_id") if _valid_sku(r.get("sku_id"), repo) else None,
+            "sku_id": sid,
             "family": fam, "name": name,
-            "in_catalogue": True if stocked_family else r.get("in_catalogue", True),
-            "qty": r.get("qty") if isinstance(r.get("qty"), (int, float)) else None,
-            "unit": unit,
+            "in_catalogue": evidence["in_catalogue"],
+            "qty": (r.get("qty") if isinstance(r.get("qty"), (int, float))
+                    else (local or {}).get("qty")),
+            "unit": unit or (local or {}).get("unit"),
             "rate": r.get("rate") if isinstance(r.get("rate"), (int, float)) else None,
+            "rate_unit": M.UNIT_WORDS.get(
+                str(r.get("rate_unit") or "").strip().lower(),
+                str(r.get("rate_unit") or "").strip().lower()) or None,
             "payment": payment or (r.get("payment")
                                    if r.get("payment") in ("cash", "credit") else None),
         })
     raw_intent = out.get("intent")
     intent = raw_intent if raw_intent in _VALID_INTENTS else "unknown"
+    # Explicit transaction words in the owner's sentence are authoritative.
+    # Do not ask "becha ya khareeda?" merely because the model omitted an
+    # intent that the deterministic parser already found.
+    if segmented.get("intent") in ("sale", "delivery", "count"):
+        intent = segmented["intent"]
     # Never let the model collapse an explicit "X aur Y" order into one item.
     # The local segment parser is authoritative for item count; the LLM remains
     # authoritative for richer attributes when it found every spoken segment.
-    segmented = _fallback_extract(joined, repo)
     if len(segmented["items"]) > len(items):
         items = segmented["items"]
     return {"intent": intent, "metric": out.get("metric"), "items": items}
@@ -247,14 +344,7 @@ def _extract(state, repo) -> dict:
 def _fallback_extract(text: str, repo) -> dict:
     """Fast local fallback when the model times out or returns malformed JSON."""
     t = (text or "").lower()
-    if re.search(r"kharida|khareeda|mangwaya|delivery|aaya|liya|खरीदा|मंगवाया|आया|लिया", t):
-        intent = "delivery"
-    elif re.search(r"becha|bech|bika|diya|sale|बेचा|बिका|दिया", t):
-        intent = "sale"
-    elif re.search(r"gina|count|opening|गिना", t):
-        intent = "count"
-    else:
-        intent = "unknown"
+    intent = _detect_transaction_intent(t)
     payment = _detect_payment(t)
     items = []
     for row in nlp.parse_sale_utterance(t):
@@ -277,6 +367,68 @@ def _fallback_extract(text: str, repo) -> dict:
 
 def _valid_sku(sid, repo) -> bool:
     return bool(sid) and repo.sku(sid) is not None
+
+
+_KNOWN_OUTSIDE_PRODUCTS_RE = re.compile(
+    r"\b(?:tiles?|wire|sand|balu|bricks?|eent|pipes?|paints?|fittings?|"
+    r"plywood|marble|granite|stones?)\b|"
+    r"टाइल|वायर|तार|रेत|बालू|ईंट|पाइप|पेंट|फिटिंग|प्लाईवुड|मार्बल|ग्रेनाइट|पत्थर"
+)
+_FAMILY_HINTS = {
+    "tmt": re.compile(r"\bsari?ya\b|\bsaria\b|\btmt\b|\brods?\b|\bsteel\b|सरिया|स्टील"),
+    "cement": re.compile(r"\bcement\b|सीमेंट"),
+}
+
+
+def _catalogue_evidence(phrase: str, repo) -> dict:
+    """Deterministic catalogue allow-list built from the actual SKU aliases.
+
+    The LLM may extract quantities and intent, but it may not invent catalogue
+    membership. Known outside products win even if a unit such as "bori" could
+    otherwise resemble a cement alias (for example "5 bori tiles").
+    """
+    raw = (phrase or "").lower()
+    if _KNOWN_OUTSIDE_PRODUCTS_RE.search(raw):
+        return {"in_catalogue": False, "candidate_ids": [], "family": None}
+
+    catalogue = repo.load_catalogue()
+    alias_idx = M.build_alias_index(catalogue, repo.load_learning())
+    norm = M.normalize(raw)
+    padded = f" {norm} "
+    matched_sets = []
+    for alias, ids in alias_idx.items():
+        a = M.normalize(alias)
+        if a and f" {a} " in padded:
+            matched_sets.append(set(ids))
+
+    candidates = set()
+    if matched_sets:
+        candidates = set.intersection(*matched_sets)
+        if not candidates:
+            candidates = set.union(*matched_sets)
+
+    hinted_families = {family for family, pat in _FAMILY_HINTS.items()
+                       if pat.search(raw)}
+    if not candidates and hinted_families:
+        candidates = {s["sku_id"] for s in catalogue
+                      if s.get("family") in hinted_families}
+
+    attrs = M.extract_attrs(raw)
+    if not candidates and ("diameter_mm" in attrs or "grade" in attrs):
+        candidates = {s["sku_id"] for s in catalogue if s.get("family") == "tmt"}
+    for key, value in attrs.items():
+        narrowed = {sid for sid in candidates
+                    if (repo.sku(sid) or {}).get("attributes", {}).get(key) == value}
+        if narrowed:
+            candidates = narrowed
+
+    families = {(repo.sku(sid) or {}).get("family") for sid in candidates}
+    families.discard(None)
+    return {
+        "in_catalogue": bool(candidates),
+        "candidate_ids": sorted(candidates),
+        "family": next(iter(families)) if len(families) == 1 else None,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -323,6 +475,10 @@ def converse(state, user_text, flow, repo):
         state = {"flow": flow, "said": [], "history": []}
 
     state.setdefault("history", [])
+    if not state.get("original_transcript") and user_text:
+        # Keep the exact first sentence alongside the structured draft through
+        # product/rate/customer follow-ups, confirmation, and bill creation.
+        state["original_transcript"] = user_text
 
     # Follow-up slots are applied to the structured draft already extracted on
     # the first turn. This preserves the complete order and avoids another
@@ -461,6 +617,13 @@ def _apply_order_slot(state, user_text, repo):
         if rate is None or rate <= 0:
             return _ask_order_slot(state, idx, slot, "Rate number mein bataiye.")
         item["rate"] = rate
+        # The question names the item's unit ("per tonne", "per bori", etc.).
+        # Respect a different unit only when the owner explicitly says one.
+        item["rate_unit"] = (
+            nlp._find_unit((user_text or "").lower())
+            or item.get("unit")
+            or (repo.sku(item.get("sku_id")) or {}).get("default_unit")
+        )
     elif slot == "payment":
         payment = _detect_payment(user_text)
         if not payment:
@@ -469,11 +632,9 @@ def _apply_order_slot(state, user_text, repo):
             if not row.get("payment"):
                 row["payment"] = payment
     elif slot == "intent":
-        t = (user_text or "").lower()
-        if re.search(r"kharida|khareeda|liya|aaya|delivery|खरीदा|लिया|आया", t):
-            state["locked_intent"] = "delivery"
-        elif re.search(r"becha|bech|bika|diya|sale|बेचा|बिका|दिया", t):
-            state["locked_intent"] = "sale"
+        detected = _detect_transaction_intent(user_text)
+        if detected in ("sale", "delivery", "count"):
+            state["locked_intent"] = detected
         else:
             return _ask_order_slot(state, idx, slot, "Ye maal becha tha ya khareeda?")
     state["draft_items"] = items
@@ -495,13 +656,27 @@ def _order_flow(state, intent, items, repo):
     skipped = []
     for it in items:
         if it.get("in_catalogue") is False and not it.get("sku_id"):
-            skipped.append(it.get("name") or "wo cheez")
+            skipped.append(_clean_unavailable_name(it.get("name")) or "wo cheez")
         else:
             kept.append(it)
     if not kept:
         nm = skipped[0] if skipped else "wo cheez"
         return _say(state, f"{nm} hum nahi rakhte — sirf sariya aur cement hai. "
                     "Kuch aur?", listen=True, done=False)
+
+    # Keep rejected product names across all follow-up turns. Previously this
+    # local list disappeared as soon as we asked the first rate/product
+    # question, so a mixed order silently skipped the unavailable line.
+    remembered_skipped = state.setdefault("skipped_items", [])
+    newly_skipped = []
+    for name in skipped:
+        if name not in remembered_skipped:
+            remembered_skipped.append(name)
+            newly_skipped.append(name)
+    if newly_skipped:
+        state["pending_notice"] = (
+            f"{_oxford(newly_skipped)} inventory mein nahi hai, isliye add nahi kiya. "
+        )
 
     state["draft_items"] = kept
     # Resolve product identity and quantity for every line first.
@@ -524,6 +699,8 @@ def _order_flow(state, intent, items, repo):
             q = (f"{sku['canonical']} kitne mein aaya, per {per}?" if flow == "delivery"
                  else f"{sku['canonical']} ka rate kya laga, per {per}?")
             return _ask_order_slot(state, idx, "rate", q)
+        if flow in ("sale", "delivery") and it.get("rate") is not None:
+            it["rate_unit"] = it.get("rate_unit") or it["unit"]
 
     if flow == "sale" and any(not it.get("payment") for it in kept):
         first_missing = next(i for i, it in enumerate(kept) if not it.get("payment"))
@@ -531,10 +708,16 @@ def _order_flow(state, intent, items, repo):
                                "Is poori sale ka payment cash hai ya udhaar?")
 
     if flow == "sale":
-        state["pending_commit"] = {"flow": flow, "items": kept, "skipped": skipped}
+        state["pending_commit"] = {
+            "flow": flow, "items": kept,
+            "skipped": list(state.get("skipped_items", [])),
+        }
         return _resume_customer_capture(state, repo)
 
-    state["pending_commit"] = {"flow": flow, "items": kept, "skipped": skipped}
+    state["pending_commit"] = {
+        "flow": flow, "items": kept,
+        "skipped": list(state.get("skipped_items", [])),
+    }
     return _prepare_confirmation(state, repo)
 
 
@@ -608,14 +791,17 @@ def _prepare_confirmation(state, repo):
         sku = repo.sku(item["sku_id"])
         qty = float(item["qty"])
         rate = float(item.get("rate") or 0)
-        base_qty = ledger.to_base(qty, item.get("unit") or sku["default_unit"], sku)
-        amount = round(rate * base_qty, 2) if flow in ("sale", "delivery") else None
+        unit = item.get("unit") or sku["default_unit"]
+        rate_unit = item.get("rate_unit") or unit
+        amount = (round(ledger.line_amount(qty, unit, rate, rate_unit, sku), 2)
+                  if flow in ("sale", "delivery") else None)
         if amount is not None:
             total += amount
         preview_items.append({
             "sku_id": sku["sku_id"], "canonical": sku["canonical"],
-            "qty": qty, "unit": item.get("unit") or sku["default_unit"],
-            "rate": item.get("rate"), "payment": item.get("payment"),
+            "qty": qty, "unit": unit,
+            "rate": item.get("rate"), "rate_unit": rate_unit,
+            "payment": item.get("payment"),
             "amount": amount,
         })
     state["awaiting"] = "confirmation"
@@ -647,6 +833,7 @@ def _commit(state, flow, items, skipped, repo):
         payment = it.get("payment") or "cash"
         ev_items.append({"sku_id": sku["sku_id"], "qty": float(it["qty"]),
                          "unit": it["unit"], "rate": it.get("rate"),
+                         "rate_unit": it.get("rate_unit") or it["unit"],
                          "payment": payment, "spoken": it.get("name", ""),
                          "was_tap": False,
                          "customer_id": customer.get("customer_id"),
@@ -654,6 +841,7 @@ def _commit(state, flow, items, skipped, repo):
         rows.append({"phrase": it.get("name") or sku["canonical"],
                      "sku_id": sku["sku_id"], "qty": float(it["qty"]),
                      "unit": it["unit"], "rate": it.get("rate"),
+                     "rate_unit": it.get("rate_unit") or it["unit"],
                      "payment": payment, "confirmed": True})
         parts.append(f"{_num(it['qty'])} {it['unit']} {sku['canonical']}")
     result = main._write_events(etype, ev_items, TODAY.isoformat(), "exact", "voice_live")
@@ -749,6 +937,9 @@ def _analytics_answer(metric, repo):
 # Small helpers
 # ---------------------------------------------------------------------------
 def _say(state, text, listen, done):
+    notice = state.pop("pending_notice", None)
+    if notice:
+        text = notice + text
     state.setdefault("history", []).append({"role": "assistant", "content": text})
     return {"state": state, "say": text, "listen": listen, "done": done,
             "summary": {"items": _draft_summary(state)}}

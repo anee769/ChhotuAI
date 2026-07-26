@@ -9,6 +9,9 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import conversation
+import ledger
+import main
+import nlp
 
 
 class FakeRepo:
@@ -17,6 +20,7 @@ class FakeRepo:
         self.catalogue = json.loads(path.read_text(encoding="utf-8"))
         self.by_id = {row["sku_id"]: row for row in self.catalogue}
         self.saved_customer = None
+        self.events = []
 
     def load_catalogue(self):
         return self.catalogue
@@ -44,6 +48,14 @@ class FakeRepo:
             "name": name,
         }
         return self.saved_customer
+
+    def all_events(self):
+        return list(self.events)
+
+    def append_event(self, event):
+        row = dict(event, event_id=f"evt_{len(self.events) + 1}")
+        self.events.append(row)
+        return row["event_id"]
 
 
 class ConversationStateTests(unittest.TestCase):
@@ -225,6 +237,208 @@ class ConversationStateTests(unittest.TestCase):
     def test_normal_sale_does_not_match_frozen_capital_route(self):
         self.assertIsNone(
             conversation._quick_route("5 bori cement becha cash"))
+
+    def test_outside_product_is_rejected_before_the_llm(self):
+        hallucinated = {
+            "intent": "sale", "metric": None,
+            "items": [{"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
+                       "name": "tiles", "in_catalogue": True,
+                       "qty": 5, "unit": "piece", "rate": 100,
+                       "payment": "cash"}],
+        }
+        with patch.object(conversation.sarvam_client, "has_key",
+                          return_value=True), \
+             patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=hallucinated) as chat:
+            out = conversation.converse(
+                None, "5 tiles bech diya cash", "live_sale", self.repo)
+
+        self.assertIn("hum nahi rakhte", out["say"])
+        self.assertNotIn("Kaunsa sariya", out["say"])
+        chat.assert_not_called()
+
+    def test_llm_cannot_remap_unknown_product_to_a_stocked_sku(self):
+        hallucinated = {
+            "intent": "stock_query", "metric": None,
+            "items": [{"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
+                       "name": "sariya", "in_catalogue": True,
+                       "qty": None, "unit": None, "rate": None,
+                       "payment": None}],
+        }
+        state = {
+            "said": ["kya tiles available hai"],
+            "history": [{"role": "user", "content": "kya tiles available hai"}],
+        }
+        with patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=hallucinated):
+            result = conversation._extract(state, self.repo)
+
+        self.assertEqual(len(result["items"]), 1)
+        self.assertFalse(result["items"][0]["in_catalogue"])
+        self.assertIsNone(result["items"][0]["sku_id"])
+        self.assertIsNone(result["items"][0]["family"])
+
+    def test_mixed_order_keeps_stocked_item_and_skips_tiles(self):
+        model_output = {
+            "intent": "sale", "metric": None,
+            "items": [
+                {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
+                 "name": "tiles", "in_catalogue": True, "qty": 5,
+                 "unit": "piece", "rate": 100, "payment": "cash"},
+                {"sku_id": "CEM_ULTRATECH_PPC", "family": "cement",
+                 "name": "PPC cement", "in_catalogue": True, "qty": 10,
+                 "unit": "bori", "rate": 400, "payment": "cash"},
+            ],
+        }
+        state = {
+            "said": ["5 tiles aur 10 bori PPC cement becha cash"],
+            "history": [{"role": "user",
+                         "content": "5 tiles aur 10 bori PPC cement becha cash"}],
+        }
+        with patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=model_output):
+            result = conversation._extract(state, self.repo)
+
+        self.assertFalse(result["items"][0]["in_catalogue"])
+        self.assertIsNone(result["items"][0]["sku_id"])
+        self.assertEqual(result["items"][1]["sku_id"], "CEM_ULTRATECH_PPC")
+        self.assertTrue(result["items"][1]["in_catalogue"])
+
+    def test_mixed_order_announces_and_remembers_unavailable_item(self):
+        model_output = {
+            "intent": "sale", "metric": None,
+            "items": [
+                {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
+                 "name": "tiles", "in_catalogue": True, "qty": 5,
+                 "unit": "piece", "rate": 100, "payment": "cash"},
+                {"sku_id": "CEM_ULTRATECH_PPC", "family": "cement",
+                 "name": "PPC cement", "in_catalogue": True, "qty": 10,
+                 "unit": "bori", "rate": 400, "payment": "cash"},
+            ],
+        }
+        phrase = "5 tiles aur 10 bori PPC cement becha cash"
+        with patch.object(conversation.sarvam_client, "has_key",
+                          return_value=True), \
+             patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=model_output):
+            out = conversation.converse(
+                None, phrase, "live_sale", self.repo)
+            self.assertIn("inventory mein nahi hai", out["say"])
+            self.assertIn("tiles", out["say"])
+            self.assertIn("contact number", out["say"])
+            self.assertEqual(
+                out["state"]["pending_commit"]["skipped"],
+                ["tiles"])
+
+            followup = conversation.converse(
+                out["state"], "9876543210", "live_sale", self.repo)
+        self.assertNotIn("inventory mein nahi hai", followup["say"])
+        self.assertIn("naam kya hai", followup["say"])
+
+    def test_explicit_becha_overrides_missing_llm_intent(self):
+        model_output = {
+            "intent": "unknown", "metric": None,
+            "items": [
+                {"sku_id": None, "family": "cement",
+                 "name": "cement", "in_catalogue": True, "qty": 10,
+                 "unit": "bori", "rate": None, "payment": None},
+            ],
+        }
+        with patch.object(conversation.sarvam_client, "has_key",
+                          return_value=True), \
+             patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=model_output):
+            out = conversation.converse(
+                None, "10 bori cement becha", "auto", self.repo)
+
+        self.assertEqual(out["state"]["locked_intent"], "sale")
+        self.assertIn("Kaunsa cement", out["say"])
+        self.assertNotIn("becha ya khareeda", out["say"])
+
+    def test_feminine_sale_verbs_are_detected_deterministically(self):
+        for phrase in ("50 tiles bechi hai", "50 tiles बेची है",
+                       "50 tiles bechee hain"):
+            with self.subTest(phrase=phrase):
+                self.assertEqual(
+                    conversation._detect_transaction_intent(phrase), "sale")
+
+    def test_adjacent_quantity_unit_groups_are_separate_items(self):
+        rows = nlp.parse_sale_utterance(
+            "50 kg cement 10 ton सरिया और 50 tiles बेची है")
+        self.assertEqual(len(rows), 3)
+        self.assertEqual([row["qty"] for row in rows], [50, 10, 50])
+        self.assertEqual([row["unit"] for row in rows], ["kg", "tonne", None])
+
+    def test_exact_multi_item_bechi_order_keeps_context_until_followups(self):
+        phrase = "50 kg cement 10 ton सरिया और 50 tiles बेची है"
+        model_output = {
+            "intent": "unknown", "metric": None,
+            "items": [
+                {"sku_id": None, "family": "cement", "name": "cement",
+                 "in_catalogue": True, "qty": 50, "unit": "kg",
+                 "rate": None, "payment": None},
+                {"sku_id": None, "family": "tmt", "name": "sariya",
+                 "in_catalogue": True, "qty": 10, "unit": "tonne",
+                 "rate": None, "payment": None},
+                {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
+                 "name": "tiles", "in_catalogue": True, "qty": 50,
+                 "unit": None, "rate": None, "payment": None},
+            ],
+        }
+        with patch.object(conversation.sarvam_client, "has_key",
+                          return_value=True), \
+             patch.object(conversation.sarvam_client, "chat_json",
+                          return_value=model_output) as chat:
+            out = conversation.converse(None, phrase, "auto", self.repo)
+            self.assertEqual(out["state"]["locked_intent"], "sale")
+            self.assertEqual(out["state"]["original_transcript"], phrase)
+            self.assertEqual(out["state"]["skipped_items"], ["tiles"])
+            self.assertEqual(len(out["state"]["draft_items"]), 2)
+            self.assertIn("tiles inventory mein nahi hai", out["say"])
+            self.assertIn("Kaunsa cement", out["say"])
+
+            out = conversation.converse(
+                out["state"], "PPC", "auto", self.repo)
+            self.assertEqual(len(out["state"]["draft_items"]), 2)
+            self.assertIn("Kaunsa sariya", out["say"])
+            self.assertEqual(out["state"]["original_transcript"], phrase)
+            self.assertGreaterEqual(len(out["state"]["history"]), 4)
+            self.assertEqual(chat.call_count, 1)
+
+    def test_rate_is_applied_per_quoted_unit(self):
+        tmt = self.repo.sku("TMT_16_FE500D_TATA")
+        self.assertEqual(
+            ledger.line_amount(1, "tonne", 1000, "tonne", tmt), 1000)
+        self.assertEqual(ledger.rate_to_base(1000, "tonne", tmt), 1)
+        self.assertEqual(
+            ledger.line_amount(1, "tonne", 65, "kg", tmt), 65000)
+
+        items = [
+            {"sku_id": "CEM_ULTRATECH_OPC53", "qty": 10, "unit": "bori",
+             "rate": 100, "rate_unit": "bori", "payment": "cash"},
+            {"sku_id": "TMT_16_FE500D_TATA", "qty": 1, "unit": "tonne",
+             "rate": 1000, "rate_unit": "tonne", "payment": "cash"},
+        ]
+        state = {
+            "said": [], "history": [],
+            "pending_commit": {"flow": "sale", "items": items, "skipped": []},
+            "customer": {"customer_id": "cust_test", "name": "Pankaj Sharma",
+                         "phone": "+919876543210"},
+        }
+        out = conversation._prepare_confirmation(state, self.repo)
+        self.assertEqual(
+            [row["amount"] for row in out["confirmation"]["items"]],
+            [1000, 1000])
+        self.assertEqual(out["confirmation"]["total"], 2000)
+
+        with patch.object(main, "repo", self.repo):
+            committed = main._write_events(
+                "sale", [items[1]], "2026-07-26", "exact", "voice_live")
+        event = self.repo.events[-1]
+        self.assertEqual(event["rate"], 1)
+        self.assertEqual(event["quoted_rate"], 1000)
+        self.assertEqual(event["rate_unit"], "tonne")
+        self.assertEqual(committed["committed"][0]["amount"], 1000)
 
 
 if __name__ == "__main__":

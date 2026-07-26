@@ -1515,5 +1515,89 @@
     },
     "event_id": "evt_0082",
     "recorded_at": "2026-07-26T16:26:47"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "दस बोरी cement"
+    },
+    "event_id": "evt_0083",
+    "recorded_at": "2026-07-26T16:44:12"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 1000,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "एक टन सरिया बेचा है"
+    },
+    "event_id": "evt_0084",
+    "recorded_at": "2026-07-26T16:44:12"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 12.0,
+    "unit": "kg",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0007",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "12 टन 12 एमएम सरिया 12 टन 16 एमएम सरिया 50 किलो सीमेंट"
+    },
+    "event_id": "evt_0085",
+    "recorded_at": "2026-07-26T17:47:58"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "दस बोरी सीमेंट"
+    },
+    "event_id": "evt_0086",
+    "recorded_at": "2026-07-26T17:55:52"
   }
 ]

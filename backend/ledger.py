@@ -47,6 +47,26 @@ def from_base(qty_base: float, unit: str, sku: dict) -> float:
     return qty_base / mult
 
 
+def rate_to_base(rate: float, rate_unit: str, sku: dict) -> float:
+    """Convert a quoted rate (for example ₹1,000/tonne) to the catalogue's
+    base-unit rate (₹1/kg). Event rates remain base-unit rates so historical
+    ledger and margin calculations stay backward compatible."""
+    mult = sku.get("units", {}).get(rate_unit)
+    if mult is None or not mult:
+        mult = 1
+    return float(rate) / float(mult)
+
+
+def line_amount(qty: float, unit: str, rate: float,
+                rate_unit: Optional[str], sku: dict) -> float:
+    """Calculate a line total without assuming quantity and rate use the same
+    unit. Missing rate_unit retains the legacy meaning: rate per base unit."""
+    qty_base = to_base(float(qty), unit, sku)
+    rate_base = (rate_to_base(rate, rate_unit, sku)
+                 if rate_unit else float(rate))
+    return qty_base * rate_base
+
+
 # ---------------------------------------------------------------------------
 # Confidence  (spec Section 3)
 # ---------------------------------------------------------------------------
