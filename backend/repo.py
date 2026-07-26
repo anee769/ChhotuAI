@@ -44,6 +44,10 @@ class JsonRepo(Repo):
         self._catalogue = self._read("catalogue.json", default=[])
         self._by_sku = {s["sku_id"]: s for s in self._catalogue}
         self._events = self._read("events.json", default=[])
+        self._customers = self._read("customers.json", default=[])
+        self._receivables = self._read("receivables.json", default=[])
+        self._payments = self._read("payments.json", default=[])
+        self._notifications = self._read("notifications.json", default=[])
         self._learning_state = "day1"  # active toggle position
         self._learning = self._read("learning.json", default=self._empty_learning())
         self._config = self._read("config.json", default={
@@ -182,3 +186,90 @@ class JsonRepo(Repo):
             "priors": len(L.get("attribute_priors", [])) + len(L.get("unit_priors", [])),
             "corrections": len(L.get("corrections", [])),
         }
+
+    # ---- customers / credit ledger ----
+    @staticmethod
+    def normalize_phone(phone: str) -> str:
+        digits = "".join(ch for ch in str(phone or "") if ch.isdigit())
+        if len(digits) == 10:
+            return "+91" + digits
+        if len(digits) == 12 and digits.startswith("91"):
+            return "+" + digits
+        return ("+" + digits) if digits else ""
+
+    def customers(self) -> list:
+        return list(self._customers)
+
+    def customer(self, customer_id: str) -> Optional[dict]:
+        return next((c for c in self._customers if c.get("customer_id") == customer_id), None)
+
+    def customer_by_phone(self, phone: str) -> Optional[dict]:
+        norm = self.normalize_phone(phone)
+        return next((c for c in self._customers if c.get("phone") == norm), None)
+
+    def upsert_customer(self, phone: str, name: str = None) -> dict:
+        norm = self.normalize_phone(phone)
+        if not norm:
+            raise ValueError("valid phone number required")
+        with self._lock:
+            row = next((c for c in self._customers if c.get("phone") == norm), None)
+            if row:
+                if name:
+                    row["name"] = name.strip()
+                row["updated_at"] = datetime.now().isoformat(timespec="seconds")
+            else:
+                row = {
+                    "customer_id": f"cust_{len(self._customers) + 1:04d}",
+                    "phone": norm, "name": (name or "").strip(),
+                    "created_at": datetime.now().isoformat(timespec="seconds"),
+                }
+                self._customers.append(row)
+            self._write("customers.json", self._customers)
+            return dict(row)
+
+    def add_receivable(self, customer_id: str, amount: float, deadline: str,
+                       sale_event_ids: list) -> dict:
+        with self._lock:
+            row = {
+                "receivable_id": f"recv_{len(self._receivables) + 1:04d}",
+                "customer_id": customer_id,
+                "amount": round(float(amount), 2),
+                "deadline": deadline,
+                "sale_event_ids": list(sale_event_ids),
+                "created_at": datetime.now().isoformat(timespec="seconds"),
+                "status": "open",
+            }
+            self._receivables.append(row)
+            self._write("receivables.json", self._receivables)
+            return dict(row)
+
+    def receivables(self) -> list:
+        return list(self._receivables)
+
+    def payments(self) -> list:
+        return list(self._payments)
+
+    def add_payment(self, customer_id: str, amount: float, paid_on: str,
+                    note: str = "") -> dict:
+        with self._lock:
+            row = {
+                "payment_id": f"pay_{len(self._payments) + 1:04d}",
+                "customer_id": customer_id, "amount": round(float(amount), 2),
+                "paid_on": paid_on, "note": note,
+                "created_at": datetime.now().isoformat(timespec="seconds"),
+            }
+            self._payments.append(row)
+            self._write("payments.json", self._payments)
+            return dict(row)
+
+    def notifications(self) -> list:
+        return list(self._notifications)
+
+    def add_notification(self, row: dict) -> dict:
+        with self._lock:
+            item = dict(row)
+            item.setdefault("notification_id", f"note_{len(self._notifications) + 1:04d}")
+            item.setdefault("created_at", datetime.now().isoformat(timespec="seconds"))
+            self._notifications.append(item)
+            self._write("notifications.json", self._notifications)
+            return dict(item)

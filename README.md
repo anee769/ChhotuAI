@@ -37,6 +37,28 @@ Run the acceptance test (server must be running):
 .venv/bin/python backend/acceptance.py        # 23 checks, all green
 ```
 
+### Customer credit and SMS reminders
+
+Every sale conversation asks for the customer's phone number. Existing numbers
+reuse the saved name; new numbers ask for a name. Cash sales close immediately.
+Credit sales create a customer receivable with a payment deadline, and later
+payments are appended to a separate payment ledger.
+
+Deadline reminders are checked hourly and two days before the due date. Without
+an SMS gateway, reminders remain safely visible in the local notification
+outbox. To send them automatically, install the open-source
+[SMS Gateway for Android](https://github.com/capcom6/android-sms-gateway) on a
+shop Android phone, enable its Local Server, and configure:
+
+```bash
+export SMSGATE_ENDPOINT=http://PHONE_IP:8080/message
+export SMSGATE_USERNAME=the_username_shown_in_the_app
+export SMSGATE_PASSWORD=the_password_shown_in_the_app
+```
+
+The gateway software has no registration fee in local mode. Messages use the
+phone's SIM, so the mobile operator's normal SMS plan may apply.
+
 ### Running without a Sarvam API key
 
 The demo is fully operable with **no key**: type phrases in the text box instead

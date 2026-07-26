@@ -15,7 +15,7 @@
       "piece": 10.67
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 58.64,
+    "opening_cost_per_kg": 55.5,
     "aliases": [
       "saria",
       "sariya",
@@ -27,8 +27,7 @@
       "12 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 58.64
+    ]
   },
   {
     "sku_id": "TMT_16_FE500D_TATA",
@@ -46,7 +45,7 @@
       "piece": 18.96
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 57.62,
+    "opening_cost_per_kg": 54.5,
     "aliases": [
       "saria",
       "sariya",
@@ -58,8 +57,7 @@
       "16 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 57.62
+    ]
   },
   {
     "sku_id": "CEM_ULTRATECH_OPC53",
@@ -77,7 +75,7 @@
       "kg": 0.02
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 423.25,
+    "opening_cost_per_kg": 415,
     "aliases": [
       "cement",
       "सीमेंट",
@@ -86,8 +84,7 @@
       "ultratech",
       "opc 53",
       "ultratech cement"
-    ],
-    "landed_cost_per_kg": 423.25
+    ]
   },
   {
     "sku_id": "CEM_ULTRATECH_PPC",

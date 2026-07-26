@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LohaLedger | Customer CRM</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#d3e4fe",
+                        "primary-container": "#131b2e",
+                        "secondary-container": "#6cf8bb",
+                        "inverse-surface": "#2d3133",
+                        "on-secondary-container": "#00714d",
+                        "background": "#f7f9fb",
+                        "tertiary-container": "#0b1c30",
+                        "surface-container-highest": "#e0e3e5",
+                        "tertiary": "#000000",
+                        "surface-container-high": "#e6e8ea",
+                        "primary-fixed-dim": "#bec6e0",
+                        "primary-fixed": "#dae2fd",
+                        "on-error-container": "#93000a",
+                        "on-primary": "#ffffff",
+                        "error-container": "#ffdad6",
+                        "on-error": "#ffffff",
+                        "on-surface-variant": "#45464d",
+                        "secondary": "#006c49",
+                        "outline": "#76777d",
+                        "surface-tint": "#565e74",
+                        "on-primary-container": "#7c839b",
+                        "tertiary-fixed-dim": "#b7c8e1",
+                        "on-secondary": "#ffffff",
+                        "error": "#ba1a1a",
+                        "surface-container-lowest": "#ffffff",
+                        "surface-container-low": "#f2f4f6",
+                        "surface-variant": "#e0e3e5",
+                        "outline-variant": "#c6c6cd",
+                        "on-tertiary-fixed": "#0b1c30",
+                        "on-tertiary-fixed-variant": "#38485d",
+                        "on-surface": "#191c1e",
+                        "surface": "#f7f9fb",
+                        "secondary-fixed": "#6ffbbe",
+                        "on-tertiary": "#ffffff",
+                        "on-background": "#191c1e",
+                        "on-secondary-fixed": "#002113",
+                        "secondary-fixed-dim": "#4edea3",
+                        "on-tertiary-container": "#75859d",
+                        "on-secondary-fixed-variant": "#005236",
+                        "inverse-on-surface": "#eff1f3",
+                        "on-primary-fixed": "#131b2e",
+                        "inverse-primary": "#bec6e0",
+                        "primary": "#000000",
+                        "surface-dim": "#d8dadc",
+                        "surface-bright": "#f7f9fb",
+                        "surface-container": "#eceef0",
+                        "on-primary-fixed-variant": "#3f465c"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter-grid": "1.5rem",
+                        "margin-page": "2rem",
+                        "stack-xl": "3rem",
+                        "stack-md": "1.5rem",
+                        "stack-sm": "0.75rem",
+                        "inset-component": "1rem 1.25rem",
+                        "touch-target": "48px"
+                    },
+                    "fontFamily": {
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "headline-md": ["Inter"],
+                        "headline-xl": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "headline-lg-mobile": ["Inter"],
+                        "label-md": ["Inter"],
+                        "label-sm": ["Inter"]
+                    },
+                    "fontSize": {
+                        "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                        "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                        "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                        "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { background-color: #f7f9fb; font-family: 'Inter', sans-serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .customer-card-active { border-left: 4px solid #000000; background-color: #eceef0; }
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .action-green-fab { box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1); transition: all 0.2s ease; }
+        .btn-whatsapp { background: linear-gradient(135deg, #25D366 0%, #128C7E 100%); }
+        .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.3); }
+        .metric-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .metric-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+    </style>
+</head>
+<body class="text-on-surface">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-touch-target bg-surface border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer" data-icon="menu">menu</span>
+<h1 class="font-headline-md text-headline-md text-primary tracking-tight">LohaLedger</h1>
+</div>
+<div class="flex-1 max-w-md mx-8 hidden md:block">
+<div class="relative flex items-center bg-surface-container rounded-xl px-4 py-1.5 border border-outline-variant focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-on-surface-variant mr-2" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full font-label-md text-on-surface" placeholder="Search customers or transactions..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="storefront">storefront</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary transition-colors" data-icon="account_circle">account_circle</span>
+</div>
+</header>
+<!-- Side Navigation Bar -->
+<nav class="hidden lg:flex flex-col fixed left-0 top-0 h-full p-stack-sm bg-surface-container border-r border-outline-variant w-64 pt-20">
+<div class="px-4 py-6 mb-8 bg-surface-container-low rounded-xl mx-2 border border-outline-variant/30">
+<h2 class="font-headline-md text-primary font-bold">Bharat Hardware</h2>
+<p class="text-xs text-on-surface-variant opacity-70">GSTIN: 27AAACR1234</p>
+</div>
+<div class="flex flex-col gap-2 flex-1 px-2">
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="dashboard">dashboard</span>
+            Dashboard
+        </a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="inventory_2">inventory_2</span>
+            Inventory
+        </a>
+<a class="flex items-center gap-4 px-4 py-3 bg-primary-container text-on-primary-container font-bold rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+            Customers
+        </a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all rounded-xl font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+            Settings
+        </a>
+</div>
+<div class="border-t border-outline-variant pt-4 flex flex-col gap-2 px-2 mb-4">
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="help">help</span>
+            Support
+        </a>
+<a class="flex items-center gap-4 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-all font-label-md" href="#">
+<span class="material-symbols-outlined" data-icon="logout">logout</span>
+            Log Out
+        </a>
+</div>
+</nav>
+<!-- Main Content Canvas -->
+<main class="lg:pl-64 pt-touch-target pb-24 md:pb-8 min-h-screen">
+<div class="max-w-7xl mx-auto p-4 md:p-8">
+<!-- CRM Header with Stats -->
+<header class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<h2 class="font-headline-lg text-headline-lg-mobile md:text-headline-lg text-primary">Customer CRM</h2>
+<p class="text-on-surface-variant font-body-md mt-1">Manage 248 active retail &amp; contractor accounts</p>
+</div>
+<button class="bg-primary text-on-primary px-6 py-2.5 rounded-xl font-label-md flex items-center gap-2 hover:bg-primary-container transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="person_add">person_add</span>
+                New Customer
+            </button>
+</header>
+<!-- CRM Layout Grid -->
+<div class="grid grid-cols-12 gap-6">
+<!-- Left Column: Customer List -->
+<aside class="col-span-12 md:col-span-4 flex flex-col gap-4">
+<div class="bg-surface-container-lowest border border-outline-variant rounded-xl overflow-hidden flex flex-col h-[740px] shadow-sm">
+<div class="p-4 border-b border-outline-variant bg-surface-bright flex flex-col gap-3">
+<div class="flex items-center gap-2 border border-outline-variant rounded-xl px-3 py-2 bg-surface-container-lowest focus-within:border-primary">
+<span class="material-symbols-outlined text-on-surface-variant text-xl" data-icon="search">search</span>
+<input class="bg-transparent border-none focus:ring-0 w-full text-sm" placeholder="Search name or phone..." type="text"/>
+</div>
+<div class="flex gap-2">
+<span class="px-4 py-1 bg-primary-container text-on-primary-container text-[12px] font-bold rounded-full cursor-pointer">All</span>
+<span class="px-4 py-1 bg-surface-container-high text-on-surface-variant text-[12px] font-bold rounded-full cursor-pointer hover:bg-surface-container-highest transition-colors">Contractors</span>
+<span class="px-4 py-1 bg-surface-container-high text-on-surface-variant text-[12px] font-bold rounded-full cursor-pointer hover:bg-surface-container-highest transition-colors">Residents</span>
+</div>
+</div>
+<!-- Customer List Scroll Area -->
+<div class="flex-1 overflow-y-auto scrollbar-hide">
+<!-- Customer Item 1 -->
+<div class="customer-card-active p-5 border-b border-outline-variant cursor-pointer group transition-all">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-primary group-hover:text-primary transition-colors">Rakesh Sharma</h3>
+<span class="text-[10px] uppercase tracking-wider font-bold text-on-tertiary-fixed-variant bg-tertiary-fixed px-2 py-0.5 rounded-full">Contractor</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs" data-icon="call">call</span>
+                                +91 98765 43210
+                            </p>
+<div class="flex justify-between items-center bg-surface-container-lowest/50 p-2 rounded-lg">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-tight">Balance Due</span>
+<span class="text-sm font-bold text-primary">₹14,500</span>
+</div>
+</div>
+<!-- Customer Item 2 -->
+<div class="p-5 border-b border-outline-variant hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-on-surface">Sunil Kumar</h3>
+<span class="text-[10px] uppercase tracking-wider font-bold text-on-secondary-fixed-variant bg-secondary-fixed px-2 py-0.5 rounded-full">Resident</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">+91 99001 88772</p>
+<div class="flex justify-between items-center bg-surface-container-lowest/50 p-2 rounded-lg">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-tight">Balance Due</span>
+<span class="text-sm font-bold text-on-primary-fixed-variant">₹0</span>
+</div>
+</div>
+<!-- Customer Item 3 (High Credit Alert) -->
+<div class="p-5 border-b border-outline-variant hover:bg-surface-container-low cursor-pointer transition-colors border-l-4 border-error/50">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-on-surface">Pankaj Gupta</h3>
+<span class="text-[10px] uppercase tracking-wider font-bold text-on-tertiary-fixed-variant bg-tertiary-fixed px-2 py-0.5 rounded-full">Contractor</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">+91 98223 11445</p>
+<div class="flex justify-between items-center bg-error-container/20 p-2 rounded-lg">
+<span class="text-[10px] text-error font-bold uppercase tracking-tight">Overdue Credit</span>
+<span class="text-sm font-bold text-error">₹42,800</span>
+</div>
+</div>
+<!-- Customer Item 4 -->
+<div class="p-5 border-b border-outline-variant hover:bg-surface-container-low cursor-pointer transition-colors">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-bold text-on-surface">Amit Buildcon</h3>
+<span class="text-[10px] uppercase tracking-wider font-bold text-on-tertiary-fixed-variant bg-tertiary-fixed px-2 py-0.5 rounded-full">Contractor</span>
+</div>
+<p class="text-xs text-on-surface-variant mb-3">+91 77665 44332</p>
+<div class="flex justify-between items-center bg-surface-container-lowest/50 p-2 rounded-lg">
+<span class="text-[10px] text-on-surface-variant font-bold uppercase tracking-tight">Balance Due</span>
+<span class="text-sm font-bold text-primary">₹8,920</span>
+</div>
+</div>
+</div>
+</div>
+</aside>
+<!-- Right Column: Detail View -->
+<article class="col-span-12 md:col-span-8 flex flex-col gap-6">
+<!-- Profile Header Card -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-xl p-8 relative overflow-hidden shadow-sm">
+<div class="absolute -top-4 -right-4 w-48 h-48 bg-primary/5 rounded-full blur-3xl pointer-events-none"></div>
+<div class="flex flex-col md:flex-row justify-between items-start gap-6 relative z-10">
+<div class="flex items-center gap-6">
+<div class="w-20 h-20 rounded-2xl bg-primary-container flex items-center justify-center shadow-lg transform -rotate-2">
+<span class="material-symbols-outlined text-white text-4xl" data-icon="person">person</span>
+</div>
+<div>
+<h3 class="text-3xl font-bold text-primary tracking-tight">Rakesh Sharma</h3>
+<p class="font-body-md text-on-surface-variant flex items-center gap-2 mt-1">
+<span class="px-2 py-0.5 bg-surface-container-high rounded text-xs font-bold uppercase">Contractor</span>
+<span class="w-1 h-1 bg-outline-variant rounded-full"></span>
+                                    Registered since May 2021
+                                </p>
+<div class="flex flex-wrap gap-4 mt-4">
+<span class="flex items-center gap-2 text-sm text-on-surface font-medium bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant/30"><span class="material-symbols-outlined text-lg text-primary" data-icon="call">call</span> +91 98765 43210</span>
+<span class="flex items-center gap-2 text-sm text-on-surface font-medium bg-surface-container px-3 py-1.5 rounded-lg border border-outline-variant/30"><span class="material-symbols-outlined text-lg text-primary" data-icon="location_on">location_on</span> New Market, Bhopal</span>
+</div>
+</div>
+</div>
+<div class="flex gap-2">
+<button class="p-2.5 border border-outline-variant rounded-xl hover:bg-primary hover:text-on-primary transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="edit">edit</span>
+</button>
+<button class="p-2.5 border border-outline-variant rounded-xl hover:bg-primary hover:text-on-primary transition-all shadow-sm">
+<span class="material-symbols-outlined" data-icon="share">share</span>
+</button>
+</div>
+</div>
+<!-- Summary Bento -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+<div class="bg-surface-container-low border border-outline-variant/50 p-6 rounded-2xl metric-card">
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] uppercase font-bold text-on-surface-variant tracking-wider">Lifetime Spend</p>
+<span class="material-symbols-outlined text-on-primary-container/20" data-icon="payments">payments</span>
+</div>
+<p class="text-3xl font-bold text-primary tracking-tight">₹3,42,500</p>
+<div class="flex items-center text-[11px] text-on-secondary-container mt-2 font-bold">
+<span class="material-symbols-outlined text-xs mr-1" data-icon="trending_up">trending_up</span> 12% vs last month
+                            </div>
+</div>
+<div class="bg-primary-container border border-primary p-6 rounded-2xl metric-card relative overflow-hidden">
+<div class="absolute -right-4 -bottom-4 opacity-5">
+<span class="material-symbols-outlined text-8xl text-white" data-icon="account_balance_wallet">account_balance_wallet</span>
+</div>
+<div class="flex items-center justify-between mb-3">
+<p class="text-[11px] uppercase font-bold text-on-primary-container tracking-wider">Udhaar Balance</p>
+<span class="material-symbols-outlined text-on-primary-container/40" data-icon="credit_card">credit_card</span>
+</div>
+<p class="text-3xl font-bold text-white tracking-tight">₹14,500</p>
+<p class="text-[11px] text-on-primary-container/80 mt-2 font-medium">Due for 12 days • Net Credit</p>
+</div>
+<div class="flex flex-col gap-3">
+<button class="btn-whatsapp group w-full flex items-center justify-center gap-3 text-white font-bold py-4 px-6 rounded-2xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-sm">
+<span class="material-symbols-outlined text-xl group-hover:rotate-12 transition-transform" data-icon="send">send</span>
+                                Remind via WhatsApp
+                            </button>
+<button class="w-full flex items-center justify-center gap-2 bg-surface border border-outline-variant text-primary font-bold py-3 px-6 rounded-2xl hover:bg-surface-container transition-all text-sm">
+                                Settlement Log
+                            </button>
+</div>
+</div>
+</section>
+<!-- Transaction History -->
+<section class="bg-surface-container-lowest border border-outline-variant rounded-2xl flex-1 flex flex-col shadow-sm overflow-hidden">
+<div class="p-6 border-b border-outline-variant bg-surface-bright flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+<div>
+<h4 class="font-headline-md text-primary">Transaction History</h4>
+<p class="text-xs text-on-surface-variant mt-0.5">Showing latest entries for Rakesh Sharma</p>
+</div>
+<div class="flex gap-2 w-full sm:w-auto">
+<button class="flex-1 sm:flex-none px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="download">download</span> Export PDF
+                            </button>
+<button class="flex-1 sm:flex-none px-4 py-2 border border-outline-variant rounded-xl text-xs font-bold hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm" data-icon="filter_list">filter_list</span> Filter
+                            </button>
+</div>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface-container-low border-b border-outline-variant">
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Date &amp; Details</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Type</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Amount</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Status</th>
+<th class="px-6 py-4 font-label-md text-on-surface-variant uppercase tracking-widest text-[10px]">Entry</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-outline-variant/30">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<p class="font-bold text-sm text-primary">12 Oct 2023</p>
+<p class="text-xs text-on-surface-variant mt-0.5">12mm TMT Sariya (20 bundles)</p>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary/30"></span> Sales
+                                        </span>
+</td>
+<td class="px-6 py-5 font-bold text-sm text-primary">₹8,400</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded-full border border-outline-variant/50">CREDIT</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">
+<span class="material-symbols-outlined text-base bg-surface-container p-1.5 rounded-lg" data-icon="mic" style="font-variation-settings: 'FILL' 1;">mic</span>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-lowest transition-colors bg-surface-container-low/30">
+<td class="px-6 py-5">
+<p class="font-bold text-sm text-primary">05 Oct 2023</p>
+<p class="text-xs text-on-surface-variant mt-0.5">Partial Settlement via UPI</p>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span> Payment
+                                        </span>
+</td>
+<td class="px-6 py-5 font-bold text-sm text-secondary">- ₹5,000</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-[10px] font-bold rounded-full">PAID</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">
+<span class="material-symbols-outlined text-base bg-surface-container p-1.5 rounded-lg" data-icon="edit_square">edit_square</span>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-lowest transition-colors group">
+<td class="px-6 py-5">
+<p class="font-bold text-sm text-primary">28 Sep 2023</p>
+<p class="text-xs text-on-surface-variant mt-0.5">Asian Paints Ultima (20L)</p>
+</td>
+<td class="px-6 py-5">
+<span class="text-xs font-bold text-on-surface-variant flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary/30"></span> Sales
+                                        </span>
+</td>
+<td class="px-6 py-5 font-bold text-sm text-primary">₹6,100</td>
+<td class="px-6 py-5">
+<span class="px-3 py-1 bg-surface-container-highest text-on-surface-variant text-[10px] font-bold rounded-full border border-outline-variant/50">CREDIT</span>
+</td>
+<td class="px-6 py-5 text-on-surface-variant">
+<span class="material-symbols-outlined text-base bg-surface-container p-1.5 rounded-lg" data-icon="mic" style="font-variation-settings: 'FILL' 1;">mic</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="p-4 bg-surface-container-low text-center">
+<button class="text-primary font-bold text-sm hover:underline flex items-center justify-center gap-2 mx-auto">
+                            View All Transactions (124) <span class="material-symbols-outlined text-sm" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section>
+</article>
+</div>
+</div>
+</main>
+<!-- Voice Assistant FAB -->
+<div class="fixed bottom-24 right-6 lg:bottom-10 lg:right-10 z-50">
+<button class="w-16 h-16 bg-primary text-white rounded-2xl flex items-center justify-center action-green-fab transition-all active:scale-95 shadow-xl hover:bg-primary-container">
+<span class="material-symbols-outlined text-3xl" data-icon="mic" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+</div>
+<!-- Bottom Navigation Bar (Mobile only) -->
+<nav class="lg:hidden fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-5 pt-3 bg-surface border-t border-outline-variant shadow-2xl rounded-t-3xl glass-panel">
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="home">home</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Home</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="mic">mic</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Voice</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary text-on-primary rounded-2xl p-2 px-5 shadow-lg -translate-y-2" href="#">
+<span class="material-symbols-outlined" data-icon="groups">groups</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">CRM</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant p-2" href="#">
+<span class="material-symbols-outlined" data-icon="menu">menu</span>
+<span class="text-[10px] font-bold mt-1 uppercase tracking-tighter">Menu</span>
+</a>
+</nav>
+<!-- Voice Visualizer Overlay -->
+<div class="hidden fixed top-0 left-0 w-full h-1.5 bg-primary z-[60] flex gap-1 overflow-hidden" id="voice-ui">
+<div class="h-full bg-secondary-fixed flex-1 animate-[pulse_1s_infinite]"></div>
+<div class="h-full bg-secondary-fixed flex-1 animate-[pulse_1.2s_infinite]"></div>
+<div class="h-full bg-secondary-fixed flex-1 animate-[pulse_0.8s_infinite]"></div>
+<div class="h-full bg-secondary-fixed flex-1 animate-[pulse_1.4s_infinite]"></div>
+</div>
+<script>
+    // Micro-interaction for Voice Assistant
+    const fab = document.querySelector('.action-green-fab');
+    const voiceUi = document.getElementById('voice-ui');
+    
+    fab.addEventListener('click', () => {
+        voiceUi.classList.toggle('hidden');
+        if(!voiceUi.classList.contains('hidden')) {
+            fab.classList.remove('bg-primary');
+            fab.classList.add('bg-primary-container');
+            setTimeout(() => {
+                voiceUi.classList.add('hidden');
+                fab.classList.add('bg-primary');
+                fab.classList.remove('bg-primary-container');
+            }, 3000);
+        }
+    });
+
+    // Simple tab switching logic for demo
+    const cards = document.querySelectorAll('.cursor-pointer');
+    cards.forEach(card => {
+        if(card.closest('aside')) { // only target sidebar cards
+            card.addEventListener('click', () => {
+                cards.forEach(c => {
+                    if(c.closest('aside')) c.classList.remove('customer-card-active', 'bg-surface-container-low');
+                });
+                card.classList.add('customer-card-active');
+            });
+        }
+    });
+</script>
+</body></html>

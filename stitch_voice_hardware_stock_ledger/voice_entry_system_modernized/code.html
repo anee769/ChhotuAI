@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>LohaLedger - Voice Transaction</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#d3e4fe",
+                    "primary-container": "#131b2e",
+                    "secondary-container": "#6cf8bb",
+                    "inverse-surface": "#2d3133",
+                    "on-secondary-container": "#00714d",
+                    "background": "#f7f9fb",
+                    "tertiary-container": "#0b1c30",
+                    "surface-container-highest": "#e0e3e5",
+                    "tertiary": "#000000",
+                    "surface-container-high": "#e6e8ea",
+                    "primary-fixed-dim": "#bec6e0",
+                    "primary-fixed": "#dae2fd",
+                    "on-error-container": "#93000a",
+                    "on-primary": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "on-error": "#ffffff",
+                    "on-surface-variant": "#45464d",
+                    "secondary": "#006c49",
+                    "outline": "#76777d",
+                    "surface-tint": "#565e74",
+                    "on-primary-container": "#7c839b",
+                    "tertiary-fixed-dim": "#b7c8e1",
+                    "on-secondary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-container-low": "#f2f4f6",
+                    "surface-variant": "#e0e3e5",
+                    "outline-variant": "#c6c6cd",
+                    "on-tertiary-fixed": "#0b1c30",
+                    "on-tertiary-fixed-variant": "#38485d",
+                    "on-surface": "#191c1e",
+                    "surface": "#f7f9fb",
+                    "secondary-fixed": "#6ffbbe",
+                    "on-tertiary": "#ffffff",
+                    "on-background": "#191c1e",
+                    "on-secondary-fixed": "#002113",
+                    "secondary-fixed-dim": "#4edea3",
+                    "on-tertiary-container": "#75859d",
+                    "on-secondary-fixed-variant": "#005236",
+                    "inverse-on-surface": "#eff1f3",
+                    "on-primary-fixed": "#131b2e",
+                    "inverse-primary": "#bec6e0",
+                    "primary": "#000000",
+                    "surface-dim": "#d8dadc",
+                    "surface-bright": "#f7f9fb",
+                    "surface-container": "#eceef0",
+                    "on-primary-fixed-variant": "#3f465c"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "gutter-grid": "1.5rem",
+                    "margin-page": "2rem",
+                    "stack-xl": "3rem",
+                    "stack-md": "1.5rem",
+                    "stack-sm": "0.75rem",
+                    "inset-component": "1rem 1.25rem"
+            },
+            "fontFamily": {
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "headline-md": ["Inter"],
+                    "headline-xl": ["Inter"],
+                    "headline-lg": ["Inter"],
+                    "headline-lg-mobile": ["Inter"],
+                    "label-md": ["Inter"],
+                    "label-sm": ["Inter"]
+            },
+            "fontSize": {
+                    "body-lg": ["18px", {"lineHeight": "28px", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-xl": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                    "label-md": ["14px", {"lineHeight": "20px", "letterSpacing": "0.01em", "fontWeight": "600"}],
+                    "label-sm": ["12px", {"lineHeight": "16px", "letterSpacing": "0.02em", "fontWeight": "500"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        @keyframes zen-pulse {
+            0% { transform: scale(1); opacity: 0.15; }
+            50% { transform: scale(1.4); opacity: 0.05; }
+            100% { transform: scale(1.6); opacity: 0; }
+        }
+        .mic-wave {
+            animation: zen-pulse 2.5s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+        }
+        .waveform-dot {
+            transition: height 0.2s ease;
+        }
+        .modern-card {
+            background-color: #ffffff;
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 4px 12px -2px rgba(0,0,0,0.02);
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md overflow-x-hidden">
+<!-- Top Navigation -->
+<header class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-6 h-16 bg-surface/80 backdrop-blur-md border-b border-outline-variant">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary cursor-pointer hover:opacity-70 transition-opacity" onclick="window.history.back()">arrow_back</span>
+<h1 class="font-headline-md text-primary tracking-tight">LohaLedger</h1>
+</div>
+<div class="flex items-center gap-5">
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">storefront</span>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer">account_circle</span>
+</div>
+</header>
+<main class="relative min-h-screen w-full flex flex-col items-center pt-24 px-6 pb-32">
+<!-- Minimal Zen Record State -->
+<div class="w-full max-w-lg flex flex-col items-center mb-10">
+<div class="mb-4 text-on-surface-variant font-label-md tracking-widest uppercase opacity-60" id="status-label">Voice Entry Active</div>
+<div class="relative flex items-center justify-center my-8">
+<!-- Wave effects -->
+<div class="mic-wave absolute w-24 h-24 bg-primary rounded-full" style="animation-delay: 0s;"></div>
+<div class="mic-wave absolute w-24 h-24 bg-primary rounded-full" style="animation-delay: 0.8s;"></div>
+<div class="mic-wave absolute w-24 h-24 bg-primary rounded-full" style="animation-delay: 1.6s;"></div>
+<button class="relative z-10 w-20 h-20 bg-primary text-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all" id="mic-main">
+<span class="material-symbols-outlined !text-4xl" style="font-variation-settings: 'FILL' 1;">mic</span>
+</button>
+</div>
+<div class="flex items-center gap-1.5 h-6">
+<div class="waveform-dot w-1 h-2 bg-primary/20 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+<div class="waveform-dot w-1 h-4 bg-primary/40 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+<div class="waveform-dot w-1 h-6 bg-primary rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+<div class="waveform-dot w-1 h-4 bg-primary/40 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+<div class="waveform-dot w-1 h-2 bg-primary/20 rounded-full animate-bounce" style="animation-delay: 0.5s"></div>
+</div>
+</div>
+<!-- Transcription -->
+<div class="w-full max-w-lg mb-8">
+<div class="p-6 rounded-2xl bg-white border border-outline-variant/30 text-center">
+<p class="font-body-lg text-on-surface italic leading-relaxed opacity-80">
+                    "Pankaj ko 2 bora cement diya, 500 udhaar pe"
+                </p>
+</div>
+</div>
+<!-- AI Parsed Preview Card -->
+<div class="w-full max-w-lg mb-12">
+<div class="modern-card p-6 rounded-3xl overflow-hidden relative border-t-4 border-t-primary">
+<div class="flex justify-between items-start mb-6">
+<div class="flex flex-col gap-1">
+<span class="text-[10px] font-bold tracking-[0.2em] text-on-surface-variant uppercase">AI Analysis</span>
+<div class="flex items-center gap-2">
+<span class="bg-primary/5 text-primary px-2.5 py-1 rounded-full text-[11px] font-bold border border-primary/10">CREDIT ENTRY</span>
+</div>
+</div>
+<div class="text-right">
+<span class="text-headline-xl text-primary font-black block leading-none">₹500</span>
+<span class="text-label-sm text-on-surface-variant">Confirmed Amount</span>
+</div>
+</div>
+<div class="bg-surface-container-low/50 rounded-2xl p-4 mb-6 flex items-center justify-between">
+<div>
+<h4 class="font-headline-md text-primary leading-tight">Pankaj</h4>
+<p class="text-label-md text-on-surface-variant">Cement (2 Bags)</p>
+</div>
+<span class="material-symbols-outlined text-outline-variant">chevron_right</span>
+</div>
+<div class="flex gap-3">
+<button class="flex-1 bg-primary text-white h-14 rounded-2xl font-label-md flex items-center justify-center gap-2 hover:bg-primary/90 transition-all active:scale-[0.98]">
+                        Confirm Entry
+                        <span class="material-symbols-outlined !text-xl">done_all</span>
+</button>
+<button class="w-14 h-14 rounded-2xl border border-outline-variant flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low transition-all">
+<span class="material-symbols-outlined">edit</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Recent Logs Section -->
+<div class="w-full max-w-lg">
+<div class="flex justify-between items-center mb-5 px-1">
+<h3 class="text-label-md font-bold tracking-wider text-on-surface-variant/70 uppercase">Recent Activity</h3>
+<span class="text-primary font-bold text-label-sm cursor-pointer hover:underline">View Ledger</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Log 1 -->
+<div class="modern-card flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer group border-transparent hover:border-outline-variant/30">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined !text-xl">history</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Manoj Sutar</p>
+<p class="text-label-sm text-on-surface-variant">Paint Can x1 • Credit</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-bold text-primary">₹1,200</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors !text-lg">edit_note</span>
+</div>
+</div>
+<!-- Log 2 -->
+<div class="modern-card flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer group border-transparent hover:border-outline-variant/30">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-secondary-container/20 flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined !text-xl">payments</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Cash Sale</p>
+<p class="text-label-sm text-on-surface-variant">PVC Pipe x4 • Cash</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-bold text-primary">₹800</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors !text-lg">edit_note</span>
+</div>
+</div>
+<!-- Log 3 -->
+<div class="modern-card flex items-center justify-between p-4 rounded-2xl hover:bg-surface-container-low transition-all cursor-pointer group border-transparent hover:border-outline-variant/30">
+<div class="flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-error-container/20 flex items-center justify-center text-error">
+<span class="material-symbols-outlined !text-xl">priority_high</span>
+</div>
+<div>
+<p class="font-label-md text-on-surface">Rajesh</p>
+<p class="text-label-sm text-on-surface-variant">1kg Nails • Credit</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="font-bold text-primary">₹120</span>
+<span class="material-symbols-outlined text-outline-variant group-hover:text-primary transition-colors !text-lg">edit_note</span>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-white/80 backdrop-blur-xl border-t border-outline-variant shadow-[0_-8px_30px_rgb(0,0,0,0.04)]">
+<div class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined !text-[28px]">home</span>
+<span class="text-[10px] font-bold uppercase tracking-widest mt-1">Home</span>
+</div>
+<div class="relative -mt-12">
+<div class="absolute -inset-4 bg-primary/5 rounded-full blur-2xl"></div>
+<div class="flex flex-col items-center justify-center bg-primary text-white w-20 h-20 rounded-full shadow-2xl scale-100 active:scale-95 transition-transform cursor-pointer ring-4 ring-surface">
+<span class="material-symbols-outlined !text-3xl" style="font-variation-settings: 'FILL' 1;">mic</span>
+</div>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:opacity-100 transition-all cursor-pointer">
+<span class="material-symbols-outlined !text-[28px]">menu</span>
+<span class="text-[10px] font-bold uppercase tracking-widest mt-1">Ledger</span>
+</div>
+</nav>
+<script>
+        const micBtn = document.getElementById('mic-main');
+        const waves = document.querySelectorAll('.mic-wave');
+        const dots = document.querySelectorAll('.waveform-dot');
+        const statusLabel = document.getElementById('status-label');
+        
+        let isListening = true;
+
+        micBtn.addEventListener('click', () => {
+            isListening = !isListening;
+            if(!isListening) {
+                waves.forEach(w => w.style.display = 'none');
+                dots.forEach(d => {
+                    d.classList.remove('animate-bounce');
+                    d.style.height = '4px';
+                    d.style.opacity = '0.2';
+                });
+                statusLabel.innerText = 'Microphone Paused';
+                statusLabel.classList.remove('opacity-60');
+                statusLabel.classList.add('text-error');
+                micBtn.classList.remove('bg-primary');
+                micBtn.classList.add('bg-outline');
+            } else {
+                waves.forEach(w => w.style.display = 'block');
+                dots.forEach(d => {
+                    d.classList.add('animate-bounce');
+                    d.style.opacity = '1';
+                });
+                statusLabel.innerText = 'Voice Entry Active';
+                statusLabel.classList.add('opacity-60');
+                statusLabel.classList.remove('text-error');
+                micBtn.classList.add('bg-primary');
+                micBtn.classList.remove('bg-outline');
+            }
+        });
+    </script>
+</body></html>

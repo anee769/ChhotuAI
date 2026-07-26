@@ -1,0 +1,26 @@
+[
+  {
+    "payment_id": "pay_0001",
+    "customer_id": "cust_0001",
+    "amount": 15000.0,
+    "paid_on": "2026-07-23",
+    "note": "UPI",
+    "created_at": "2026-07-23T19:05:00"
+  },
+  {
+    "payment_id": "pay_0002",
+    "customer_id": "cust_0002",
+    "amount": 8200.0,
+    "paid_on": "2026-07-20",
+    "note": "Cash",
+    "created_at": "2026-07-20T18:40:00"
+  },
+  {
+    "payment_id": "pay_0003",
+    "customer_id": "cust_0005",
+    "amount": 31500.0,
+    "paid_on": "2026-07-25",
+    "note": "Bank transfer",
+    "created_at": "2026-07-25T16:25:00"
+  }
+]

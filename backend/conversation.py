@@ -28,7 +28,8 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import date
+import re
+from datetime import date, timedelta
 
 import matcher as M
 import sarvam_client
@@ -39,6 +40,37 @@ _FAMILIES = ("tmt", "cement", "pipe", "fitting", "fastener", "paint")
 # 'low' = fast (~8s/turn), great when Saaras returns numbers as digits (usual).
 # 'medium' = slower (~30s/turn) but firmer on spelled-out Hindi number WORDS.
 _EFFORT = os.environ.get("CHHOTU_REASONING", "low")
+
+
+def parse_phone(text: str):
+    digits = "".join(ch for ch in str(text or "") if ch.isdigit())
+    return digits[-10:] if len(digits) >= 10 else None
+
+
+def parse_deadline(text: str):
+    """Accept YYYY-MM-DD, DD/MM[/YYYY], or a relative number of days."""
+    t = (text or "").lower().strip()
+    iso = re.search(r"\b(20\d{2}-\d{1,2}-\d{1,2})\b", t)
+    if iso:
+        try:
+            return date.fromisoformat(iso.group(1)).isoformat()
+        except ValueError:
+            return None
+    dm = re.search(r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](20\d{2}))?\b", t)
+    if dm:
+        try:
+            return date(int(dm.group(3) or TODAY.year), int(dm.group(2)),
+                        int(dm.group(1))).isoformat()
+        except ValueError:
+            return None
+    if re.search(r"agle hafte|next week|ek hafta", t):
+        return (TODAY + timedelta(days=7)).isoformat()
+    if re.search(r"kal|tomorrow", t):
+        return (TODAY + timedelta(days=1)).isoformat()
+    m = re.search(r"(\d+)\s*(din|day)", t)
+    if m:
+        return (TODAY + timedelta(days=int(m.group(1)))).isoformat()
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -138,6 +170,14 @@ def converse(state, user_text, flow, repo):
 
     if not state or "said" not in state:
         state = {"flow": flow, "said": []}
+
+    # Customer phone/name/deadline are deterministic data-entry slots (udhaar
+    # sales only) — handled directly, not via the LLM extractor, and kept out
+    # of state["said"] so they don't confuse product understanding.
+    aw = state.get("awaiting")
+    if aw in ("customer_phone", "customer_name", "deadline"):
+        return _apply_customer_slot(state, aw, user_text, repo)
+
     state["said"].append(user_text or "")
 
     ext = _extract(state, repo)
@@ -205,13 +245,73 @@ def _order_flow(state, intent, items, repo):
             return _say(state, f"{sku['canonical']} — cash ya udhaar?",
                         listen=True, done=False)
 
+    if flow == "sale" and any(it.get("payment") == "credit" for it in kept):
+        state["pending_commit"] = {"flow": flow, "items": kept, "skipped": skipped}
+        return _resume_customer_capture(state, repo)
+
     return _commit(state, flow, kept, skipped, repo)
+
+
+# ---------------------------------------------------------------------------
+# Udhaar customer capture (deterministic data entry, gates the commit)
+# ---------------------------------------------------------------------------
+def _apply_customer_slot(state, aw, user_text, repo):
+    if aw == "customer_phone":
+        phone = parse_phone(user_text)
+        if not phone:
+            return _say(state, "Customer ka 10 digit number bataiye udhaar ke liye.",
+                        listen=True, done=False)
+        known = repo.customer_by_phone(phone)
+        state["customer"] = {"phone": repo.normalize_phone(phone),
+                             "customer_id": known.get("customer_id") if known else None,
+                             "name": known.get("name") if known else None}
+        state["awaiting"] = None
+        return _resume_customer_capture(state, repo)
+
+    if aw == "customer_name":
+        name = (user_text or "").strip()
+        if not name:
+            return _say(state, "Naam bataiye.", listen=True, done=False)
+        customer = repo.upsert_customer(state["customer"]["phone"], name)
+        state["customer"] = {"phone": customer["phone"],
+                             "customer_id": customer["customer_id"],
+                             "name": customer["name"]}
+        state["awaiting"] = None
+        return _resume_customer_capture(state, repo)
+
+    if aw == "deadline":
+        deadline = parse_deadline(user_text)
+        if not deadline:
+            return _say(state, "Date samajh nahi aayi — jaise 'kal', 'agle hafte', "
+                        "ya '5 din baad' bataiye.", listen=True, done=False)
+        state["payment_deadline"] = deadline
+        state["awaiting"] = None
+        return _resume_customer_capture(state, repo)
+
+
+def _resume_customer_capture(state, repo):
+    customer = state.get("customer") or {}
+    if not customer.get("phone"):
+        state["awaiting"] = "customer_phone"
+        return _say(state, "Customer ka 10 digit number bataiye udhaar ke liye.",
+                    listen=True, done=False)
+    if not customer.get("customer_id"):
+        state["awaiting"] = "customer_name"
+        return _say(state, "Naya customer hai — naam kya hai?", listen=True, done=False)
+    if not state.get("payment_deadline"):
+        state["awaiting"] = "deadline"
+        return _say(state, f"{customer['name']} — payment kab tak? Date ya kitne din "
+                    "baad bataiye.", listen=True, done=False)
+    pc = state.pop("pending_commit")
+    return _commit(state, pc["flow"], pc["items"], pc["skipped"], repo)
 
 
 def _commit(state, flow, items, skipped, repo):
     import main
     etype = {"sale": "sale", "delivery": "delivery",
              "count": "opening_balance"}.get(flow, flow)
+    customer = state.get("customer") or {}
+    deadline = state.get("payment_deadline")
     ev_items, rows, parts = [], [], []
     for it in items:
         sku = repo.sku(it["sku_id"])
@@ -219,16 +319,28 @@ def _commit(state, flow, items, skipped, repo):
         ev_items.append({"sku_id": sku["sku_id"], "qty": float(it["qty"]),
                          "unit": it["unit"], "rate": it.get("rate"),
                          "payment": payment, "spoken": it.get("name", ""),
-                         "was_tap": False})
+                         "was_tap": False,
+                         "customer_id": customer.get("customer_id") if payment == "credit" else None,
+                         "payment_deadline": deadline if payment == "credit" else None})
         rows.append({"phrase": it.get("name") or sku["canonical"],
                      "sku_id": sku["sku_id"], "qty": float(it["qty"]),
                      "unit": it["unit"], "rate": it.get("rate"),
                      "payment": payment, "confirmed": True})
         parts.append(f"{_num(it['qty'])} {it['unit']} {sku['canonical']}")
     result = main._write_events(etype, ev_items, TODAY.isoformat(), "exact", "voice_live")
+    if flow == "sale" and customer.get("customer_id") and deadline:
+        credit_total = sum(c.get("amount") or 0 for i, c in enumerate(result["committed"])
+                           if ev_items[i]["payment"] == "credit")
+        if credit_total:
+            result["receivable"] = repo.add_receivable(
+                customer["customer_id"], credit_total, deadline,
+                [c["event_id"] for i, c in enumerate(result["committed"])
+                 if ev_items[i]["payment"] == "credit"])
     verb = {"sale": "bik gaya", "delivery": "aa gaya",
             "count": "gin liya"}.get(flow, "likh diya")
     say = f"Theek hai — {_oxford(parts)} {verb}, likh diya."
+    if customer.get("name") and deadline:
+        say += f" {customer['name']} ke udhaar mein, {deadline} tak."
     if skipped:
         say += f" {_oxford(skipped)} chhod diya, wo stock mein nahi."
     out = _say(state, say, listen=False, done=True)

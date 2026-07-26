@@ -10,12 +10,15 @@ Run:  python backend/seed.py
 from __future__ import annotations
 
 import json
+import os
 import random
 from datetime import date, timedelta
 from pathlib import Path
 
 random.seed(42)
-DATA = Path(__file__).resolve().parent.parent / "data"
+DATA = Path(os.environ.get(
+    "CHHOTU_DATA_DIR", Path(__file__).resolve().parent.parent / "data"
+))
 TODAY = date(2026, 7, 26)
 PERIOD_START = TODAY - timedelta(days=42)  # ~6 weeks
 DEVANAGARI = {"tmt": "सरिया", "cement": "सीमेंट", "pipe": "पाइप"}
@@ -243,6 +246,66 @@ def learning_day60() -> dict:
     }
 
 
+def build_customers() -> list:
+    return [
+        {"customer_id": "cust_0001", "name": "Pankaj Sharma",
+         "phone": "+919876543210", "created_at": "2026-06-18T11:20:00"},
+        {"customer_id": "cust_0002", "name": "Manoj Sutar",
+         "phone": "+919810234567", "created_at": "2026-06-22T16:05:00"},
+        {"customer_id": "cust_0003", "name": "Amit Construction",
+         "phone": "+919560112233", "created_at": "2026-07-02T10:10:00"},
+        {"customer_id": "cust_0004", "name": "Rakesh Hardware",
+         "phone": "+919999001122", "created_at": "2026-07-09T14:35:00"},
+        {"customer_id": "cust_0005", "name": "Sunita Traders",
+         "phone": "+919811223344", "created_at": "2026-07-14T12:00:00"},
+        {"customer_id": "cust_0006", "name": "Deepak Contractor",
+         "phone": "+919650778899", "created_at": "2026-07-20T17:15:00"},
+    ]
+
+
+def build_receivables() -> list:
+    return [
+        {"receivable_id": "recv_0001", "customer_id": "cust_0001",
+         "amount": 48500.0, "deadline": "2026-07-28",
+         "sale_event_ids": ["evt_0101"], "created_at": "2026-07-18T18:10:00",
+         "status": "open"},
+        {"receivable_id": "recv_0002", "customer_id": "cust_0002",
+         "amount": 18200.0, "deadline": "2026-07-24",
+         "sale_event_ids": ["evt_0102"], "created_at": "2026-07-12T13:25:00",
+         "status": "open"},
+        {"receivable_id": "recv_0003", "customer_id": "cust_0003",
+         "amount": 76000.0, "deadline": "2026-08-05",
+         "sale_event_ids": ["evt_0103"], "created_at": "2026-07-21T15:40:00",
+         "status": "open"},
+        {"receivable_id": "recv_0004", "customer_id": "cust_0004",
+         "amount": 12600.0, "deadline": "2026-07-27",
+         "sale_event_ids": ["evt_0104"], "created_at": "2026-07-19T12:15:00",
+         "status": "open"},
+        {"receivable_id": "recv_0005", "customer_id": "cust_0005",
+         "amount": 31500.0, "deadline": "2026-07-30",
+         "sale_event_ids": ["evt_0105"], "created_at": "2026-07-16T17:55:00",
+         "status": "open"},
+        {"receivable_id": "recv_0006", "customer_id": "cust_0006",
+         "amount": 9400.0, "deadline": "2026-07-23",
+         "sale_event_ids": ["evt_0106"], "created_at": "2026-07-15T11:30:00",
+         "status": "open"},
+    ]
+
+
+def build_payments() -> list:
+    return [
+        {"payment_id": "pay_0001", "customer_id": "cust_0001",
+         "amount": 15000.0, "paid_on": "2026-07-23", "note": "UPI",
+         "created_at": "2026-07-23T19:05:00"},
+        {"payment_id": "pay_0002", "customer_id": "cust_0002",
+         "amount": 8200.0, "paid_on": "2026-07-20", "note": "Cash",
+         "created_at": "2026-07-20T18:40:00"},
+        {"payment_id": "pay_0003", "customer_id": "cust_0005",
+         "amount": 31500.0, "paid_on": "2026-07-25", "note": "Bank transfer",
+         "created_at": "2026-07-25T16:25:00"},
+    ]
+
+
 def main():
     DATA.mkdir(parents=True, exist_ok=True)
     cat = build_catalogue()
@@ -258,6 +321,10 @@ def main():
     dump("learning_day1.json", day1)
     dump("learning_day60.json", learning_day60())
     dump("learning.json", day1)  # active = day1
+    dump("customers.json", build_customers())
+    dump("receivables.json", build_receivables())
+    dump("payments.json", build_payments())
+    dump("notifications.json", [])
     print(f"catalogue: {len(cat)} SKUs")
     print(f"events:    {len(events)}")
     print("learning:  day1 (empty) + day60 (~25 aliases) written")
