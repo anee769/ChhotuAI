@@ -127,7 +127,7 @@ class ConversationStateTests(unittest.TestCase):
         self.assertEqual([m["role"] for m in messages[-3:]],
                          ["user", "assistant", "user"])
         self.assertEqual(chat.call_count, 1)
-        self.assertEqual(chat.call_args.kwargs["timeout"], 18)
+        self.assertEqual(chat.call_args.kwargs["timeout"], 75)
         self.assertEqual(result["items"][0]["sku_id"], "CEM_ULTRATECH_PPC")
 
     def test_explicit_two_item_speech_cannot_be_collapsed_by_model(self):
@@ -231,7 +231,11 @@ class ConversationStateTests(unittest.TestCase):
                 None, phrases[0], "live_sale", self.repo)
 
         self.assertEqual(out, expected)
-        analytics.assert_called_once_with("frozen", self.repo)
+        analytics.assert_called_once()
+        metric, repo, state = analytics.call_args.args
+        self.assertEqual(metric, "frozen")
+        self.assertIs(repo, self.repo)
+        self.assertEqual(state["lang"], "hi")
         extract.assert_not_called()
 
     def test_normal_sale_does_not_match_frozen_capital_route(self):
