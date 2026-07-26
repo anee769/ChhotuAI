@@ -269,9 +269,15 @@ def _extract(state, repo) -> dict:
     messages = [{"role": "system", "content": _extract_prompt(repo)}, *history]
     out = {}
     try:
+        # sarvam-30b is a reasoning model: on this prompt it routinely spends
+        # 3000+ tokens on internal reasoning_content before writing the JSON
+        # answer. max_tokens=1200/timeout=18 (a prior latency attempt) cut it
+        # off on EVERY call — finish_reason="length", content=None — silently
+        # falling back to the much cruder regex parser below on every single
+        # turn. 4096 is this tier's actual cap; give it the room it needs.
         out = sarvam_client.chat_json(messages, temperature=0.1,
-                                      reasoning_effort=_EFFORT, max_tokens=1200,
-                                      timeout=18)
+                                      reasoning_effort=_EFFORT, max_tokens=4096,
+                                      timeout=75)
     except Exception:
         out = {}
     if not isinstance(out, dict) or "items" not in out:

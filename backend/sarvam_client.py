@@ -190,7 +190,7 @@ def text_to_speech(text: str, language_code: str = "hi-IN",
 # ---------------------------------------------------------------------------
 def chat(messages: list, tools: list = None, tool_choice: Any = None,
          temperature: float = 0.1, model: str = None, max_tokens: int = 4000,
-         reasoning_effort: str = None, timeout: int = 18) -> dict:
+         reasoning_effort: str = None, timeout: int = 75) -> dict:
     """Raw OpenAI-compatible chat completion. Returns the full response dict.
 
     NOTE: sarvam-30b is a reasoning model — it emits `reasoning_content` and
@@ -220,7 +220,7 @@ def chat_message(resp: dict) -> dict:
 
 def chat_json(messages: list, temperature: float = 0.1,
               reasoning_effort: str = None, max_tokens: int = 4000,
-              timeout: int = 18) -> dict:
+              timeout: int = 75) -> dict:
     """
     Ask the model for a single JSON object and parse it. Tolerant of code fences.
     Used by the matcher's semantic rerank and invoice line extraction.
