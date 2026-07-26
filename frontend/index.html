@@ -419,6 +419,136 @@
     border-radius:12px; background:#fff;
   }
   .voice-command-input input { border:0 !important; background:transparent !important; }
+  .voice-entry-card.conversation-active .voice-stage,
+  .voice-entry-card.conversation-active .voice-processing { display:none !important; }
+  .voice-conversation {
+    margin-top:22px; overflow:hidden; border:1px solid #d8dbe0;
+    border-radius:14px; background:#fff;
+  }
+  .voice-conversation-turn { padding:22px 24px; }
+  .voice-speaker-label {
+    display:flex; align-items:center; gap:7px; margin-bottom:7px;
+    color:#737881; font-size:10px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .voice-speaker-label .material-symbols-outlined { font-size:16px; }
+  .voice-user-utterance {
+    color:#3f444c; font-size:14px; line-height:1.55;
+  }
+  .voice-assistant-turn {
+    margin-top:18px; padding-top:18px; border-top:1px solid #e3e6e9;
+  }
+  .voice-assistant-copy {
+    max-width:760px; color:#111827; font-size:18px; line-height:1.45;
+    font-weight:720; letter-spacing:-.015em;
+  }
+  .voice-turn-state {
+    display:flex; align-items:center; gap:9px; margin-top:10px;
+    color:#686d75; font-size:12px;
+  }
+  .voice-turn-state::before {
+    content:""; width:7px; height:7px; flex:0 0 auto;
+    border-radius:50%; background:#006c49;
+  }
+  .voice-turn-state.is-thinking::before { animation:pulse 1.2s infinite; }
+  .voice-turn-state.is-listening { color:#006c49; }
+  .voice-turn-state.is-listening::before {
+    box-shadow:0 0 0 5px rgba(0,108,73,.09);
+    animation:pulse 1.05s infinite;
+  }
+  .voice-turn-state.is-error { color:#9a5b00; }
+  .voice-turn-state.is-error::before { background:#9a5b00; }
+  .voice-current-entry {
+    padding:18px 24px 20px; border-top:1px solid #d8dbe0;
+    background:#f5f6f7;
+  }
+  .voice-current-entry-head {
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    margin-bottom:10px;
+  }
+  .voice-current-entry-title {
+    color:#30343a; font-size:11px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .voice-current-entry-count { color:#777c84; font-size:11px; }
+  .voice-draft-list {
+    overflow:hidden; border:1px solid #dde0e4; border-radius:10px; background:#fff;
+  }
+  .voice-draft-item {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+    gap:16px; padding:12px 14px; border-bottom:1px solid #eceef0;
+  }
+  .voice-draft-item:last-child { border-bottom:0; }
+  .voice-draft-main { display:flex; align-items:flex-start; gap:10px; min-width:0; }
+  .voice-draft-icon {
+    width:21px; height:21px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:50%; background:#dcf7ea; color:#006c49;
+  }
+  .voice-draft-icon .material-symbols-outlined { font-size:14px; font-weight:700; }
+  .voice-draft-name {
+    overflow:hidden; color:#20242a; font-size:13px; font-weight:720;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .voice-draft-meta { margin-top:3px; color:#6c7179; font-size:11px; }
+  .voice-draft-status {
+    color:#686d75; font-size:11px; font-weight:650; white-space:nowrap;
+  }
+  .voice-draft-item.needs-detail .voice-draft-icon {
+    background:#eceef0; color:#636871;
+  }
+  .voice-draft-item.unavailable .voice-draft-icon {
+    background:#ffe7e3; color:#ae160d;
+  }
+  .voice-draft-item.unavailable .voice-draft-name {
+    color:#7f2620; text-decoration:line-through;
+  }
+  .voice-draft-item.unavailable .voice-draft-status { color:#9b251e; }
+  .voice-draft-context {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+  }
+  .voice-draft-context span {
+    padding:5px 8px; border:1px solid #d9dde1; border-radius:7px;
+    background:#fff; color:#5c6169; font-size:10px; font-weight:650;
+  }
+  .voice-reply-bar {
+    display:flex; align-items:center; gap:9px; padding:14px 16px;
+    border-top:1px solid #d8dbe0; background:#fff;
+  }
+  .voice-reply-mic {
+    width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:10px; background:#050505; color:#fff;
+  }
+  .voice-reply-mic .material-symbols-outlined { font-size:21px; }
+  .voice-reply-mic.is-listening { background:#006c49; }
+  .voice-reply-bar input {
+    min-width:0; flex:1; height:42px; padding:0 12px;
+  }
+  .voice-reply-send {
+    width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:10px; background:#111827; color:#fff;
+  }
+  .voice-reply-send .material-symbols-outlined { font-size:19px; }
+  .voice-result-stock {
+    display:grid; gap:7px; padding:14px 24px;
+    border-top:1px solid #e2e5e8; background:#fff;
+  }
+  .voice-result-stock-row {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    color:#5d626a; font-size:11px;
+  }
+  .voice-result-stock-row strong { color:#20242a; font-size:12px; }
+  .voice-result-actions {
+    display:flex; flex-wrap:wrap; gap:9px; padding:15px 24px;
+    border-top:1px solid #d8dbe0; background:#fff;
+  }
+  .voice-result-actions button {
+    min-height:40px; padding:0 14px; border-radius:9px;
+    font-size:12px; font-weight:750;
+  }
+  .voice-result-actions .primary { background:#050505; color:#fff; }
+  .voice-result-actions .secondary {
+    border:1px solid #d8dbe0; background:#fff; color:#34383f;
+  }
   .voice-confirmation {
     margin-top:18px; overflow:hidden; border:1px solid #d4d7dc;
     border-top:5px solid #050505; border-radius:16px; background:#fff;
@@ -488,6 +618,9 @@
     .page-heading { align-items:flex-start; flex-direction:column; }
     .voice-entry-head { flex-direction:column; }
     .voice-stage { padding:30px 16px 22px; }
+    .voice-conversation-turn, .voice-current-entry { padding-left:16px; padding-right:16px; }
+    .voice-draft-item { grid-template-columns:minmax(0,1fr); gap:7px; }
+    .voice-draft-status { padding-left:31px; }
   }
 </style>
 </head>
@@ -748,6 +881,7 @@ function toast(msg, ok=true){ const t=document.getElementById('toast'); t.textCo
 
 async function api(path, opts){ const r=await fetch(path,opts); if(!r.ok) throw new Error(await r.text()); return r.json(); }
 function fmtNum(n){ const x=Number(n); return Number.isFinite(x) ? (Number.isInteger(x)?x:parseFloat(x.toFixed(2))) : n; }
+function escHtml(value){ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function boot(){
   const s = await api('/api/state');
@@ -824,7 +958,7 @@ function renderVoiceUI(tab, flow){
           <label class="cursor-pointer text-xs font-semibold text-slate-600">Upload audio<input type="file" accept="audio/*" class="hidden" onchange="micUpload(event,'${tab}','${flow}')"></label>
         </div>
       </div>
-      <div id="proc-${tab}" class="text-sm text-blue-300 hidden"></div>
+      <div id="proc-${tab}" class="voice-processing text-sm text-blue-300 hidden"></div>
       <div id="conv-${tab}" class="mt-4"></div>
       <div id="res-${tab}" class="mt-4 space-y-3"></div>
     </div>`;
@@ -961,37 +1095,39 @@ function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Ma
 // start conversation from a spoken utterance (mic)
 async function convStartVoice(tab, flow){
   const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
-  proc.innerHTML='<span class="pulse">🎤 Bol rahe ho… (ruk jao to apne aap sun lega)</span>';
+  proc.innerHTML='<span class="pulse">Sun raha hoon… Bolna poora ho to bas ruk jaiye.</span>';
   setMicListening(tab,true);
   let blob;
   try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
   catch(e){ proc.innerHTML=''; toast('Mic nahi mila — likh ke ya Upload audio se karo',false); return; }
   finally{ setMicListening(tab,false); }
-  proc.innerHTML='<span class="pulse">🎧 Sun rahe hain (Saaras)…</span>';
+  proc.innerHTML='<span class="pulse">Aapki baat samajh raha hoon…</span>';
   let roman='', disp=''; try{ const o=await transcribeBlob(blob); roman=o.roman; disp=o.disp; }catch(e){}
   if(!roman){ proc.innerHTML=''; toast('Kuch suna nahi — dobara boliye',false); return; }
-  proc.innerHTML='Aapne kaha: <b>'+disp+'</b>';
-  convBegin(tab, flow, roman, true);
+  convBegin(tab, flow, roman, true, disp);
 }
 // start conversation from typed text (fallback — answers via text too)
 function convStartText(tab, flow){
   const text=document.getElementById('txt-'+tab).value.trim(); if(!text) return;
   document.getElementById('proc-'+tab).classList.add('hidden');
-  convBegin(tab, flow, text, false);
+  convBegin(tab, flow, text, false, text);
 }
 
-async function convBegin(tab, flow, text, voice){
-  CONV[tab]={flow, state:null, voice:voice};
+async function convBegin(tab, flow, text, voice, displayText){
+  CONV[tab]={flow, state:null, voice:voice, latestUser:displayText||text, phase:'thinking'};
+  document.getElementById('voiceUI-'+tab).querySelector('.voice-entry-card')?.classList.add('conversation-active');
   document.getElementById('res-'+tab).innerHTML='';
-  await convTurn(tab, text);
+  await convTurn(tab, text, displayText);
 }
 
 // send a turn to /api/converse, speak the reply, then listen or finish
-async function convTurn(tab, text){
+async function convTurn(tab, text, displayText){
   const C=CONV[tab];
   const panel=document.getElementById('conv-'+tab);
+  C.latestUser=displayText||(text==='confirm'?'Entry confirmed':text);
+  C.phase='thinking';
   // The first turn may use the LLM; follow-up slots reuse the structured draft.
-  panel.innerHTML=renderConv(C, '<span class="pulse">🧠 Chhotu soch raha hai<span class="dots"></span></span>');
+  panel.innerHTML=renderConv(C);
   playFiller();                         // instant spoken acknowledgment
   let r;
   try{ r=await api('/api/converse',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -1005,7 +1141,8 @@ async function convTurn(tab, text){
     await playSay(r.say_audio_b64);
     return;
   }
-  panel.innerHTML=renderConv(C, '');
+  C.phase=r.listen?'question':'ready';
+  panel.innerHTML=renderConv(C);
   await playSay(r.say_audio_b64);
   if(r.done){ convFinish(tab, r); return; }
   if(r.listen){ await convListen(tab); }
@@ -1014,19 +1151,20 @@ async function convTurn(tab, text){
 async function convListen(tab){
   const C=CONV[tab]; const panel=document.getElementById('conv-'+tab);
   if(!C.voice){ return; } // typed mode waits for the answer box
-  panel.innerHTML=renderConv(C, '<span class="pulse text-rose-300">🎤 aapka jawaab sun raha hoon… (bolo)</span>');
+  C.phase='listening';
+  panel.innerHTML=renderConv(C);
   setMicListening(tab,true);
   let blob; try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
-  catch(e){ C.voice=false; panel.innerHTML=renderConv(C, '<span class="text-amber-300">Mic nahi — neeche likh ke jawaab do</span>'); return; }
+  catch(e){ C.voice=false; C.phase='mic-error'; panel.innerHTML=renderConv(C); return; }
   finally{ setMicListening(tab,false); }
-  let ans=''; try{ const o=await transcribeBlob(blob); ans=o.roman; }catch(e){}
+  let ans='', disp=''; try{ const o=await transcribeBlob(blob); ans=o.roman; disp=o.disp; }catch(e){}
   if(!ans){ toast('Suna nahi — phir se',false); return convListen(tab); }
-  await convTurn(tab, ans);
+  await convTurn(tab, ans, disp||ans);
 }
 
 function convAnswerText(tab){
   const inp=document.getElementById('convans-'+tab); const v=inp.value.trim(); if(!v) return;
-  inp.value=''; convTurn(tab, v);
+  inp.value=''; convTurn(tab, v, v);
 }
 function convRepeat(tab){ playSay_fromLast(tab); }
 async function playSay_fromLast(tab){ const C=CONV[tab]; if(C && C.lastSay){ toast('🔊 '+C.lastSay); } }
@@ -1061,29 +1199,87 @@ async function convConfirm(tab){
   await convTurn(tab,'confirm');
 }
 
-function renderConv(C, statusHtml){
+function renderCurrentEntry(C){
   const s=C.summary||{items:[]};
-  const rows=(s.items||[]).map(it=>{
+  const items=s.items||[];
+  const rows=items.map(it=>{
     const sku=it.sku_id?STATE.byId[it.sku_id]:null;
-    const name=sku?sku.canonical:('“'+(it.phrase||'')+'”');
+    const name=sku?sku.canonical:(it.phrase||'Product');
     const bits=[];
-    if(it.qty!=null) bits.push((it.self_corrected?'2→':'')+fmtNum(it.qty)+(it.unit?(' '+it.unit):''));
+    if(it.qty!=null) bits.push(fmtNum(it.qty)+(it.unit?(' '+it.unit):''));
     if(it.rate!=null) bits.push('₹'+fmtNum(it.rate)+(it.unit?('/'+it.unit):''));
     if(it.payment) bits.push(it.payment);
-    const tick=it.confirmed?'✅':(it.sku_id?'…':'❓');
-    return `<div class="flex justify-between text-sm py-1 ${it.active?'text-white':'text-slate-400'}">
-      <span>${tick} ${name}</span><span>${bits.join(' · ')}</span></div>`;
+    const complete=Boolean(it.sku_id&&it.qty!=null);
+    return `<div class="voice-draft-item ${complete?'':'needs-detail'}">
+      <div class="voice-draft-main">
+        <span class="voice-draft-icon"><span class="material-symbols-outlined">${complete?'check':'more_horiz'}</span></span>
+        <div class="min-w-0"><div class="voice-draft-name">${escHtml(name)}</div>
+          <div class="voice-draft-meta">${escHtml(bits.join(' · ')||(complete?'Product matched':'More information needed'))}</div></div>
+      </div>
+      <div class="voice-draft-status">${complete?'Added to draft':'Needs detail'}</div>
+    </div>`;
   }).join('');
-  const say=C.lastSay?`<div class="text-lg font-semibold text-sky-200 mb-1">🗣️ ${C.lastSay}</div>`:'';
-  const answerBox = (!C.done)? `<div class="flex gap-2 mt-3">
-      <button onclick="convListen('${convTabOf(C)}')" class="chip px-3 py-2 rounded-lg text-sm">🎤 Bol ke jawaab</button>
-      <input id="convans-${convTabOf(C)}" class="flex-1 rounded-lg px-3 py-2 text-sm" placeholder="ya jawaab likho…" onkeydown="if(event.key==='Enter')convAnswerText('${convTabOf(C)}')">
-      <button onclick="convAnswerText('${convTabOf(C)}')" class="bg-blue-600 px-3 py-2 rounded-lg text-sm font-semibold">→</button>
+  const skipped=[...new Set(C.state?.skipped_items||[])];
+  const unavailable=skipped.map(name=>`<div class="voice-draft-item unavailable">
+    <div class="voice-draft-main">
+      <span class="voice-draft-icon"><span class="material-symbols-outlined">close</span></span>
+      <div class="min-w-0"><div class="voice-draft-name">${escHtml(name)}</div>
+        <div class="voice-draft-meta">Not available in inventory</div></div>
+    </div>
+    <div class="voice-draft-status">Not added</div>
+  </div>`).join('');
+  if(!rows&&!unavailable) return '';
+  const customer=C.state?.customer;
+  const context=[];
+  if(customer?.name||customer?.phone) context.push(`Customer: ${customer?.name||customer?.phone}`);
+  if(C.state?.payment_deadline) context.push(`Due: ${dayLabel(C.state.payment_deadline)}`);
+  const payment=[...new Set(items.map(it=>it.payment).filter(Boolean))].join(' + ');
+  if(payment) context.push(`Payment: ${payment}`);
+  const contextHtml=context.length?`<div class="voice-draft-context">${context.map(x=>`<span>${escHtml(x)}</span>`).join('')}</div>`:'';
+  const count=items.length;
+  return `<div class="voice-current-entry">
+    <div class="voice-current-entry-head">
+      <div class="voice-current-entry-title">Current entry</div>
+      <div class="voice-current-entry-count">${count} item${count===1?'':'s'}</div>
+    </div>
+    <div class="voice-draft-list">${rows}${unavailable}</div>
+    ${contextHtml}
+  </div>`;
+}
+
+function renderConv(C){
+  const tab=convTabOf(C);
+  const phases={
+    thinking:['Understanding your entry…','is-thinking'],
+    listening:['Sun raha hoon… Bolna poora ho to bas ruk jaiye.','is-listening'],
+    'mic-error':['Mic nahi mila. Neeche likh kar jawaab dein.','is-error'],
+    question:['Aap voice ya text se jawaab de sakte hain.',''],
+    ready:['Details updated.','']
+  };
+  const phase=phases[C.phase]||phases.question;
+  const showAssistant=C.phase!=='thinking'&&C.lastSay;
+  const assistant=showAssistant?`<div class="voice-assistant-turn">
+    <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
+    <div class="voice-assistant-copy">${escHtml(C.lastSay)}</div>
+  </div>`:'';
+  const micAction=C.phase==='listening'?'stopRecordingNow()':`convListen('${tab}')`;
+  const answerBox = (!C.done&&C.phase!=='thinking')? `<div class="voice-reply-bar">
+      <button onclick="${micAction}" class="voice-reply-mic ${C.phase==='listening'?'is-listening':''}" aria-label="${C.phase==='listening'?'Stop listening':'Answer by voice'}">
+        <span class="material-symbols-outlined">${C.phase==='listening'?'graphic_eq':'mic'}</span>
+      </button>
+      <input id="convans-${tab}" placeholder="Jawaab likhein…" onkeydown="if(event.key==='Enter')convAnswerText('${tab}')">
+      <button onclick="convAnswerText('${tab}')" class="voice-reply-send" aria-label="Send answer"><span class="material-symbols-outlined">arrow_forward</span></button>
     </div>`:'';
-  return `<div class="card p-4 border-sky-800">${say}
-    <div class="text-xs text-blue-300 mb-2">${statusHtml||''}</div>
-    <div class="border-t border-[#24304f] pt-2">${rows||'<span class="text-slate-500 text-sm">…</span>'}</div>
-    ${answerBox}</div>`;
+  return `<div class="voice-conversation">
+    <div class="voice-conversation-turn">
+      <div class="voice-speaker-label"><span class="material-symbols-outlined">person</span>Aapne kaha</div>
+      <div class="voice-user-utterance">${escHtml(C.latestUser||'')}</div>
+      ${assistant}
+      <div class="voice-turn-state ${phase[1]}">${phase[0]}</div>
+    </div>
+    ${renderCurrentEntry(C)}
+    ${answerBox}
+  </div>`;
 }
 function convTabOf(C){ for(const t in CONV){ if(CONV[t]===C) return t; } return 'sale'; }
 
@@ -1093,14 +1289,21 @@ async function convFinish(tab, r){
   const committed=(r.committed&&r.committed.committed)||[];
   // query answer (stock / analytics) — nothing written to the ledger
   if(!committed.length){
-    panel.innerHTML=`<div class="card p-4 border-sky-800">
-      <div class="text-sky-200 font-bold text-lg">🗣️ ${C.lastSay||''}</div>
-      <button onclick="renderVoiceUI('${tab}','${C.flow}')" class="text-blue-300 underline text-sm mt-2">phir se poochho</button></div>`;
+    panel.innerHTML=`<div class="voice-conversation">
+      <div class="voice-conversation-turn">
+        <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
+        <div class="voice-assistant-copy">${escHtml(C.lastSay||'')}</div>
+        <div class="voice-turn-state">Answer ready</div>
+      </div>
+      <div class="voice-result-actions">
+        <button onclick="resetVoiceConversation('${tab}','${C.flow}')" class="secondary">Ask something else</button>
+      </div>
+    </div>`;
     CONV[tab]=null; return;
   }
   const affected=(r.committed&&r.committed.affected_stock)||{};
-  let stockRows=Object.entries(affected).map(([sid,st])=>`<div class="flex justify-between text-sm">
-    <span>${STATE.byId[sid].canonical}</span><b class="${(st.uncounted||st.oversold)?'text-amber-300':'text-emerald-400'}">${st.display}</b></div>`).join('');
+  let stockRows=Object.entries(affected).map(([sid,st])=>`<div class="voice-result-stock-row">
+    <span>${escHtml(STATE.byId[sid].canonical)}</span><strong>${escHtml(st.display)}</strong></div>`).join('');
   const billItems=committed.map((c,i)=>{
     const candidates=C.summary.items||[];
     const it=candidates[i]||candidates.find(x=>x.sku_id===c.sku_id)||{};
@@ -1112,14 +1315,25 @@ async function convFinish(tab, r){
   // it, or we're just counting stock) the bill comes from the supplier, not us.
   const committedFlow=(r.committed&&r.committed.flow)||'sale';
   const bills=(billItems.length&&committedFlow==='sale')
-    ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 One bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
+    ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="primary">View bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
     : '';
-  panel.innerHTML=`<div class="card p-4 border-emerald-700">
-    <div class="text-emerald-400 font-bold text-lg mb-1">✅ ${C.lastSay||'Likh diya'}</div>
-    <div class="mt-2 space-y-1">${stockRows}</div>
-    <div class="flex gap-2 mt-3 flex-wrap">${bills}
-      <button onclick="renderVoiceUI('${tab}','${C.flow}')" class="text-blue-300 underline text-sm">nayi entry</button></div></div>`;
+  panel.innerHTML=`<div class="voice-conversation">
+    <div class="voice-conversation-turn">
+      <div class="voice-speaker-label"><span class="material-symbols-outlined">check_circle</span>Recorded</div>
+      <div class="voice-assistant-copy">${escHtml(C.lastSay||'Entry recorded')}</div>
+      <div class="voice-turn-state">Ledger updated</div>
+    </div>
+    ${renderCurrentEntry(C)}
+    ${stockRows?`<div class="voice-result-stock">${stockRows}</div>`:''}
+    <div class="voice-result-actions">${bills}
+      <button onclick="resetVoiceConversation('${tab}','${C.flow}')" class="secondary">New entry</button>
+    </div>
+  </div>`;
   CONV[tab]=null;
+}
+function resetVoiceConversation(tab,flow='auto'){
+  CONV[tab]=null;
+  renderVoiceUI(tab,flow);
 }
 
 // central floating button — start the assistant with any intent

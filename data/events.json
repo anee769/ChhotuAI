@@ -1599,5 +1599,51 @@
     },
     "event_id": "evt_0086",
     "recorded_at": "2026-07-26T17:55:52"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 50.0,
+    "unit": "bori",
+    "rate": 100.0,
+    "quoted_rate": 100,
+    "rate_unit": "bori",
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "50 बोरी cement बेचा है"
+    },
+    "event_id": "evt_0087",
+    "recorded_at": "2026-07-26T22:29:15"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 50.0,
+    "quoted_rate": 50,
+    "rate_unit": "bori",
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "दस बोरी सीमेंट बेचा है"
+    },
+    "event_id": "evt_0088",
+    "recorded_at": "2026-07-26T22:33:29"
   }
 ]
