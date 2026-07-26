@@ -291,8 +291,11 @@ def _valid_sku(sid, repo) -> bool:
 # on an order. The LLM is reserved for what genuinely needs it — pinning
 # down which product/qty/price was said.
 _QUICK_PATTERNS = [
-    ("frozen", re.compile(r"nahi\s*bika|bika\s*nahi|frozen|phasa|dead\s*stock|"
-                          r"purana\s*maal|move\w*\s*nahi|kaun\s*sa\s*saamaan")),
+    ("frozen", re.compile(r"nahi\s*bika|bika\s*nahi|not\s+sold|unsold|frozen|"
+                          r"phasa|dead\s*stock|purana\s*maal|move\w*\s*nahi|"
+                          r"kaun\s*sa\s*(?:saamaan|samaan|maal)|"
+                          r"नहीं\s*बिका|बिका\s*नहीं|फ्रोजन|फ[ँं]?सा|"
+                          r"पुराना\s*माल|कौन\s*सा\s*(?:सामान|माल)")),
     ("udhaar", re.compile(r"kitna\s*udhaar|udhaar\s*kitna|total\s*udhaar|udhaar\s*baaki|"
                           r"baaki\s*kitna")),
     ("cash", re.compile(r"aaj\s*(ka\s*)?cash|cash\s*kitna|kitna\s*cash")),
@@ -316,9 +319,6 @@ def _quick_route(text: str):
 
 
 def converse(state, user_text, flow, repo):
-    if not sarvam_client.has_key():
-        return _reply("Voice ke liye Sarvam API key chahiye.", listen=False, done=True)
-
     if not state or "said" not in state:
         state = {"flow": flow, "said": [], "history": []}
 
@@ -342,14 +342,21 @@ def converse(state, user_text, flow, repo):
         state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_order_slot(state, user_text, repo)
 
-    if (not flow or flow == "auto") and not state.get("locked_intent"):
+    # Voice Entry is a sale-capable screen, but it is also where the owner asks
+    # stock and business questions. Route an unambiguous first-turn query before
+    # the screen's `live_sale` hint can force it into an order. Analytics are
+    # fully ledger-derived and do not need an LLM or API key.
+    if not state.get("locked_intent"):
         quick = _quick_route(user_text)
-        if quick == ("stock", None):
+        if quick and quick[0] == "analytics":
+            return _analytics_answer(quick[1], repo)
+        if quick == ("stock", None) and sarvam_client.has_key():
             state["said"].append(user_text or "")
             state["history"].append({"role": "user", "content": user_text or ""})
             return _stock_flow(state, _extract(state, repo)["items"], repo)
-        if quick and quick[0] == "analytics":
-            return _analytics_answer(quick[1], repo)
+
+    if not sarvam_client.has_key():
+        return _reply("Voice ke liye Sarvam API key chahiye.", listen=False, done=True)
 
     state["said"].append(user_text or "")
     state["history"].append({"role": "user", "content": user_text or ""})

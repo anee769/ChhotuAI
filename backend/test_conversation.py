@@ -196,6 +196,36 @@ class ConversationStateTests(unittest.TestCase):
         self.assertEqual(conversation.parse_deadline("do hafte baad"), "2026-08-09")
         self.assertEqual(conversation.parse_deadline("15 August"), "2026-08-15")
 
+    def test_frozen_capital_question_is_not_forced_into_live_sale(self):
+        phrases = [
+            "मेरा कौन सा माल 60 दिनों से नहीं बिका है",
+            "mera kaun sa maal 60 dinon se nahi bika hai",
+            "which stock has not sold in 60 days",
+        ]
+        for phrase in phrases:
+            self.assertEqual(conversation._quick_route(phrase),
+                             ("analytics", "frozen"))
+
+        expected = {
+            "state": None, "say": "frozen answer", "listen": False, "done": True,
+            "summary": {"items": []},
+        }
+        with patch.object(conversation.sarvam_client, "has_key",
+                          return_value=False), \
+             patch.object(conversation, "_extract") as extract, \
+             patch.object(conversation, "_analytics_answer",
+                          return_value=expected) as analytics:
+            out = conversation.converse(
+                None, phrases[0], "live_sale", self.repo)
+
+        self.assertEqual(out, expected)
+        analytics.assert_called_once_with("frozen", self.repo)
+        extract.assert_not_called()
+
+    def test_normal_sale_does_not_match_frozen_capital_route(self):
+        self.assertIsNone(
+            conversation._quick_route("5 bori cement becha cash"))
+
 
 if __name__ == "__main__":
     unittest.main()
