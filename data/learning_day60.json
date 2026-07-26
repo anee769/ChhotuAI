@@ -1,11 +1,6 @@
 {
   "aliases_learned": [
     {
-      "phrase": "chhota rod",
-      "sku_id": "TMT_8_FE500_TATA",
-      "confirmed_at": "2026-07-26"
-    },
-    {
       "phrase": "barah mm",
       "sku_id": "TMT_12_FE500D_TATA",
       "confirmed_at": "2026-07-26"
@@ -21,13 +16,63 @@
       "confirmed_at": "2026-07-26"
     },
     {
-      "phrase": "das mm saria",
-      "sku_id": "TMT_10_FE500D_TATA",
+      "phrase": "tiscon solah",
+      "sku_id": "TMT_16_FE500D_TATA",
       "confirmed_at": "2026-07-26"
     },
     {
-      "phrase": "jindal barah",
-      "sku_id": "TMT_12_FE500_JINDAL",
+      "phrase": "tata barah mm",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "tata solah mm",
+      "sku_id": "TMT_16_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "chhota sariya",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "mota sariya",
+      "sku_id": "TMT_16_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "patla rod",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "mota rod",
+      "sku_id": "TMT_16_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "12 wala",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "16 wala",
+      "sku_id": "TMT_16_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "das mm",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "sariya barah",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "sariya solah",
+      "sku_id": "TMT_16_FE500D_TATA",
       "confirmed_at": "2026-07-26"
     },
     {
@@ -36,13 +81,13 @@
       "confirmed_at": "2026-07-26"
     },
     {
-      "phrase": "acc chalis tetalis",
-      "sku_id": "CEM_ACC_OPC43",
+      "phrase": "ultratech opc",
+      "sku_id": "CEM_ULTRATECH_OPC53",
       "confirmed_at": "2026-07-26"
     },
     {
-      "phrase": "ambuja",
-      "sku_id": "CEM_AMBUJA_OPC53",
+      "phrase": "opc cement",
+      "sku_id": "CEM_ULTRATECH_OPC53",
       "confirmed_at": "2026-07-26"
     },
     {
@@ -51,77 +96,27 @@
       "confirmed_at": "2026-07-26"
     },
     {
-      "phrase": "ek inch pipe",
-      "sku_id": "PIPE_10_C3",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "aadha inch",
-      "sku_id": "PIPE_05_C3",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "do inch pipe",
-      "sku_id": "PIPE_2_C5",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "motta rod",
-      "sku_id": "TMT_20_FE500D_TATA",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "srmb barah",
-      "sku_id": "TMT_12_FE500D_SRMB",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "panther das",
-      "sku_id": "TMT_10_FE500_JINDAL",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "emulsion white",
-      "sku_id": "PAINT_AP_EMUL_W",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "enamel",
-      "sku_id": "PAINT_BRG_ENAMEL_W",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "elbow",
-      "sku_id": "FIT_ELBOW_1",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "coupler ek inch",
-      "sku_id": "FIT_COUP_1",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "tractor paint",
-      "sku_id": "PAINT_AP_TRACTOR",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "pauna inch pipe",
-      "sku_id": "PIPE_075_C3",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "chhabis mm",
-      "sku_id": "TMT_25_FE500D_TATA",
-      "confirmed_at": "2026-07-26"
-    },
-    {
-      "phrase": "tata das",
-      "sku_id": "TMT_10_FE500D_TATA",
+      "phrase": "ultratech ppc",
+      "sku_id": "CEM_ULTRATECH_PPC",
       "confirmed_at": "2026-07-26"
     },
     {
       "phrase": "cement ultratech",
+      "sku_id": "CEM_ULTRATECH_OPC53",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "teri cement",
+      "sku_id": "CEM_ULTRATECH_OPC53",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "safed cement",
+      "sku_id": "CEM_ULTRATECH_PPC",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "bori cement",
       "sku_id": "CEM_ULTRATECH_OPC53",
       "confirmed_at": "2026-07-26"
     }
@@ -152,16 +147,10 @@
       "count": 18
     },
     {
-      "family": "tmt",
-      "attribute": "grade",
-      "value": "Fe500",
-      "count": 7
-    },
-    {
-      "family": "pipe",
-      "attribute": "class",
-      "value": "Class 3",
-      "count": 11
+      "family": "cement",
+      "attribute": "type",
+      "value": "OPC 53",
+      "count": 15
     }
   ],
   "unit_priors": [
@@ -176,27 +165,25 @@
       "count": 26
     },
     {
-      "sku_id": "PIPE_10_C3",
-      "unit": "piece",
-      "count": 9
+      "sku_id": "TMT_16_FE500D_TATA",
+      "unit": "tonne",
+      "count": 8
     }
   ],
   "corrections": [
     {
-      "spoken": "chhota rod",
-      "chosen_sku": "TMT_8_FE500_TATA",
+      "spoken": "chhota sariya",
+      "chosen_sku": "TMT_12_FE500D_TATA",
       "rejected": [
-        "TMT_6_FE500_TATA",
-        "TMT_10_FE500D_TATA"
+        "TMT_16_FE500D_TATA"
       ],
       "ts": "2026-07-26"
     },
     {
-      "spoken": "motta rod",
-      "chosen_sku": "TMT_20_FE500D_TATA",
+      "spoken": "mota rod",
+      "chosen_sku": "TMT_16_FE500D_TATA",
       "rejected": [
-        "TMT_16_FE500D_TATA",
-        "TMT_25_FE500D_TATA"
+        "TMT_12_FE500D_TATA"
       ],
       "ts": "2026-07-26"
     }

@@ -306,12 +306,11 @@ def _stock_view(sku: dict, det: dict) -> dict:
     qty = det["qty"]
     prefix = "~" if det.get("estimated") else ""
     unit = det.get("unit", "")
-    # Negative derived stock = sold more than recorded -> a real signal, not a
-    # bug. Surface it honestly and prompt a stock-take rather than showing junk.
+    qs = f"{qty:g}"  # 8.0 -> "8", 4.2 -> "4.2"
     if qty < 0:
-        return {"display": f"0 {unit} — recorded se {prefix}{abs(qty)} zyada bika, gin lo",
+        return {"display": f"0 {unit} — recorded se {prefix}{abs(qty):g} zyada bika, gin lo",
                 "qty": qty, "uncounted": False, "oversold": True, "unit": unit}
-    return {"display": f'{prefix}{qty} {unit}',
+    return {"display": f'{prefix}{qs} {unit}',
             "qty": qty, "uncounted": False, "estimated": det.get("estimated"),
             "unit": unit}
 

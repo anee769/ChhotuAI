@@ -3,43 +3,43 @@
   "invoice_no": "SB/2026-27/0413",
   "invoice_date": "2026-07-24",
   "image": "sample_invoice.png",
-  "note": "Deterministic fallback used when SARVAM_API_KEY is absent or the Document Digitization job fails. GST is stripped; freight is prorated by value (spec Section 4).",
+  "note": "Deterministic fallback used when SARVAM_API_KEY is absent or the Document Digitization job fails. The 'aapki cost' per unit removes GST and adds a share of freight (spec Section 4).",
   "lines": [
     {
       "line_id": "L1",
-      "raw_text": "Tata Tiscon TMT Bar 12mm Fe500D  3.00 MT  @ 52000  1,56,000.00",
+      "raw_text": "Tata Tiscon TMT Bar 12mm Fe500D  3.00 MT  @ 57500  1,72,500.00",
       "product_phrase": "tata tiscon tmt 12mm fe500d",
       "qty": 3.0, "unit": "tonne",
-      "taxable_value": 156000.0, "gst_rate": 18,
+      "taxable_value": 172500.0, "gst_rate": 18,
       "certain": true,
       "bbox": [0.06, 0.28, 0.94, 0.34]
     },
     {
       "line_id": "L2",
-      "raw_text": "Tata Tiscon TMT Bar 16mm Fe500D  2.00 MT  @ 51000  1,02,000.00",
+      "raw_text": "Tata Tiscon TMT Bar 16mm Fe500D  2.00 MT  @ 56500  1,13,000.00",
       "product_phrase": "tata tiscon tmt 16mm fe500d",
       "qty": 2.0, "unit": "tonne",
-      "taxable_value": 102000.0, "gst_rate": 18,
+      "taxable_value": 113000.0, "gst_rate": 18,
       "certain": true,
       "bbox": [0.06, 0.35, 0.94, 0.41]
     },
     {
       "line_id": "L3",
-      "raw_text": "UltraTech OPC 53 Cement 50kg  100 Bags  @ 330  33,000.00",
+      "raw_text": "UltraTech OPC 53 Cement 50kg  100 Bags  @ 415  41,500.00",
       "product_phrase": "ultratech opc 53 cement",
       "qty": 100.0, "unit": "bori",
-      "taxable_value": 33000.0, "gst_rate": 28,
+      "taxable_value": 41500.0, "gst_rate": 28,
       "certain": true,
       "bbox": [0.06, 0.42, 0.94, 0.48]
     },
     {
       "line_id": "L4",
-      "raw_text": "Jindal Panther TMT 10mm Fe500D  2̶ 3 MT (handwritten)  @ 55000",
-      "product_phrase": "jindal panther tmt 10mm fe500d",
-      "qty": null, "unit": "tonne",
-      "taxable_value": 165000.0, "gst_rate": 18,
+      "raw_text": "UltraTech PPC Cement 50kg  8̶0 100 Bags (handwritten)  @ 390  39,000.00",
+      "product_phrase": "ultratech ppc cement",
+      "qty": null, "unit": "bori",
+      "taxable_value": 39000.0, "gst_rate": 28,
       "certain": false,
-      "handwritten_correction": {"struck": 2.0, "written": 3.0, "field": "qty"},
+      "handwritten_correction": {"struck": 80.0, "written": 100.0, "field": "qty"},
       "bbox": [0.06, 0.49, 0.94, 0.56]
     },
     {
@@ -54,10 +54,10 @@
     },
     {
       "line_id": "F1",
-      "raw_text": "Transport / Freight (LR No. 2291)  4,500.00",
+      "raw_text": "Transport / Freight (LR No. 2291)  6,500.00",
       "product_phrase": null,
       "is_freight": true,
-      "freight_value": 4500.0,
+      "freight_value": 6500.0,
       "certain": true,
       "bbox": [0.06, 0.66, 0.94, 0.71]
     }

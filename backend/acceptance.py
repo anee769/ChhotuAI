@@ -43,7 +43,7 @@ l1 = next(l for l in inv["lines"] if l.get("line_id") == "L1")
 check("L1 landed cost GST-stripped (< gross)", l1["landed_cost_per_unit"] < l1["gross_would_be"],
       f'landed {l1["landed_cost_per_unit"]} vs gross {l1["gross_would_be"]}')
 check("L1 landed ≈ (taxable+freight)/3000kg",
-      abs(l1["landed_cost_per_unit"] - (156000 + l1["prorated_freight"]) / 3000) < 0.5,
+      abs(l1["landed_cost_per_unit"] - (172500 + l1["prorated_freight"]) / 3000) < 0.5,
       f'{l1["landed_cost_per_unit"]}')
 check("uncertain row flagged (L5)", any(l.get("line_id") == "L5" and l.get("certain") is False for l in inv["lines"]))
 check("handwritten correction surfaced (L4)", any(l.get("handwritten_correction") for l in inv["lines"]))
@@ -79,11 +79,11 @@ check("bill returns a PDF", pdf[:4] == b"%PDF", f"{pdf[:8]}")
 
 # --- #8 sell UNCOUNTED sku: margin computed, stock flagged ---
 print("\n#8 Sell an UNCOUNTED SKU")
-UNC = "TMT_25_FE500D_SRMB"
+UNC = "CEM_ULTRATECH_PPC"
 before = next(x for x in call("/api/stock")["rows"] if x["sku_id"] == UNC)
 check("SKU is UNCOUNTED before", before["uncounted"] is True, before["display"])
 call("/api/commit", {"type": "sale", "occurred_on": st["today"], "precision": "exact",
-     "items": [{"sku_id": UNC, "qty": 0.5, "unit": "tonne", "payment": "cash", "spoken": "pachchis mm srmb aadha ton"}]})
+     "items": [{"sku_id": UNC, "qty": 20, "unit": "bori", "payment": "cash", "spoken": "ultratech ppc bees bori"}]})
 after = next(x for x in call("/api/stock")["rows"] if x["sku_id"] == UNC)
 check("still UNCOUNTED after sale (not 0/neg)", after["uncounted"] is True, after["display"])
 today = call("/api/today")
@@ -94,7 +94,7 @@ check("margin still computed for uncounted sale", bool(sold) and sold[0]["margin
 # --- #9 voice count -> opening_balance resolves to a number ---
 print("\n#9 Voice count establishes baseline")
 call("/api/commit", {"type": "opening_balance", "occurred_on": st["today"], "precision": "day",
-     "items": [{"sku_id": UNC, "qty": 3.0, "unit": "tonne", "count_precision": "estimated", "spoken": "pachchis mm srmb teen ton"}]})
+     "items": [{"sku_id": UNC, "qty": 40, "unit": "bori", "count_precision": "estimated", "spoken": "ultratech ppc chalis bori"}]})
 after2 = next(x for x in call("/api/stock")["rows"] if x["sku_id"] == UNC)
 check("resolves to a number after count", after2["uncounted"] is False, after2["display"])
 
@@ -117,7 +117,7 @@ r = call("/api/parse", {"text": "pichle hafte kuch cement gaya tha", "flow": "re
 check("vague triggers narrowing question", r["temporal"]["ask"] and r["temporal"]["vague"])
 today_before = call("/api/today")["margin"]
 call("/api/commit", {"type": "sale", "occurred_on": st["today"], "precision": "week", "source": "voice_recall",
-     "items": [{"sku_id": "CEM_ACC_OPC43", "qty": 10, "unit": "bori", "payment": "cash", "spoken": "pichle hafte cement"}]})
+     "items": [{"sku_id": "CEM_ULTRATECH_OPC53", "qty": 10, "unit": "bori", "payment": "cash", "spoken": "pichle hafte cement"}]})
 t = call("/api/today")
 check("week-precision excluded from today's margin", call("/api/today")["margin"] == today_before,
       f'margin unchanged {today_before}')

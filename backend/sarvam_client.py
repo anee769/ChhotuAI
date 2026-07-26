@@ -91,7 +91,8 @@ def _dump(name: str, payload: Any) -> None:
         pass  # debug dumping must never break a request
 
 
-def _request(method: str, path: str, *, files=None, data=None, json_body=None) -> dict:
+def _request(method: str, path: str, *, files=None, data=None, json_body=None,
+             timeout: int = None) -> dict:
     """Raw HTTP with retry + timeout. Returns parsed JSON dict."""
     if not API_KEY:
         raise SarvamError(
@@ -108,7 +109,7 @@ def _request(method: str, path: str, *, files=None, data=None, json_body=None) -
                 files=files,
                 data=data,
                 json=json_body,
-                timeout=TIMEOUT,
+                timeout=timeout or TIMEOUT,
             )
             if resp.status_code == 200:
                 out = resp.json()
@@ -188,12 +189,14 @@ def text_to_speech(text: str, language_code: str = "hi-IN",
 # Chat completions  (sarvam-30b, tool calling)
 # ---------------------------------------------------------------------------
 def chat(messages: list, tools: list = None, tool_choice: Any = None,
-         temperature: float = 0.1, model: str = None, max_tokens: int = 4000) -> dict:
+         temperature: float = 0.1, model: str = None, max_tokens: int = 4000,
+         reasoning_effort: str = None, timeout: int = 75) -> dict:
     """Raw OpenAI-compatible chat completion. Returns the full response dict.
 
     NOTE: sarvam-30b is a reasoning model — it emits `reasoning_content` and
     only then the final `content`. A small max_tokens truncates it mid-reasoning
     (finish_reason=length) leaving content=None, so keep this generous.
+    reasoning_effort='low' trims latency (still reasons, but less).
     """
     body: dict = {
         "model": model or CHAT_MODEL,
@@ -201,10 +204,12 @@ def chat(messages: list, tools: list = None, tool_choice: Any = None,
         "temperature": temperature,
         "max_tokens": max_tokens,
     }
+    if reasoning_effort:
+        body["reasoning_effort"] = reasoning_effort
     if tools:
         body["tools"] = tools
         body["tool_choice"] = tool_choice or "auto"
-    return _request("POST", "/v1/chat/completions", json_body=body)
+    return _request("POST", "/v1/chat/completions", json_body=body, timeout=timeout)
 
 
 def chat_message(resp: dict) -> dict:
@@ -212,12 +217,18 @@ def chat_message(resp: dict) -> dict:
     return resp["choices"][0]["message"]
 
 
-def chat_json(messages: list, temperature: float = 0.1) -> dict:
+def chat_json(messages: list, temperature: float = 0.1,
+              reasoning_effort: str = None, max_tokens: int = 4000) -> dict:
     """
     Ask the model for a single JSON object and parse it. Tolerant of code fences.
     Used by the matcher's semantic rerank and invoice line extraction.
+
+    NOTE: reasoning models spend tokens on `reasoning_content` BEFORE the final
+    JSON. If max_tokens is too small the response ends with finish_reason=length
+    and content=None. Callers that see complex inputs should pass a larger budget.
     """
-    resp = chat(messages, temperature=temperature)
+    resp = chat(messages, temperature=temperature, reasoning_effort=reasoning_effort,
+                max_tokens=max_tokens)
     msg = chat_message(resp)
     # reasoning models sometimes leave the JSON only in reasoning_content
     content = msg.get("content") or msg.get("reasoning_content") or ""

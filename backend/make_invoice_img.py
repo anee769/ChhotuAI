@@ -38,10 +38,10 @@ d.text((650, hy), "Rate", font=font(17, True), fill=(0, 0, 0))
 d.text((770, hy), "Amount", font=font(17, True), fill=(0, 0, 0))
 
 rows = [
-    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 MT", "52,000", "1,56,000.00", False),
-    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 MT", "51,000", "1,02,000.00", False),
-    ("UltraTech OPC 53 Cement 50kg", "100 Bags", "330", "33,000.00", False),
-    ("Jindal Panther TMT 10mm Fe500D", "@2 MT", "55,000", "1,65,000.00", "hand"),
+    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 MT", "57,500", "1,72,500.00", False),
+    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 MT", "56,500", "1,13,000.00", False),
+    ("UltraTech OPC 53 Cement 50kg", "100 Bags", "415", "41,500.00", False),
+    ("UltraTech PPC Cement 50kg", "80 Bags", "390", "39,000.00", "hand"),
     ("~~~~  ~~~~~~  (smudged)  ~~~~", "~~", "~~", "~~~~", "smudge"),
 ]
 y = int(0.27 * H)
@@ -49,10 +49,10 @@ step = int(0.07 * H)
 for desc, qty, rate, amt, flag in rows:
     d.text((55, y), desc, font=font(16), fill=(15, 15, 15))
     if flag == "hand":
-        # struck '2', handwritten '3' in margin (blue-ish)
+        # struck '80', handwritten '100' in margin (blue-ish)
         d.text((560, y), qty, font=font(16), fill=(15, 15, 15))
-        d.line([(566, y + 10), (582, y + 10)], fill=(200, 30, 30), width=2)  # strike
-        d.text((600, y - 6), "3", font=font(24, True), fill=(20, 40, 160))
+        d.line([(560, y + 10), (588, y + 10)], fill=(200, 30, 30), width=2)  # strike '80'
+        d.text((596, y - 8), "100", font=font(22, True), fill=(20, 40, 160))
         d.text((650, y), rate, font=font(16), fill=(15, 15, 15))
         d.text((770, y), amt, font=font(16), fill=(15, 15, 15))
     elif flag == "smudge":
@@ -68,14 +68,14 @@ for desc, qty, rate, amt, flag in rows:
 # freight line
 fy = int(0.66 * H)
 d.text((55, fy), "Transport / Freight (LR No. 2291)", font=font(16), fill=(15, 15, 15))
-d.text((770, fy), "4,500.00", font=font(16), fill=(15, 15, 15))
+d.text((770, fy), "6,500.00", font=font(16), fill=(15, 15, 15))
 d.line([(40, fy + 40), (W - 40, fy + 40)], fill=(90, 90, 90), width=1)
 d.text((560, fy + 55), "Sub Total (taxable):", font=font(16, True), fill=(0, 0, 0))
-d.text((770, fy + 55), "4,56,000.00", font=font(16, True), fill=(0, 0, 0))
+d.text((770, fy + 55), "3,66,000.00", font=font(16, True), fill=(0, 0, 0))
 d.text((560, fy + 80), "CGST+SGST/IGST:", font=font(15), fill=(0, 0, 0))
-d.text((770, fy + 80), "84,540.00", font=font(15), fill=(0, 0, 0))
+d.text((770, fy + 80), "73,930.00", font=font(15), fill=(0, 0, 0))
 d.text((560, fy + 108), "GRAND TOTAL:", font=font(18, True), fill=(120, 20, 20))
-d.text((770, fy + 108), "5,45,040.00", font=font(18, True), fill=(120, 20, 20))
+d.text((770, fy + 108), "4,46,430.00", font=font(18, True), fill=(120, 20, 20))
 
 # creases / noise
 for _ in range(3):

@@ -30,131 +30,45 @@ def piece_kg(d_mm: int) -> float:
 # Catalogue
 # ---------------------------------------------------------------------------
 def build_catalogue() -> list:
+    """A deliberately SMALL, clean catalogue: 2 families, 2 brands, a couple of
+    variants each — enough to show variant disambiguation, margin, udhaar,
+    frozen/uncounted capital and invoice landed-cost, but tidy on the dashboard.
+
+      1. Tata Tiscon TMT 12mm Fe500D   (sariya, the star SKU)
+      2. Tata Tiscon TMT 16mm Fe500D   (sariya, second size)
+      3. UltraTech OPC 53 Cement 50kg  (cement, counted + active)
+      4. UltraTech PPC Cement 50kg     (cement, kept UNCOUNTED in the demo)
+    """
     cat = []
 
-    # --- TMT bars: genuine variant explosion (~24 SKUs) ---
-    tmt_matrix = [
-        # (diameter, [grades], [brands])
-        (6,  ["Fe500"],          ["Tata Tiscon", "Jindal Panther"]),
-        (8,  ["Fe500", "Fe500D"], ["Tata Tiscon", "Jindal Panther", "SRMB"]),
-        (10, ["Fe500", "Fe500D"], ["Tata Tiscon", "Jindal Panther", "SRMB"]),
-        (12, ["Fe500", "Fe500D"], ["Tata Tiscon", "Jindal Panther", "SRMB"]),
-        (16, ["Fe500D"],          ["Tata Tiscon", "Jindal Panther", "SRMB"]),
-        (20, ["Fe500D"],          ["Tata Tiscon", "SRMB"]),
-        (25, ["Fe500D"],          ["Tata Tiscon", "SRMB"]),
-    ]
-    brand_code = {"Tata Tiscon": "TATA", "Jindal Panther": "JINDAL", "SRMB": "SRMB"}
-    base_cost = {6: 62, 8: 58, 10: 55, 12: 52, 16: 51, 20: 50, 25: 50}
-    for dia, grades, brands in tmt_matrix:
-        for grade in grades:
-            for brand in brands:
-                gcode = grade.replace("Fe", "FE")
-                sku_id = f"TMT_{dia}_{gcode}_{brand_code[brand]}"
-                cost = base_cost[dia] + (1.5 if grade == "Fe500D" else 0) + \
-                    ({"Tata Tiscon": 2, "Jindal Panther": 1, "SRMB": 0}[brand])
-                cat.append({
-                    "sku_id": sku_id,
-                    "canonical": f"{brand} TMT Bar {dia}mm {grade}",
-                    "family": "tmt",
-                    "attributes": {"diameter_mm": dia, "grade": grade, "brand": brand},
-                    "default_unit": "tonne",
-                    "units": {"kg": 1, "tonne": 1000, "piece": piece_kg(dia)},
-                    "gst_rate": 18,
-                    "opening_cost_per_kg": round(cost, 1),
-                    "aliases": ["saria", "sariya", "सरिया", "tmt bar", "rod", "tmt",
-                                f"{dia}mm rod", f"{dia} mm", brand.split()[0].lower(),
-                                brand_code[brand].lower()],
-                })
-
-    # --- Cement (~8) ---
-    cem = [
-        ("UltraTech", "OPC 53", 415), ("UltraTech", "PPC", 385),
-        ("ACC", "OPC 43", 372), ("ACC", "PPC", 360),
-        ("Ambuja", "OPC 53", 405), ("Ambuja", "PPC", 378),
-        ("JK", "OPC 43", 365), ("JK", "PPC", 352),
-    ]
-    for brand, typ, cost in cem:
-        bcode = brand.upper().replace(" ", "")
-        tcode = typ.replace(" ", "")
+    # --- TMT bars: one brand, one grade, two sizes ---
+    for dia, cost in [(12, 55.5), (16, 54.5)]:
         cat.append({
-            "sku_id": f"CEM_{bcode}_{tcode}",
-            "canonical": f"{brand} {typ} Cement 50kg",
+            "sku_id": f"TMT_{dia}_FE500D_TATA",
+            "canonical": f"Tata Tiscon TMT Bar {dia}mm Fe500D",
+            "family": "tmt",
+            "attributes": {"diameter_mm": dia, "grade": "Fe500D", "brand": "Tata Tiscon"},
+            "default_unit": "tonne",
+            "units": {"kg": 1, "tonne": 1000, "piece": piece_kg(dia)},
+            "gst_rate": 18,
+            "opening_cost_per_kg": cost,
+            "aliases": ["saria", "sariya", "सरिया", "tmt bar", "rod", "tmt",
+                        f"{dia}mm rod", f"{dia} mm", "tata", "tiscon"],
+        })
+
+    # --- Cement: one brand, two types ---
+    for typ, tcode, cost in [("OPC 53", "OPC53", 415), ("PPC", "PPC", 385)]:
+        cat.append({
+            "sku_id": f"CEM_ULTRATECH_{tcode}",
+            "canonical": f"UltraTech {typ} Cement 50kg",
             "family": "cement",
-            "attributes": {"brand": brand, "type": typ, "weight_kg": 50},
+            "attributes": {"brand": "UltraTech", "type": typ, "weight_kg": 50},
             "default_unit": "bori",
             "units": {"bori": 1, "tonne": 20, "kg": 0.02},
             "gst_rate": 28,
             "opening_cost_per_kg": cost,  # per bori (base unit)
-            "aliases": ["cement", "सीमेंट", "bori", "bag", brand.lower(),
-                        typ.lower(), f"{brand.lower()} cement"],
-        })
-
-    # --- PVC pipe (~8) ---
-    for size, sname in [(0.5, '½"'), (0.75, '¾"'), (1.0, '1"'),
-                        (1.5, '1.5"'), (2.0, '2"')]:
-        for cls, ccode, mult in [("Class 3", "C3", 1.0), ("Class 5", "C5", 1.35)]:
-            if size in (1.5, 2.0) and cls == "Class 3":
-                continue  # not every combo carried -> 8 SKUs
-            base = 90 + size * 180
-            cat.append({
-                "sku_id": f"PIPE_{str(size).replace('.', '')}_{ccode}",
-                "canonical": f'Supreme PVC Pipe {sname} {cls}',
-                "family": "pipe",
-                "attributes": {"size_inch": size, "class": cls},
-                "default_unit": "piece",
-                "units": {"piece": 1, "bundle": 10},
-                "gst_rate": 18,
-                "opening_cost_per_kg": round(base * mult, 1),  # per piece (base)
-                "aliases": ["pipe", "पाइप", "paip", "pvc", f'{sname} pipe',
-                            f"{size} inch pipe"],
-            })
-
-    # --- Fittings (~4) ---
-    for name, code, cost in [("Elbow 1\"", "ELBOW_1", 28), ("Tee 1\"", "TEE_1", 34),
-                             ("Coupler 1\"", "COUP_1", 18), ("Elbow 2\"", "ELBOW_2", 62)]:
-        cat.append({
-            "sku_id": f"FIT_{code}",
-            "canonical": f"PVC {name}",
-            "family": "fitting",
-            "attributes": {},
-            "default_unit": "piece",
-            "units": {"piece": 1, "box": 50},
-            "gst_rate": 18,
-            "opening_cost_per_kg": cost,
-            "aliases": ["fitting", name.lower(), "elbow", "tee", "coupler"],
-        })
-
-    # --- Fasteners (~2) ---
-    for name, code, cost in [("Anchor Bolt 10mm", "ANCHOR_10", 12),
-                             ("Wood Screw 2\"", "SCREW_2", 2)]:
-        cat.append({
-            "sku_id": f"FAST_{code}",
-            "canonical": name,
-            "family": "fastener",
-            "attributes": {},
-            "default_unit": "piece",
-            "units": {"piece": 1, "box": 100},
-            "gst_rate": 18,
-            "opening_cost_per_kg": cost,
-            "aliases": ["bolt", "screw", "kabza", name.lower()],
-        })
-
-    # --- Paint (~4) ---
-    for name, code, cost, unit in [
-        ("Asian Paints Apcolite Emulsion White", "AP_EMUL_W", 210, "litre"),
-        ("Asian Paints Tractor Emulsion", "AP_TRACTOR", 165, "litre"),
-        ("Berger Enamel Glossy White", "BRG_ENAMEL_W", 240, "litre"),
-        ("Berger Silk Luxury Emulsion", "BRG_SILK", 320, "litre")]:
-        cat.append({
-            "sku_id": f"PAINT_{code}",
-            "canonical": name,
-            "family": "paint",
-            "attributes": {},
-            "default_unit": "litre",
-            "units": {"litre": 1, "bucket": 20},
-            "gst_rate": 18,
-            "opening_cost_per_kg": cost,
-            "aliases": ["paint", "rang", name.lower().split()[0].lower()],
+            "aliases": ["cement", "सीमेंट", "bori", "bag", "ultratech",
+                        typ.lower(), "ultratech cement"],
         })
 
     return cat
@@ -182,91 +96,62 @@ def build_events(cat: list) -> list:
         events.append(kw)
 
     by_id = {s["sku_id"]: s for s in cat}
-    all_ids = [s["sku_id"] for s in cat]
 
-    # 8 SKUs left with NO baseline and NO activity -> UNCOUNTED in the demo.
-    uncounted = {"TMT_25_FE500D_SRMB", "FAST_ANCHOR_10", "FAST_SCREW_2",
-                 "FIT_ELBOW_2", "PAINT_BRG_SILK", "PIPE_20_C5",
-                 "CEM_JK_PPC", "FIT_COUP_1"}
+    TMT12, TMT16 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA"
+    OPC53, PPC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC"
 
-    counted = [i for i in all_ids if i not in uncounted]  # ~42 get a baseline
+    # UltraTech PPC is deliberately left UNCOUNTED (no baseline, no activity)
+    # so the demo shows a "abhi tak gina nahi" SKU.
+    counted = [TMT12, TMT16, OPC53]
 
-    # 12 counted SKUs with zero movement in 60 days -> frozen capital.
-    frozen = {"CEM_AMBUJA_PPC", "CEM_ACC_PPC", "PIPE_15_C5", "PIPE_10_C5",
-              "TMT_6_FE500_JINDAL", "TMT_20_FE500D_SRMB", "FIT_TEE_1",
-              "PAINT_BRG_ENAMEL_W", "TMT_16_FE500D_JINDAL", "PIPE_075_C5",
-              "CEM_JK_OPC43", "TMT_8_FE500_SRMB"}
-
-    # 1) opening_balance for ~42 counted SKUs at period start
-    for sid in counted:
-        sku = by_id[sid]
-        fam = sku["family"]
-        if fam == "tmt":
-            qty, unit, cp = round(random.uniform(1.5, 6.0), 1), "tonne", "estimated"
-        elif fam == "cement":
-            qty, unit, cp = random.randint(40, 220), "bori", "exact"
-        elif fam == "pipe":
-            qty, unit, cp = random.randint(20, 160), "piece", "exact"
-        else:
-            qty, unit, cp = random.randint(30, 300), sku["default_unit"], "exact"
+    # 1) opening_balance at period start for the 3 counted SKUs
+    opening = {TMT12: (15.0, "tonne", "estimated"),
+               TMT16: (10.0, "tonne", "estimated"),
+               OPC53: (400, "bori", "exact")}
+    for sid, (qty, unit, cp) in opening.items():
         add(type="opening_balance", sku_id=sid, qty=qty, unit=unit, rate=None,
             payment=None, occurred_on=d(PERIOD_START), precision="day",
             count_precision=cp, occurred_at=None, recorded_at=rec(PERIOD_START),
             confidence=0.9, source="voice_count",
             evidence={"transcript": f"opening stock {qty} {unit}"})
 
-    # 2) Steel price rise mid-period: early deliveries cheap, later dearer.
-    #    Deliveries carry landed cost (rate per base unit).
-    steel_targets = ["TMT_12_FE500D_TATA", "TMT_12_FE500_JINDAL",
-                     "TMT_10_FE500D_TATA", "TMT_16_FE500D_TATA"]
-    for sid in steel_targets:
-        sku = by_id[sid]
-        base = sku["opening_cost_per_kg"]
-        # early delivery ~base, late delivery +8% (the rise)
+    # 2) Steel price rise mid-period on the star SKU (12mm): early delivery
+    #    cheap, later delivery +8% -> powers the dashboard "steel rise" marker.
+    for sid in (TMT12, TMT16):
+        base = by_id[sid]["opening_cost_per_kg"]
         early = PERIOD_START + timedelta(days=6)
         late = PERIOD_START + timedelta(days=26)
-        add(type="delivery", sku_id=sid, qty=round(random.uniform(2, 5), 1),
-            unit="tonne", rate=round(base * 0.99, 1), payment="credit",
-            occurred_on=d(early), precision="day", count_precision=None,
-            occurred_at=None, recorded_at=rec(early), confidence=0.95,
-            source="invoice_photo", evidence={"transcript": "delivery received"})
-        add(type="delivery", sku_id=sid, qty=round(random.uniform(2, 5), 1),
-            unit="tonne", rate=round(base * 1.08, 1), payment="credit",
-            occurred_on=d(late), precision="day", count_precision=None,
-            occurred_at=None, recorded_at=rec(late), confidence=0.95,
-            source="invoice_photo",
+        add(type="delivery", sku_id=sid, qty=4.0, unit="tonne",
+            rate=round(base * 0.99, 1), payment="credit", occurred_on=d(early),
+            precision="day", count_precision=None, occurred_at=None,
+            recorded_at=rec(early), confidence=0.95, source="invoice_photo",
+            evidence={"transcript": "delivery received"})
+        add(type="delivery", sku_id=sid, qty=4.0, unit="tonne",
+            rate=round(base * 1.08, 1), payment="credit", occurred_on=d(late),
+            precision="day", count_precision=None, occurred_at=None,
+            recorded_at=rec(late), confidence=0.95, source="invoice_photo",
             evidence={"transcript": "delivery received (price up)"})
 
-    # cement + pipe deliveries (no dramatic rise)
-    for sid in ["CEM_ULTRATECH_OPC53", "CEM_ACC_OPC43", "PIPE_10_C3"]:
-        sku = by_id[sid]
-        dd = PERIOD_START + timedelta(days=random.randint(8, 20))
-        add(type="delivery", sku_id=sid, qty=random.randint(40, 120),
-            unit=sku["default_unit"], rate=sku["opening_cost_per_kg"],
-            payment="credit", occurred_on=d(dd), precision="day",
-            count_precision=None, occurred_at=None, recorded_at=rec(dd),
-            confidence=0.95, source="invoice_photo",
-            evidence={"transcript": "delivery"})
+    # cement delivery (no dramatic rise)
+    dd = PERIOD_START + timedelta(days=12)
+    add(type="delivery", sku_id=OPC53, qty=120, unit="bori",
+        rate=by_id[OPC53]["opening_cost_per_kg"], payment="credit",
+        occurred_on=d(dd), precision="day", count_precision=None,
+        occurred_at=None, recorded_at=rec(dd), confidence=0.95,
+        source="invoice_photo", evidence={"transcript": "delivery"})
 
-    # 3) Sales across the period (skip frozen + uncounted). cash/credit mix.
-    sellable = [i for i in counted if i not in frozen]
+    # 3) Sales across the period — cash/credit mix, healthy margin.
     for day_off in range(2, 42):
         dt = PERIOD_START + timedelta(days=day_off)
-        for _ in range(random.randint(1, 4)):
-            sid = random.choice(sellable)
+        for _ in range(random.randint(1, 2)):
+            sid = random.choice(counted)
             sku = by_id[sid]
-            fam = sku["family"]
             cost = sku["opening_cost_per_kg"]
-            # sale rate = cost * healthy margin
-            markup = random.uniform(1.05, 1.18)
-            if fam == "tmt":
-                qty, unit = round(random.uniform(0.2, 1.5), 1), "tonne"
-            elif fam == "cement":
-                qty, unit = random.randint(5, 40), "bori"
-            elif fam == "pipe":
-                qty, unit = random.randint(2, 20), "piece"
+            markup = random.uniform(1.06, 1.16)
+            if sku["family"] == "tmt":
+                qty, unit = round(random.uniform(0.2, 0.8), 1), "tonne"
             else:
-                qty, unit = random.randint(2, 15), sku["default_unit"]
+                qty, unit = random.randint(5, 20), "bori"
             pay = "credit" if random.random() < 0.4 else "cash"
             add(type="sale", sku_id=sid, qty=qty, unit=unit,
                 rate=round(cost * markup, 1), payment=pay, occurred_on=d(dt),
@@ -277,38 +162,34 @@ def build_events(cat: list) -> list:
 
     # 4) TODAY's sales so the Today tab shows live numbers (cash + credit)
     today_sales = [
-        ("TMT_12_FE500D_TATA", 1.5, "tonne", "cash"),
-        ("CEM_ULTRATECH_OPC53", 30, "bori", "cash"),
-        ("TMT_16_FE500D_TATA", 0.8, "tonne", "credit"),
-        ("PIPE_10_C3", 12, "piece", "credit"),
+        (TMT12, 1.5, "tonne", "cash"),
+        (OPC53, 30, "bori", "cash"),
+        (TMT16, 0.8, "tonne", "credit"),
     ]
     for sid, qty, unit, pay in today_sales:
-        sku = by_id[sid]
-        cost = sku["opening_cost_per_kg"]
+        cost = by_id[sid]["opening_cost_per_kg"]
         add(type="sale", sku_id=sid, qty=qty, unit=unit,
             rate=round(cost * 1.12, 1), payment=pay, occurred_on=d(TODAY),
             precision="exact", count_precision=None,
             occurred_at=TODAY.isoformat() + "T11:00:00", recorded_at=rec(TODAY),
             confidence=0.9, source="voice_live",
-            evidence={"transcript": f"{qty} {unit} {sku['canonical']}"})
+            evidence={"transcript": f"{qty} {unit} {by_id[sid]['canonical']}"})
 
     # a week-precision entry -> "plus N purani entries", excluded from today
-    add(type="sale", sku_id="CEM_ACC_OPC43", qty=15, unit="bori",
-        rate=by_id["CEM_ACC_OPC43"]["opening_cost_per_kg"] * 1.1, payment="cash",
+    add(type="sale", sku_id=OPC53, qty=15, unit="bori",
+        rate=round(by_id[OPC53]["opening_cost_per_kg"] * 1.1, 1), payment="cash",
         occurred_on=d(TODAY - timedelta(days=3)), precision="week",
         count_precision=None, occurred_at=None, recorded_at=rec(TODAY),
         confidence=0.6, source="voice_recall",
         evidence={"transcript": "pichle hafte kuch cement gaya tha"})
 
     # 5) one stock_take that DISAGREES with derived stock (reconciliation delta)
-    #    Pick a counted, actively-sold SKU.
-    st_sku = "CEM_ULTRATECH_OPC53"
-    add(type="stock_take", sku_id=st_sku, qty=38, unit="bori", rate=None,
+    add(type="stock_take", sku_id=OPC53, qty=38, unit="bori", rate=None,
         payment=None, occurred_on=d(TODAY - timedelta(days=1)), precision="day",
         count_precision="exact", occurred_at=None,
         recorded_at=rec(TODAY - timedelta(days=1)), confidence=0.92,
         source="voice_count",
-        evidence={"transcript": "aaj gina to 48 bori nikla"})
+        evidence={"transcript": "aaj gina to 38 bori nikla"})
 
     return events
 
@@ -323,39 +204,35 @@ def learning_day1() -> dict:
 
 def learning_day60() -> dict:
     now = TODAY.isoformat()
+    T12, T16 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA"
+    OPC, PPC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC"
     aliases = [
-        ("chhota rod", "TMT_8_FE500_TATA"), ("barah mm", "TMT_12_FE500D_TATA"),
-        ("solah mm", "TMT_16_FE500D_TATA"), ("tiscon barah", "TMT_12_FE500D_TATA"),
-        ("das mm saria", "TMT_10_FE500D_TATA"), ("jindal barah", "TMT_12_FE500_JINDAL"),
-        ("ultratech 53", "CEM_ULTRATECH_OPC53"), ("acc chalis tetalis", "CEM_ACC_OPC43"),
-        ("ambuja", "CEM_AMBUJA_OPC53"), ("ppc cement", "CEM_ULTRATECH_PPC"),
-        ("ek inch pipe", "PIPE_10_C3"), ("aadha inch", "PIPE_05_C3"),
-        ("do inch pipe", "PIPE_2_C5"), ("motta rod", "TMT_20_FE500D_TATA"),
-        ("srmb barah", "TMT_12_FE500D_SRMB"), ("panther das", "TMT_10_FE500_JINDAL"),
-        ("emulsion white", "PAINT_AP_EMUL_W"), ("enamel", "PAINT_BRG_ENAMEL_W"),
-        ("elbow", "FIT_ELBOW_1"), ("coupler ek inch", "FIT_COUP_1"),
-        ("tractor paint", "PAINT_AP_TRACTOR"), ("pauna inch pipe", "PIPE_075_C3"),
-        ("chhabis mm", "TMT_25_FE500D_TATA"), ("tata das", "TMT_10_FE500D_TATA"),
-        ("cement ultratech", "CEM_ULTRATECH_OPC53"),
+        ("barah mm", T12), ("solah mm", T16), ("tiscon barah", T12),
+        ("tiscon solah", T16), ("tata barah mm", T12), ("tata solah mm", T16),
+        ("chhota sariya", T12), ("mota sariya", T16), ("patla rod", T12),
+        ("mota rod", T16), ("12 wala", T12), ("16 wala", T16),
+        ("das mm", T12), ("sariya barah", T12), ("sariya solah", T16),
+        ("ultratech 53", OPC), ("ultratech opc", OPC), ("opc cement", OPC),
+        ("ppc cement", PPC), ("ultratech ppc", PPC), ("cement ultratech", OPC),
+        ("teri cement", OPC), ("safed cement", PPC), ("bori cement", OPC),
     ]
     priors = [
         {"family": "tmt", "attribute": "diameter_mm", "value": 12, "count": 19},
         {"family": "tmt", "attribute": "grade", "value": "Fe500D", "count": 31},
         {"family": "tmt", "attribute": "brand", "value": "Tata Tiscon", "count": 22},
         {"family": "cement", "attribute": "brand", "value": "UltraTech", "count": 18},
-        {"family": "tmt", "attribute": "grade", "value": "Fe500", "count": 7},
-        {"family": "pipe", "attribute": "class", "value": "Class 3", "count": 11},
+        {"family": "cement", "attribute": "type", "value": "OPC 53", "count": 15},
     ]
     unit_priors = [
-        {"sku_id": "TMT_12_FE500D_TATA", "unit": "tonne", "count": 14},
-        {"sku_id": "CEM_ULTRATECH_OPC53", "unit": "bori", "count": 26},
-        {"sku_id": "PIPE_10_C3", "unit": "piece", "count": 9},
+        {"sku_id": T12, "unit": "tonne", "count": 14},
+        {"sku_id": OPC, "unit": "bori", "count": 26},
+        {"sku_id": T16, "unit": "tonne", "count": 8},
     ]
     corrections = [
-        {"spoken": "chhota rod", "chosen_sku": "TMT_8_FE500_TATA",
-         "rejected": ["TMT_6_FE500_TATA", "TMT_10_FE500D_TATA"], "ts": now},
-        {"spoken": "motta rod", "chosen_sku": "TMT_20_FE500D_TATA",
-         "rejected": ["TMT_16_FE500D_TATA", "TMT_25_FE500D_TATA"], "ts": now},
+        {"spoken": "chhota sariya", "chosen_sku": T12,
+         "rejected": [T16], "ts": now},
+        {"spoken": "mota rod", "chosen_sku": T16,
+         "rejected": [T12], "ts": now},
     ]
     return {
         "aliases_learned": [{"phrase": p, "sku_id": s, "confirmed_at": now}

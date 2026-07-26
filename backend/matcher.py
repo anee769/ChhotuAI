@@ -93,6 +93,17 @@ def extract_attrs(phrase: str) -> dict:
         if re.search(rf"\b{hint}\b", p):
             attrs["brand"] = brand
             break
+    # cement type
+    if re.search(r"opc\s*53|53\s*grade", p):
+        attrs["type"] = "OPC 53"
+    elif re.search(r"opc\s*43|43\s*grade", p):
+        attrs["type"] = "OPC 43"
+    elif re.search(r"\bppc\b", p):
+        attrs["type"] = "PPC"
+    # pipe class
+    mc = re.search(r"class\s*(\d)", p)
+    if mc:
+        attrs["class"] = f"Class {mc.group(1)}"
     # pipe size
     m = re.search(r'(\d(?:\.\d)?)\s*(?:inch|")', p)
     if m:
