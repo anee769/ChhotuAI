@@ -17,7 +17,12 @@ def accounts(repo) -> list:
     out = []
     for cid, customer in customers.items():
         recs = sorted(recs_by.get(cid, []), key=lambda r: (r["deadline"], r["created_at"]))
-        paid_pool = sum(float(p["amount"]) for p in pays_by.get(cid, []))
+        customer_payments = sorted(
+            pays_by.get(cid, []),
+            key=lambda p: (p.get("paid_on", ""), p.get("created_at", "")),
+            reverse=True,
+        )
+        paid_pool = sum(float(p["amount"]) for p in customer_payments)
         open_dues = []
         total_credit = 0.0
         for r in recs:
@@ -37,7 +42,9 @@ def accounts(repo) -> list:
             "outstanding": outstanding,
             "next_deadline": open_dues[0]["deadline"] if open_dues else None,
             "open_dues": open_dues,
-            "payment_count": len(pays_by.get(cid, [])),
+            "payment_count": len(customer_payments),
+            # Keep every receipt as its own immutable row. Totals remain derived.
+            "payments": customer_payments,
         })
     return sorted(out, key=lambda x: (-x["outstanding"], x.get("name", "")))
 

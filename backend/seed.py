@@ -332,7 +332,6 @@ def main():
     dump("customers.json", build_customers())
     dump("receivables.json", build_receivables())
     dump("payments.json", build_payments())
-    dump("notifications.json", [])
     print(f"catalogue: {len(cat)} SKUs")
     print(f"events:    {len(events)}")
     print("learning:  day1 (empty) + day60 (~25 aliases) written")

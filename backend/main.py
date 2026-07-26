@@ -13,7 +13,6 @@ import json
 import os
 import re
 import sys
-import asyncio
 from datetime import date, datetime
 from pathlib import Path
 
@@ -28,7 +27,6 @@ import ledger as L
 import learning as LEARN
 import nlp
 import crm
-import notifications as NOTIFY
 from repo import JsonRepo
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -294,9 +292,10 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
             "evidence": {"transcript": it.get("spoken", "")},
         }
         eid = repo.append_event(ev)
-        # rate is quoted per the spoken unit (e.g. ₹/tonne) — amount = rate * qty
-        # in that SAME unit, not the base unit (was multiplying ₹/tonne by kg).
-        amount = float(rate) * float(it["qty"]) if rate is not None else 0
+        # Rates are stored per catalogue base unit (₹/kg for TMT, ₹/bori for
+        # cement), matching margin and invoice calculations.
+        base_qty = L.to_base(float(it["qty"]), it.get("unit", sku["default_unit"]), sku)
+        amount = float(rate) * base_qty if rate is not None else 0
         committed.append({"event_id": eid, "sku_id": sku_id, "rate": rate,
                           "rate_assumed": rate_assumed, "amount": round(amount, 2)})
     events = repo.all_events()
@@ -308,7 +307,7 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
 
 
 # ---------------------------------------------------------------------------
-# Customers / credit / payments / reminders
+# Customers / credit / payments
 # ---------------------------------------------------------------------------
 @app.get("/api/customers")
 def customers():
@@ -342,30 +341,6 @@ def record_payment(customer_id: str, payload: dict = Body(...)):
         payload.get("note", ""),
     )
     return {"payment": row, "account": crm.account(repo, customer_id)}
-
-
-@app.get("/api/notifications")
-def notification_log():
-    return {"notifications": repo.notifications()}
-
-
-@app.post("/api/reminders/run")
-def run_reminders():
-    return NOTIFY.run_due_reminders(repo, TODAY)
-
-
-async def _reminder_loop():
-    while True:
-        try:
-            NOTIFY.run_due_reminders(repo, TODAY)
-        except Exception as e:
-            print("reminder check failed:", repr(e)[:200])
-        await asyncio.sleep(3600)
-
-
-@app.on_event("startup")
-async def start_reminder_worker():
-    asyncio.create_task(_reminder_loop())
 
 
 def _stock_view(sku: dict, det: dict) -> dict:
@@ -442,7 +417,8 @@ def today():
 @app.get("/api/today/tts")
 def today_tts():
     m = _today_summary()
-    text = (f"Aaj ka margin abhi tak {int(m['margin'])} rupaye. "
+    text = (f"Aaj ki total sale {int(m['total'])} rupaye. "
+            f"Margin abhi tak {int(m['margin'])} rupaye. "
             f"Cash aaya {int(m['cash'])} rupaye. "
             f"Udhaar gaya {int(m['credit'])} rupaye.")
     if m["provisional_extra"]:
@@ -741,6 +717,9 @@ def bill(payload: dict = Body(...)):
     from reportlab.lib.units import mm
 
     items = payload.get("items", [])  # [{sku_id, qty, unit, rate, payment}]
+    customer = payload.get("customer") or {}
+    if customer.get("customer_id") and not customer.get("name"):
+        customer = repo.customer(customer["customer_id"]) or customer
     catalogue_by = by_id()
     buf = io.BytesIO()
     c = canvas.Canvas(buf, pagesize=A5)
@@ -752,6 +731,13 @@ def bill(payload: dict = Body(...)):
     y -= 6 * mm
     c.drawString(15 * mm, y, "Tax Invoice (GST)")
     c.drawRightString(w - 15 * mm, y, f"Date: {TODAY.isoformat()}")
+    if customer.get("name") or customer.get("phone"):
+        y -= 5 * mm
+        c.setFont("Helvetica-Bold", 8)
+        c.drawString(15 * mm, y, f"Customer: {customer.get('name') or 'Unnamed'}")
+        c.setFont("Helvetica", 8)
+        c.drawRightString(w - 15 * mm, y,
+                          f"Contact: {customer.get('phone') or '-'}")
     y -= 4 * mm
     c.line(15 * mm, y, w - 15 * mm, y)
     y -= 6 * mm

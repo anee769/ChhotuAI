@@ -32,6 +32,7 @@ import re
 from datetime import date, timedelta
 
 import matcher as M
+import nlp
 import sarvam_client
 
 TODAY = date(2026, 7, 26)
@@ -63,11 +64,11 @@ def parse_deadline(text: str):
                         int(dm.group(1))).isoformat()
         except ValueError:
             return None
-    if re.search(r"agle hafte|next week|ek hafta", t):
+    if re.search(r"agle hafte|next week|ek hafta|अगले हफ्ते|एक हफ्ता", t):
         return (TODAY + timedelta(days=7)).isoformat()
-    if re.search(r"kal|tomorrow", t):
+    if re.search(r"kal|tomorrow|कल", t):
         return (TODAY + timedelta(days=1)).isoformat()
-    m = re.search(r"(\d+)\s*(din|day)", t)
+    m = re.search(r"(\d+)\s*(din|day|दिन)", t)
     if m:
         return (TODAY + timedelta(days=int(m.group(1)))).isoformat()
     return None
@@ -133,8 +134,8 @@ _VALID_INTENTS = {"sale", "delivery", "count", "stock_query", "analytics_query",
 # LLM has been observed to miss an explicit "udhaar mein becha" and ask "cash
 # ya udhaar?" again. Detect it deterministically from the transcript instead
 # of trusting the extractor's json field, same reasoning as _quick_route().
-_CREDIT_RE = re.compile(r"udhaar|udhar|credit|baaki|khaate")
-_CASH_RE = re.compile(r"\bcash\b|nagad")
+_CREDIT_RE = re.compile(r"udhaar|udhar|credit|baaki|khaate|उधार|बाकी|खाते")
+_CASH_RE = re.compile(r"\bcash\b|nagad|कैश|नकद")
 
 
 def _detect_payment(text: str):
@@ -148,17 +149,17 @@ def _detect_payment(text: str):
 
 def _extract(state, repo) -> dict:
     joined = " . ".join(s for s in state["said"] if s)
-    messages = [{"role": "system", "content": _extract_prompt(repo)},
-                {"role": "user", "content": joined}]
+    history = state.get("history") or [{"role": "user", "content": joined}]
+    messages = [{"role": "system", "content": _extract_prompt(repo)}, *history]
     out = {}
-    for _ in range(2):
-        try:
-            out = sarvam_client.chat_json(messages, temperature=0.1,
-                                          reasoning_effort=_EFFORT, max_tokens=4096)
-        except Exception:
-            out = {}
-        if isinstance(out, dict) and "items" in out:
-            break
+    try:
+        out = sarvam_client.chat_json(messages, temperature=0.1,
+                                      reasoning_effort=_EFFORT, max_tokens=1200,
+                                      timeout=18)
+    except Exception:
+        out = {}
+    if not isinstance(out, dict) or "items" not in out:
+        return _fallback_extract(joined, repo)
     if not isinstance(out, dict):
         out = {}
     payment = _detect_payment(joined)
@@ -170,10 +171,19 @@ def _extract(state, repo) -> dict:
         unit = (r.get("unit") or "").strip().lower() or None
         if unit:
             unit = M.UNIT_WORDS.get(unit, unit)
+        name = r.get("name") or ""
+        name_l = name.lower()
+        stocked_family = ("cement" if re.search(r"cement|सीमेंट", name_l)
+                          else "tmt" if re.search(r"sari?ya|sariya|सरिया|tmt", name_l)
+                          else None)
+        # A generic stocked family is ambiguous, not "out of catalogue".
+        # This prevents "50 bori cement" being rejected before we can ask OPC/PPC.
+        if stocked_family:
+            fam = fam or stocked_family
         items.append({
             "sku_id": r.get("sku_id") if _valid_sku(r.get("sku_id"), repo) else None,
-            "family": fam, "name": r.get("name") or "",
-            "in_catalogue": r.get("in_catalogue", True),
+            "family": fam, "name": name,
+            "in_catalogue": True if stocked_family else r.get("in_catalogue", True),
             "qty": r.get("qty") if isinstance(r.get("qty"), (int, float)) else None,
             "unit": unit,
             "rate": r.get("rate") if isinstance(r.get("rate"), (int, float)) else None,
@@ -183,6 +193,37 @@ def _extract(state, repo) -> dict:
     raw_intent = out.get("intent")
     intent = raw_intent if raw_intent in _VALID_INTENTS else "unknown"
     return {"intent": intent, "metric": out.get("metric"), "items": items}
+
+
+def _fallback_extract(text: str, repo) -> dict:
+    """Fast local fallback when the model times out or returns malformed JSON."""
+    t = (text or "").lower()
+    if re.search(r"kharida|khareeda|mangwaya|delivery|aaya|liya|खरीदा|मंगवाया|आया|लिया", t):
+        intent = "delivery"
+    elif re.search(r"becha|bech|bika|diya|sale|बेचा|बिका|दिया", t):
+        intent = "sale"
+    elif re.search(r"gina|count|opening|गिना", t):
+        intent = "count"
+    else:
+        intent = "unknown"
+    payment = _detect_payment(t)
+    items = []
+    for row in nlp.parse_sale_utterance(t):
+        phrase = row.get("product_phrase") or ""
+        match = M.match(phrase, repo.load_catalogue(), repo.load_learning(),
+                        "live_sale" if intent == "sale" else intent)
+        sid = match.get("sku_id") if match.get("status") == "matched" else None
+        sku = repo.sku(sid) if sid else None
+        family = (sku or {}).get("family")
+        if not family:
+            family = "cement" if re.search(r"cement|सीमेंट", phrase) else \
+                ("tmt" if re.search(r"sari?ya|sariya|सरिया|tmt", phrase) else None)
+        items.append({
+            "sku_id": sid, "family": family, "name": phrase,
+            "in_catalogue": bool(family or sid), "qty": row.get("qty"),
+            "unit": row.get("unit"), "rate": None, "payment": payment,
+        })
+    return {"intent": intent, "metric": None, "items": items}
 
 
 def _valid_sku(sid, repo) -> bool:
@@ -230,24 +271,39 @@ def converse(state, user_text, flow, repo):
         return _reply("Voice ke liye Sarvam API key chahiye.", listen=False, done=True)
 
     if not state or "said" not in state:
-        state = {"flow": flow, "said": []}
+        state = {"flow": flow, "said": [], "history": []}
 
-    # Customer phone/name/deadline are deterministic data-entry slots (udhaar
-    # sales only) — handled directly, not via the LLM extractor, and kept out
-    # of state["said"] so they don't confuse product understanding.
+    state.setdefault("history", [])
+
+    # Follow-up slots are applied to the structured draft already extracted on
+    # the first turn. This preserves the complete order and avoids another
+    # 30-second model call for simple answers such as "12 mm", "50", or "cash".
     aw = state.get("awaiting")
     if aw in ("customer_phone", "customer_name", "deadline"):
+        state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_customer_slot(state, aw, user_text, repo)
+    if aw == "confirmation":
+        state["history"].append({"role": "user", "content": user_text or ""})
+        if re.search(r"confirm|haan|ha|yes|theek|ठीक|हाँ", (user_text or "").lower()):
+            state["awaiting"] = None
+            pc = state.pop("pending_commit")
+            return _commit(state, pc["flow"], pc["items"], pc["skipped"], repo)
+        return _prepare_confirmation(state, repo)
+    if state.get("awaiting_order"):
+        state["history"].append({"role": "user", "content": user_text or ""})
+        return _apply_order_slot(state, user_text, repo)
 
     if (not flow or flow == "auto") and not state.get("locked_intent"):
         quick = _quick_route(user_text)
         if quick == ("stock", None):
             state["said"].append(user_text or "")
+            state["history"].append({"role": "user", "content": user_text or ""})
             return _stock_flow(state, _extract(state, repo)["items"], repo)
         if quick and quick[0] == "analytics":
             return _analytics_answer(quick[1], repo)
 
     state["said"].append(user_text or "")
+    state["history"].append({"role": "user", "content": user_text or ""})
 
     ext = _extract(state, repo)
     intent = ext["intent"]
@@ -270,6 +326,7 @@ def converse(state, user_text, flow, repo):
     if intent == "unknown" and not ext["items"]:
         return _say(state, "Ye samajh nahi aaya — sirf sariya aur cement rakhte hain. "
                     "Kya chahiye?", listen=True, done=False)
+    state["draft_items"] = ext["items"]
     return _order_flow(state, intent, ext["items"], repo)
 
 
@@ -285,12 +342,110 @@ def _ask_product(item):
     return "Kaunsa maal — sariya ya cement? Thoda detail se boliye."
 
 
+def _ask_order_slot(state, item_index, slot, text):
+    state["awaiting_order"] = {"item_index": item_index, "slot": slot}
+    return _say(state, text, listen=True, done=False)
+
+
+def _answer_number(text):
+    value, _ = nlp._find_qty((text or "").lower())
+    if value is not None:
+        return float(value)
+    m = re.search(r"-?\d+(?:\.\d+)?", text or "")
+    if m:
+        return float(m.group(0))
+    hindi = {
+        "एक": 1, "दो": 2, "तीन": 3, "चार": 4, "पांच": 5, "छह": 6,
+        "सात": 7, "आठ": 8, "नौ": 9, "दस": 10, "बारह": 12,
+        "सोलह": 16, "बीस": 20, "पच्चीस": 25, "तीस": 30,
+        "चालीस": 40, "पचास": 50, "साठ": 60, "सौ": 100,
+    }
+    for word, number in hindi.items():
+        if word in (text or ""):
+            return float(number)
+    return None
+
+
+def _sku_from_answer(text, family, repo):
+    t = (text or "").lower()
+    direct = None
+    if family == "tmt" or re.search(r"sari?ya|sariya|tmt|सरिया", t):
+        if re.search(r"\b12\b|barah|बारह", t):
+            direct = "TMT_12_FE500D_TATA"
+        elif re.search(r"\b16\b|solah|सोलह", t):
+            direct = "TMT_16_FE500D_TATA"
+        elif re.search(r"\b20\b|bees|बीस", t):
+            direct = "TMT_20_FE500D_TATA"
+    if family == "cement" or re.search(r"cement|सीमेंट", t):
+        if re.search(r"opc|53|ओपीसी", t):
+            direct = "CEM_ULTRATECH_OPC53"
+        elif re.search(r"\bppc\b|पीपीसी", t):
+            direct = "CEM_ULTRATECH_PPC"
+        elif re.search(r"\bpsc\b|पीएससी", t):
+            direct = "CEM_ULTRATECH_PSC"
+    if direct and repo.sku(direct):
+        return direct
+    match = M.match(text or "", repo.load_catalogue(), repo.load_learning(), "live_sale")
+    return match.get("sku_id") if match.get("status") == "matched" else None
+
+
+def _apply_order_slot(state, user_text, repo):
+    waiting = state.pop("awaiting_order")
+    items = state.get("draft_items") or []
+    idx = int(waiting.get("item_index", 0))
+    slot = waiting.get("slot")
+    if idx >= len(items):
+        return _say(state, "Order ka context kho gaya — poori entry ek baar phir boliye.",
+                    listen=True, done=False)
+    item = items[idx]
+    if slot == "product":
+        sid = _sku_from_answer(user_text, item.get("family"), repo)
+        if not sid:
+            return _ask_order_slot(state, idx, slot, _ask_product(item))
+        item["sku_id"] = sid
+        item["family"] = repo.sku(sid).get("family")
+    elif slot == "qty":
+        qty = _answer_number(user_text)
+        if qty is None or qty <= 0:
+            return _ask_order_slot(state, idx, slot, "Quantity samajh nahi aayi — kitna?")
+        item["qty"] = qty
+        unit = nlp._find_unit((user_text or "").lower())
+        if unit:
+            item["unit"] = unit
+    elif slot == "rate":
+        rate = _answer_number(user_text)
+        if rate is None or rate <= 0:
+            return _ask_order_slot(state, idx, slot, "Rate number mein bataiye.")
+        item["rate"] = rate
+    elif slot == "payment":
+        payment = _detect_payment(user_text)
+        if not payment:
+            return _ask_order_slot(state, idx, slot, "Payment cash hai ya udhaar?")
+        for row in items:
+            if not row.get("payment"):
+                row["payment"] = payment
+    elif slot == "intent":
+        t = (user_text or "").lower()
+        if re.search(r"kharida|khareeda|liya|aaya|delivery|खरीदा|लिया|आया", t):
+            state["locked_intent"] = "delivery"
+        elif re.search(r"becha|bech|bika|diya|sale|बेचा|बिका|दिया", t):
+            state["locked_intent"] = "sale"
+        else:
+            return _ask_order_slot(state, idx, slot, "Ye maal becha tha ya khareeda?")
+    state["draft_items"] = items
+    return _order_flow(state, state.get("locked_intent") or state.get("flow"),
+                       items, repo)
+
+
 def _order_flow(state, intent, items, repo):
     if intent not in ("sale", "delivery", "count"):
         # Never guess bought-vs-sold when the extractor couldn't classify it —
         # writing the wrong direction silently corrupts stock.
-        return _say(state, "Ye maal aapne becha ya khareeda?", listen=True, done=False)
+        state["draft_items"] = items
+        return _ask_order_slot(state, 0, "intent",
+                               "Ye maal aapne becha ya khareeda?")
     flow = intent  # sale | delivery | count
+    state["locked_intent"] = flow
     # drop products the shop does not stock, but tell the owner once
     kept = []
     skipped = []
@@ -304,33 +459,39 @@ def _order_flow(state, intent, items, repo):
         return _say(state, f"{nm} hum nahi rakhte — sirf sariya aur cement hai. "
                     "Kuch aur?", listen=True, done=False)
 
-    for it in kept:
-        # 1) which product
+    state["draft_items"] = kept
+    # Resolve product identity and quantity for every line first.
+    for idx, it in enumerate(kept):
         if not it.get("sku_id"):
-            return _say(state, _ask_product(it), listen=True, done=False)
+            return _ask_order_slot(state, idx, "product", _ask_product(it))
         sku = repo.sku(it["sku_id"])
-        # 2) quantity
         if it.get("qty") in (None, ""):
-            return _say(state, f"{sku['canonical']} — kitna?", listen=True, done=False)
-        # 3) unit sanity
+            return _ask_order_slot(state, idx, "qty",
+                                   f"{sku['canonical']} — kitna?")
         if not it.get("unit") or it["unit"] not in sku.get("units", {}):
             it["unit"] = sku.get("default_unit")
-        # 4) rate (sale AND delivery)
+
+    # Then collect each line's rate. Payment belongs to the whole sale and is
+    # deliberately asked only once after all line items are complete.
+    for idx, it in enumerate(kept):
+        sku = repo.sku(it["sku_id"])
         if flow in ("sale", "delivery") and it.get("rate") is None:
             per = it["unit"]
             q = (f"{sku['canonical']} kitne mein aaya, per {per}?" if flow == "delivery"
                  else f"{sku['canonical']} ka rate kya laga, per {per}?")
-            return _say(state, q, listen=True, done=False)
-        # 5) payment (sale only)
-        if flow == "sale" and not it.get("payment"):
-            return _say(state, f"{sku['canonical']} — cash ya udhaar?",
-                        listen=True, done=False)
+            return _ask_order_slot(state, idx, "rate", q)
 
-    if flow == "sale" and any(it.get("payment") == "credit" for it in kept):
+    if flow == "sale" and any(not it.get("payment") for it in kept):
+        first_missing = next(i for i, it in enumerate(kept) if not it.get("payment"))
+        return _ask_order_slot(state, first_missing, "payment",
+                               "Is poori sale ka payment cash hai ya udhaar?")
+
+    if flow == "sale":
         state["pending_commit"] = {"flow": flow, "items": kept, "skipped": skipped}
         return _resume_customer_capture(state, repo)
 
-    return _commit(state, flow, kept, skipped, repo)
+    state["pending_commit"] = {"flow": flow, "items": kept, "skipped": skipped}
+    return _prepare_confirmation(state, repo)
 
 
 # ---------------------------------------------------------------------------
@@ -340,7 +501,7 @@ def _apply_customer_slot(state, aw, user_text, repo):
     if aw == "customer_phone":
         phone = parse_phone(user_text)
         if not phone:
-            return _say(state, "Customer ka 10 digit number bataiye udhaar ke liye.",
+            return _say(state, "Customer ka 10 digit contact number bataiye.",
                         listen=True, done=False)
         known = repo.customer_by_phone(phone)
         state["customer"] = {"phone": repo.normalize_phone(phone),
@@ -374,17 +535,60 @@ def _resume_customer_capture(state, repo):
     customer = state.get("customer") or {}
     if not customer.get("phone"):
         state["awaiting"] = "customer_phone"
-        return _say(state, "Customer ka 10 digit number bataiye udhaar ke liye.",
+        return _say(state, "Customer ka 10 digit contact number bataiye.",
                     listen=True, done=False)
     if not customer.get("customer_id"):
         state["awaiting"] = "customer_name"
         return _say(state, "Naya customer hai — naam kya hai?", listen=True, done=False)
-    if not state.get("payment_deadline"):
+    pending = state.get("pending_commit") or {}
+    needs_deadline = any(it.get("payment") == "credit"
+                         for it in pending.get("items", []))
+    if needs_deadline and not state.get("payment_deadline"):
         state["awaiting"] = "deadline"
         return _say(state, f"{customer['name']} — payment kab tak? Date ya kitne din "
                     "baad bataiye.", listen=True, done=False)
-    pc = state.pop("pending_commit")
-    return _commit(state, pc["flow"], pc["items"], pc["skipped"], repo)
+    return _prepare_confirmation(state, repo)
+
+
+def _prepare_confirmation(state, repo):
+    """Return a complete, read-only transaction preview. Nothing is written
+    until the explicit Confirm Entry button sends the confirmation turn."""
+    import ledger
+    pending = state.get("pending_commit") or {}
+    flow = pending.get("flow")
+    items = pending.get("items") or []
+    customer = state.get("customer") or {}
+    preview_items = []
+    total = 0.0
+    for item in items:
+        sku = repo.sku(item["sku_id"])
+        qty = float(item["qty"])
+        rate = float(item.get("rate") or 0)
+        base_qty = ledger.to_base(qty, item.get("unit") or sku["default_unit"], sku)
+        amount = round(rate * base_qty, 2) if flow in ("sale", "delivery") else None
+        if amount is not None:
+            total += amount
+        preview_items.append({
+            "sku_id": sku["sku_id"], "canonical": sku["canonical"],
+            "qty": qty, "unit": item.get("unit") or sku["default_unit"],
+            "rate": item.get("rate"), "payment": item.get("payment"),
+            "amount": amount,
+        })
+    state["awaiting"] = "confirmation"
+    state["draft_items"] = items
+    preview = {
+        "flow": flow, "items": preview_items, "total": round(total, 2),
+        "customer": {
+            "customer_id": customer.get("customer_id"),
+            "name": customer.get("name"), "phone": customer.get("phone"),
+        } if customer else None,
+        "payment_deadline": state.get("payment_deadline"),
+    }
+    out = _say(state, "Saari details taiyaar hain. Check karke Confirm Entry dabaiye.",
+               listen=False, done=False)
+    out["confirmation_required"] = True
+    out["confirmation"] = preview
+    return out
 
 
 def _commit(state, flow, items, skipped, repo):
@@ -401,7 +605,7 @@ def _commit(state, flow, items, skipped, repo):
                          "unit": it["unit"], "rate": it.get("rate"),
                          "payment": payment, "spoken": it.get("name", ""),
                          "was_tap": False,
-                         "customer_id": customer.get("customer_id") if payment == "credit" else None,
+                         "customer_id": customer.get("customer_id"),
                          "payment_deadline": deadline if payment == "credit" else None})
         rows.append({"phrase": it.get("name") or sku["canonical"],
                      "sku_id": sku["sku_id"], "qty": float(it["qty"]),
@@ -409,6 +613,10 @@ def _commit(state, flow, items, skipped, repo):
                      "payment": payment, "confirmed": True})
         parts.append(f"{_num(it['qty'])} {it['unit']} {sku['canonical']}")
     result = main._write_events(etype, ev_items, TODAY.isoformat(), "exact", "voice_live")
+    result["customer"] = {
+        "customer_id": customer.get("customer_id"),
+        "name": customer.get("name"), "phone": customer.get("phone"),
+    } if customer else None
     if flow == "sale" and customer.get("customer_id") and deadline:
         credit_total = sum(c.get("amount") or 0 for i, c in enumerate(result["committed"])
                            if ev_items[i]["payment"] == "credit")
@@ -420,8 +628,10 @@ def _commit(state, flow, items, skipped, repo):
     verb = {"sale": "bik gaya", "delivery": "aa gaya",
             "count": "gin liya"}.get(flow, "likh diya")
     say = f"Theek hai — {_oxford(parts)} {verb}, likh diya."
-    if customer.get("name") and deadline:
-        say += f" {customer['name']} ke udhaar mein, {deadline} tak."
+    if customer.get("name"):
+        say += f" Customer: {customer['name']}."
+    if deadline:
+        say += f" Udhaar {deadline} tak."
     if skipped:
         say += f" {_oxford(skipped)} chhod diya, wo stock mein nahi."
     out = _say(state, say, listen=False, done=True)
@@ -495,13 +705,27 @@ def _analytics_answer(metric, repo):
 # Small helpers
 # ---------------------------------------------------------------------------
 def _say(state, text, listen, done):
+    state.setdefault("history", []).append({"role": "assistant", "content": text})
     return {"state": state, "say": text, "listen": listen, "done": done,
-            "summary": {"items": []}}
+            "summary": {"items": _draft_summary(state)}}
 
 
 def _reply(say, listen=False, done=True, state=None, summary=None):
     return {"state": state, "say": say, "listen": listen, "done": done,
             "summary": summary or {"items": []}}
+
+
+def _draft_summary(state):
+    rows = []
+    for item in state.get("draft_items") or []:
+        rows.append({
+            "phrase": item.get("name") or "",
+            "sku_id": item.get("sku_id"),
+            "qty": item.get("qty"), "unit": item.get("unit"),
+            "rate": item.get("rate"), "payment": item.get("payment"),
+            "confirmed": bool(item.get("sku_id") and item.get("qty") is not None),
+        })
+    return rows
 
 
 def _oxford(names):

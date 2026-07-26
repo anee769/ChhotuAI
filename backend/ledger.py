@@ -194,6 +194,7 @@ def margin_for_day(catalogue_by_sku: dict, events: list, day: date) -> dict:
             "qty": e["qty"], "unit": e.get("unit"),
             "rate": sale_rate, "cost": cost,
             "margin": round(line_margin, 2) if line_margin is not None else None,
+            "amount": round(revenue, 2),
             "payment": e.get("payment", "cash"),
         })
     return {
@@ -201,6 +202,7 @@ def margin_for_day(catalogue_by_sku: dict, events: list, day: date) -> dict:
         "margin": round(margin, 2),
         "cash": round(cash, 2),
         "credit": round(credit, 2),
+        "total": round(cash + credit, 2),
         "provisional_extra": provisional_extra,
         "lines": lines,
     }

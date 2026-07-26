@@ -92,7 +92,7 @@ def _dump(name: str, payload: Any) -> None:
 
 
 def _request(method: str, path: str, *, files=None, data=None, json_body=None,
-             timeout: int = None) -> dict:
+             timeout: int = None, max_retries: int = None) -> dict:
     """Raw HTTP with retry + timeout. Returns parsed JSON dict."""
     if not API_KEY:
         raise SarvamError(
@@ -100,7 +100,8 @@ def _request(method: str, path: str, *, files=None, data=None, json_body=None,
         )
     url = f"{BASE_URL}{path}"
     last_err: Optional[Exception] = None
-    for attempt in range(1, MAX_RETRIES + 1):
+    attempts = max_retries if max_retries is not None else MAX_RETRIES
+    for attempt in range(1, attempts + 1):
         try:
             resp = requests.request(
                 method,
@@ -116,17 +117,17 @@ def _request(method: str, path: str, *, files=None, data=None, json_body=None,
                 _dump(path.strip("/").replace("/", "_"), out)
                 return out
             # 429 / 5xx -> retry; 4xx (except 429) -> fail fast
-            if resp.status_code in (429, 500, 502, 503) and attempt < MAX_RETRIES:
+            if resp.status_code in (429, 500, 502, 503) and attempt < attempts:
                 time.sleep(0.8 * attempt)
                 continue
             _dump(f"error_{resp.status_code}", resp.text)
             raise SarvamError(f"{method} {path} -> {resp.status_code}: {resp.text[:400]}")
         except requests.RequestException as e:
             last_err = e
-            if attempt < MAX_RETRIES:
+            if attempt < attempts:
                 time.sleep(0.8 * attempt)
                 continue
-    raise SarvamError(f"{method} {path} failed after {MAX_RETRIES} tries: {last_err}")
+    raise SarvamError(f"{method} {path} failed after {attempts} tries: {last_err}")
 
 
 # ---------------------------------------------------------------------------
@@ -146,17 +147,15 @@ def speech_to_text(audio_bytes: bytes, filename: str = "audio.wav",
 
 def transcribe_both(audio_bytes: bytes, filename: str = "audio.wav") -> dict:
     """
-    Convenience: one call for the display transcript (codemix) and one for the
-    matcher string (translit). Falls back gracefully if the second call fails.
+    One responsive code-mixed transcription used for both display and parsing.
+    The previous second transliteration request doubled voice-turn latency.
     """
+    # One STT request keeps a voice turn responsive. The LLM understands native
+    # Hindi/English code-mix directly, so a second transliteration request was
+    # pure latency and could double the time before the conversation even began.
     display = speech_to_text(audio_bytes, filename, mode="codemix")
     transcript = display.get("transcript", "")
-    try:
-        romanized = speech_to_text(audio_bytes, filename, mode="translit").get(
-            "transcript", transcript
-        )
-    except SarvamError:
-        romanized = transcript
+    romanized = transcript
     return {
         "transcript": transcript,
         "romanized": romanized,
@@ -178,7 +177,8 @@ def text_to_speech(text: str, language_code: str = "hi-IN",
         "pace": pace,
         "output_audio_codec": "mp3",
     }
-    out = _request("POST", "/text-to-speech", json_body=body)
+    out = _request("POST", "/text-to-speech", json_body=body,
+                   timeout=10, max_retries=1)
     audios = out.get("audios") or []
     if not audios:
         raise SarvamError("TTS returned no audio")
@@ -190,7 +190,7 @@ def text_to_speech(text: str, language_code: str = "hi-IN",
 # ---------------------------------------------------------------------------
 def chat(messages: list, tools: list = None, tool_choice: Any = None,
          temperature: float = 0.1, model: str = None, max_tokens: int = 4000,
-         reasoning_effort: str = None, timeout: int = 75) -> dict:
+         reasoning_effort: str = None, timeout: int = 18) -> dict:
     """Raw OpenAI-compatible chat completion. Returns the full response dict.
 
     NOTE: sarvam-30b is a reasoning model — it emits `reasoning_content` and
@@ -209,7 +209,8 @@ def chat(messages: list, tools: list = None, tool_choice: Any = None,
     if tools:
         body["tools"] = tools
         body["tool_choice"] = tool_choice or "auto"
-    return _request("POST", "/v1/chat/completions", json_body=body, timeout=timeout)
+    return _request("POST", "/v1/chat/completions", json_body=body, timeout=timeout,
+                    max_retries=1)
 
 
 def chat_message(resp: dict) -> dict:
@@ -218,7 +219,8 @@ def chat_message(resp: dict) -> dict:
 
 
 def chat_json(messages: list, temperature: float = 0.1,
-              reasoning_effort: str = None, max_tokens: int = 4000) -> dict:
+              reasoning_effort: str = None, max_tokens: int = 4000,
+              timeout: int = 18) -> dict:
     """
     Ask the model for a single JSON object and parse it. Tolerant of code fences.
     Used by the matcher's semantic rerank and invoice line extraction.
@@ -228,7 +230,7 @@ def chat_json(messages: list, temperature: float = 0.1,
     and content=None. Callers that see complex inputs should pass a larger budget.
     """
     resp = chat(messages, temperature=temperature, reasoning_effort=reasoning_effort,
-                max_tokens=max_tokens)
+                max_tokens=max_tokens, timeout=timeout)
     msg = chat_message(resp)
     # reasoning models sometimes leave the JSON only in reasoning_content
     content = msg.get("content") or msg.get("reasoning_content") or ""

@@ -1347,5 +1347,89 @@
       "transcript": "aaj gina to 38 bori nikla"
     },
     "event_id": "evt_0071"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 50.0,
+    "unit": "bori",
+    "rate": 50,
+    "payment": "cash",
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "PPC"
+    },
+    "event_id": "evt_0075",
+    "recorded_at": "2026-07-26T15:22:40"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 50.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "PPC"
+    },
+    "event_id": "evt_0076",
+    "recorded_at": "2026-07-26T15:38:51"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 10.0,
+    "unit": "bori",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "UltraTech PPC Cement 50kg"
+    },
+    "event_id": "evt_0077",
+    "recorded_at": "2026-07-26T15:53:50"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 5.0,
+    "unit": "tonne",
+    "rate": 100,
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "5 बोरी cement और 1 ton सरिया"
+    },
+    "event_id": "evt_0078",
+    "recorded_at": "2026-07-26T16:11:11"
   }
 ]

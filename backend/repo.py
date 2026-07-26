@@ -47,7 +47,6 @@ class JsonRepo(Repo):
         self._customers = self._read("customers.json", default=[])
         self._receivables = self._read("receivables.json", default=[])
         self._payments = self._read("payments.json", default=[])
-        self._notifications = self._read("notifications.json", default=[])
         self._learning_state = "day1"  # active toggle position
         self._learning = self._read("learning.json", default=self._empty_learning())
         self._config = self._read("config.json", default={
@@ -261,15 +260,3 @@ class JsonRepo(Repo):
             self._payments.append(row)
             self._write("payments.json", self._payments)
             return dict(row)
-
-    def notifications(self) -> list:
-        return list(self._notifications)
-
-    def add_notification(self, row: dict) -> dict:
-        with self._lock:
-            item = dict(row)
-            item.setdefault("notification_id", f"note_{len(self._notifications) + 1:04d}")
-            item.setdefault("created_at", datetime.now().isoformat(timespec="seconds"))
-            self._notifications.append(item)
-            self._write("notifications.json", self._notifications)
-            return dict(item)

@@ -173,16 +173,265 @@
     .app-nav { top:69px; }
     .app-main { padding-top:18px; }
   }
+
+  /* Reference-faithful shell */
+  .app-header {
+    position:fixed; inset:0 0 auto 0; width:100%; height:72px; padding:0 28px;
+    display:flex; align-items:center; background:rgba(247,249,251,.96);
+    border:0; border-bottom:1px solid #c9cdd2; z-index:50;
+  }
+  .app-header > .topbar-inner {
+    width:100%; display:grid; grid-template-columns:260px minmax(280px,500px) 1fr;
+    align-items:center; gap:26px;
+  }
+  .brand-lockup { display:flex; align-items:center; gap:11px; min-width:0; }
+  .brand-mark, .shop-avatar {
+    display:grid; place-items:center; background:#050505; color:#fff;
+    font-weight:800; border-radius:12px;
+  }
+  .brand-mark { width:38px; height:38px; font-size:18px; }
+  .brand-name { font-size:21px; line-height:1.1; font-weight:800; letter-spacing:-.03em; }
+  .brand-tagline { margin-top:2px; font-size:11px; color:#73777f; }
+  .global-search {
+    height:48px; display:flex; align-items:center; gap:12px; padding:0 16px;
+    background:#f0f2f4; border:1px solid #c9cdd2; border-radius:14px;
+  }
+  .global-search input {
+    width:100%; padding:0 !important; border:0 !important; outline:0 !important;
+    background:transparent !important; font-size:14px;
+  }
+  .app-header .header-tools {
+    position:static; justify-self:end; display:flex !important; flex-wrap:nowrap;
+  }
+  .day-control { width:auto; min-width:190px; padding:8px 11px !important; }
+  .wake-control { display:grid !important; }
+  .icon-button {
+    width:40px; height:40px; place-items:center; border:1px solid #d4d7db;
+    border-radius:50%; background:#fff;
+  }
+  .app-nav {
+    position:fixed; left:0; top:72px; bottom:0; width:268px; padding:20px 18px;
+    background:#f0f2f4; border-right:1px solid #c9cdd2; z-index:40;
+    display:flex; flex-direction:column; gap:6px;
+  }
+  .shop-card {
+    display:flex; align-items:center; gap:12px; padding:14px; margin-bottom:15px;
+    border:1px solid #d8dbe0; background:#f7f9fb; border-radius:12px;
+  }
+  .shop-avatar { width:42px; height:42px; flex:0 0 auto; }
+  .shop-card #shopName {
+    max-width:150px; font-size:13px !important; line-height:1.25 !important;
+    font-weight:750; color:#17191c; overflow:hidden; text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .shop-card span { font-size:11px; color:#686d75; }
+  .nav-label {
+    padding:0 10px 6px; color:#8a8f97; font-size:10px;
+    font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  }
+  .app-nav .tab-btn {
+    width:100%; min-height:46px; padding:0 14px; gap:13px; border-radius:10px;
+    display:flex; align-items:center; font-size:14px; font-weight:550;
+    color:#353941; background:transparent; box-shadow:none;
+  }
+  .app-nav .tab-btn .material-symbols-outlined { font-size:21px; }
+  .app-nav .tab-btn.active {
+    color:#fff; background:#050505; box-shadow:0 7px 16px -12px #000;
+  }
+  .nav-footer {
+    margin-top:auto; padding-top:14px; border-top:1px solid #d1d5da;
+  }
+  .nav-footer button {
+    width:100%; display:flex; align-items:center; gap:12px; padding:10px 12px;
+    color:#42464d; font-size:13px;
+  }
+  .nav-footer .version { padding:10px 12px 0; color:#969aa1; font-size:10px; }
+  .app-main { margin-left:268px; padding:104px 34px 76px; }
+  .intro-hero, .utility-aside { display:none !important; }
+  .workspace-shell { display:block !important; max-width:1250px; }
+  .main-column { width:100%; }
+  .card { border-color:#d8dbe0; border-radius:14px; box-shadow:0 5px 14px -14px #000; }
+  .btn-primary { background:#050505; color:#fff; border-radius:10px; }
+  .btn-secondary { border-radius:10px; }
+  .ledger-table-wrap { border-color:#cdd1d6; border-radius:12px; }
+  .ledger-table th { padding:13px 16px; background:#eef0f2; color:#454a52; }
+  .ledger-table td { padding:15px 16px; }
+  .central-mic { background:#050505 !important; border-radius:14px !important; }
+  .page-heading {
+    display:flex; align-items:end; justify-content:space-between; gap:20px; margin-bottom:28px;
+  }
+  .page-heading h1 { margin-top:5px; font-size:32px; line-height:1.15; font-weight:800; letter-spacing:-.035em; }
+  .page-heading p { margin-top:6px; color:#626770; font-size:14px; }
+  .eyebrow { color:#737881; font-size:11px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; }
+  .inventory-toolbar {
+    min-height:70px; display:flex; align-items:center; justify-content:space-between;
+    gap:16px; padding:14px 18px; border-bottom:1px solid #d8dbe0;
+  }
+  .stock-product { display:flex; align-items:center; gap:12px; min-width:250px; }
+  .stock-icon {
+    width:40px; height:40px; display:grid; place-items:center; flex:0 0 auto;
+    border:1px solid #cfd3d8; border-radius:10px; background:#f2f4f6;
+  }
+  .stock-status {
+    display:inline-flex; padding:4px 9px; border-radius:999px;
+    font-size:10px; font-weight:800; text-transform:uppercase;
+  }
+  .stock-status.stable { background:#d9fbea; color:#006c49; }
+  .stock-status.attention { background:#ffe2de; color:#ae160d; }
+  .stock-status.uncounted { background:#e6e8eb; color:#555a62; }
+  .customer-metrics {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px;
+  }
+  .metric-tile { padding:17px 18px; border:1px solid #d3d7dc; border-radius:12px; background:#fff; }
+  .metric-tile .label { color:#696e76; font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+  .metric-tile .value { margin-top:7px; font-size:25px; font-weight:800; letter-spacing:-.025em; }
+  .crm-layout {
+    display:grid; grid-template-columns:330px minmax(0,1fr); min-height:560px;
+    border:1px solid #cdd1d6; border-radius:14px; overflow:hidden; background:#fff;
+  }
+  .customer-list { border-right:1px solid #cdd1d6; background:#f8f9fa; }
+  .customer-list-search { padding:14px; border-bottom:1px solid #d7dadd; }
+  .customer-list-search input { width:100%; padding:11px 13px; font-size:13px; }
+  .customer-row {
+    width:100%; display:block; padding:16px 18px; text-align:left;
+    border-bottom:1px solid #dde0e3; background:#fff; transition:.15s;
+  }
+  .customer-row:hover { background:#f2f4f6; }
+  .customer-row.active { background:#e9ebed; box-shadow:inset 4px 0 0 #111827; }
+  .customer-row .row-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .customer-row .name { font-size:14px; font-weight:750; }
+  .customer-row .phone { margin-top:5px; color:#656a72; font-size:11px; }
+  .customer-row .balance { margin-top:11px; display:flex; justify-content:space-between; font-size:11px; }
+  .customer-detail { padding:26px; min-width:0; }
+  .customer-profile { display:flex; align-items:center; gap:16px; padding-bottom:22px; border-bottom:1px solid #e0e2e5; }
+  .customer-avatar {
+    width:64px; height:64px; display:grid; place-items:center; border-radius:14px;
+    color:#fff; background:#111827; font-size:25px; font-weight:800;
+  }
+  .customer-profile h3 { font-size:25px; font-weight:800; letter-spacing:-.025em; }
+  .customer-profile p { margin-top:4px; color:#626770; font-size:13px; }
+  .balance-panel {
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin:20px 0;
+  }
+  .balance-card { padding:18px; border:1px solid #d6d9de; border-radius:12px; background:#f6f7f8; }
+  .balance-card.dark { color:#fff; background:#111827; border-color:#111827; }
+  .balance-card .value { margin-top:7px; font-size:27px; font-weight:800; }
+  .payment-bar {
+    display:flex; align-items:center; gap:10px; padding:15px;
+    background:#f2f4f6; border:1px solid #dadddf; border-radius:12px; margin-bottom:20px;
+  }
+  .payment-bar input { min-width:0; flex:1; padding:11px 12px; }
+  .voice-entry-card { max-width:920px; overflow:hidden; }
+  .voice-entry-head {
+    display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
+    padding-bottom:22px; border-bottom:1px solid #e0e2e5;
+  }
+  .voice-entry-head h2 { margin-top:5px; font-size:29px; line-height:1.18; font-weight:800; letter-spacing:-.035em; }
+  .voice-entry-head p { margin-top:7px; color:#666b73; font-size:14px; }
+  .voice-live-badge {
+    display:inline-flex; align-items:center; gap:7px; padding:7px 10px;
+    border:1px solid #bce5d3; border-radius:999px; background:#eefbf5;
+    color:#087653; font-size:10px; font-weight:800; text-transform:uppercase;
+  }
+  .voice-live-badge::before { content:""; width:7px; height:7px; border-radius:50%; background:#17b77d; }
+  .voice-stage {
+    margin-top:22px; padding:42px 34px 30px; border:1px solid #d8dbe0;
+    border-radius:14px; background:#f5f6f7;
+  }
+  .voice-mic-button {
+    width:82px; height:82px; display:grid; place-items:center; border-radius:50%;
+    background:#050505; color:#fff; box-shadow:0 11px 24px -15px #000;
+  }
+  .voice-command-input {
+    display:flex; gap:8px; padding:6px; border:1px solid #cfd3d8;
+    border-radius:12px; background:#fff;
+  }
+  .voice-command-input input { border:0 !important; background:transparent !important; }
+  .voice-confirmation {
+    margin-top:18px; overflow:hidden; border:1px solid #d4d7dc;
+    border-top:5px solid #050505; border-radius:16px; background:#fff;
+  }
+  .voice-confirmation-head {
+    display:flex; align-items:flex-start; justify-content:space-between; gap:20px;
+    padding:22px 24px 18px;
+  }
+  .voice-confirmation-total { text-align:right; }
+  .voice-confirmation-total strong {
+    display:block; font-size:38px; line-height:1; font-weight:850; letter-spacing:-.04em;
+  }
+  .voice-confirmation-total span { display:block; margin-top:6px; color:#666b73; font-size:11px; }
+  .confirmation-tag {
+    display:inline-flex; margin-top:8px; padding:5px 9px; border:1px solid #d2d5da;
+    border-radius:999px; background:#f3f4f5; font-size:10px; font-weight:800;
+    text-transform:uppercase;
+  }
+  .confirmation-customer {
+    margin:0 24px 14px; padding:15px 17px; border-radius:12px; background:#f3f4f5;
+  }
+  .confirmation-customer strong { display:block; font-size:16px; }
+  .confirmation-customer span { display:block; margin-top:3px; color:#656a72; font-size:12px; }
+  .confirmation-lines { margin:0 24px; border-top:1px solid #e0e2e5; }
+  .confirmation-line {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:16px;
+    padding:14px 0; border-bottom:1px solid #e5e7ea;
+  }
+  .confirmation-line .name { font-size:14px; font-weight:750; }
+  .confirmation-line .meta { margin-top:3px; color:#686d75; font-size:11px; }
+  .confirmation-line .amount { align-self:center; font-weight:800; }
+  .confirmation-action { padding:18px 24px 24px; }
+  .confirmation-action button { width:100%; min-height:52px; }
+  .dashboard-metrics {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px;
+  }
+  .dashboard-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; }
+  .section-card-head {
+    display:flex; align-items:start; justify-content:space-between; gap:14px;
+    padding:18px 20px; border-bottom:1px solid #d8dbe0;
+  }
+  .section-card-head h2 { font-size:16px; font-weight:750; }
+  .section-card-head p { margin-top:3px; color:#6b7078; font-size:11px; }
+
+  @media (max-width: 760px) {
+    .customer-metrics { grid-template-columns:1fr; }
+    .dashboard-metrics, .dashboard-grid { grid-template-columns:1fr; }
+    .crm-layout { grid-template-columns:1fr; }
+    .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
+    .balance-panel { grid-template-columns:1fr; }
+  }
+
+  @media (max-width: 900px) {
+    .app-header { height:64px; padding:0 16px; }
+    .app-header > .topbar-inner { grid-template-columns:1fr auto; gap:12px; }
+    .global-search { display:none; }
+    .brand-tagline, .day-control { display:none !important; }
+    .app-nav {
+      position:sticky; top:64px; width:100%; height:auto; padding:9px 12px;
+      flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid #d4d7db;
+    }
+    .shop-card, .nav-label, .nav-footer { display:none; }
+    .app-nav .tab-btn { width:auto; min-width:max-content; min-height:40px; padding:0 12px; }
+    .app-main { margin-left:0; padding:88px 16px 76px; }
+    .page-heading { align-items:flex-start; flex-direction:column; }
+    .voice-entry-head { flex-direction:column; }
+    .voice-stage { padding:30px 16px 22px; }
+  }
 </style>
 </head>
 <body class="min-h-screen bg-[var(--surface)] text-slate-900">
 
 <!-- HEADER -->
 <header class="app-header">
-  <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-3">
-    <div>
-      <div class="text-2xl font-black tracking-tight text-slate-900">🧱 ChhotuAI <span class="text-emerald-500">·</span> <span id="shopName" class="text-slate-700"></span></div>
-      <div class="text-xs text-slate-500">Awaaz se stock aur margin — bhoolne ke liye banaya gaya</div>
+  <div class="topbar-inner">
+    <div class="brand-lockup">
+      <div class="brand-mark">C</div>
+      <div>
+        <div class="brand-name">ChhotuAI</div>
+        <div class="brand-tagline">Voice stock ledger</div>
+      </div>
+    </div>
+    <div class="global-search">
+      <span class="material-symbols-outlined">search</span>
+      <input id="globalSearch" type="search" placeholder="Search products, customers, or commands…" oninput="handleGlobalSearch(this.value)">
     </div>
     <div class="header-tools flex flex-wrap items-center gap-3">
       <div class="learning-counters flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
@@ -197,21 +446,28 @@
         </button>
         <span class="text-xs text-slate-500">Day 60</span>
       </div>
-      <button id="wakeBtn" onclick="toggleWake()" class="wake-control rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700">
-        🎙️ "Hey Chhotu": <span id="wakeState" class="text-slate-500">OFF</span></button>
     </div>
   </div>
 </header>
 
 <!-- TABS -->
 <nav class="app-nav">
-  <button class="tab-btn active rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="sale" onclick="showTab('sale')">🗣️ Sale</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="delivery" onclick="showTab('delivery')">📦 Delivery</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="invoice" onclick="showTab('invoice')">🧾 Invoice</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="stock" onclick="showTab('stock')">📊 Stock &amp; Count</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="customers" onclick="showTab('customers')">👥 Customers</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="today" onclick="showTab('today')">📅 Today</button>
-  <button class="tab-btn rounded-full px-5 py-2 font-semibold text-slate-700" data-tab="dashboard" onclick="showTab('dashboard')">📈 Dashboard</button>
+  <div class="shop-card">
+    <div class="shop-avatar">S</div>
+    <div><div id="shopName">Sharma Building Materials</div><span>Admin Console</span></div>
+  </div>
+  <div class="nav-label">Workspace</div>
+  <button class="tab-btn active" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
+  <button class="tab-btn" data-tab="delivery" onclick="showTab('delivery')"><span class="material-symbols-outlined">local_shipping</span><span>Delivery</span></button>
+  <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span>Invoice</span></button>
+  <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span>Inventory</span></button>
+  <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span>Customers</span></button>
+  <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span>Today</span></button>
+  <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
+  <div class="nav-footer">
+    <button onclick="showTab('dashboard')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
+    <div class="version">ChhotuAI · Local ledger</div>
+  </div>
 </nav>
 
 <main class="app-main">
@@ -270,14 +526,20 @@
 
   <!-- STOCK & COUNT -->
   <section id="tab-stock" class="tabpane hidden">
-    <div class="card p-5 mb-4">
-      <h2 class="text-xl font-bold mb-3">Voice count — opening balance / stock take</h2>
-      <div id="voiceUI-count"></div>
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Inventory control</div>
+        <h1>Inventory Ledger</h1>
+        <p>Derived stock with full event history and reconciliation.</p>
+      </div>
+      <button onclick="document.getElementById('countPanel').classList.toggle('hidden')" class="btn-primary px-5 py-3 font-semibold">
+        <span class="material-symbols-outlined align-middle mr-1">mic</span> Quick Adjust
+      </button>
     </div>
-    <div id="reconPanel"></div>
-    <div class="card p-5">
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-xl font-bold">Stock (derived from event log)</h2>
+    <div id="countPanel" class="hidden mb-5"><div id="voiceUI-count"></div></div>
+    <div class="card overflow-hidden">
+      <div class="inventory-toolbar">
+        <div><div class="font-semibold">Current stock</div><div class="text-xs text-slate-500">All quantities replayed from the event log</div></div>
         <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
           <option value="">All families</option><option value="tmt">TMT</option>
           <option value="cement">Cement</option><option value="pipe">Pipe</option>
@@ -285,24 +547,21 @@
           <option value="paint">Paint</option>
         </select>
       </div>
-      <div id="stockList" class="grid md:grid-cols-2 gap-2"></div>
+      <div id="stockList"></div>
     </div>
   </section>
 
   <!-- CUSTOMERS -->
   <section id="tab-customers" class="tabpane hidden">
-    <div class="card p-6">
-      <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">Credit ledger</div>
-          <h2 class="mt-2 text-2xl font-bold">Customers</h2>
-          <p class="mt-1 text-sm text-slate-500">Outstanding credit, deadlines and received payments.</p>
-        </div>
-        <button onclick="runReminders()" class="btn-secondary px-4 py-2 text-sm font-semibold">Check reminders</button>
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Credit ledger</div>
+        <h1>Customer CRM</h1>
+        <p>Manage customer balances, deadlines and received payments.</p>
       </div>
-      <div id="customerSummary" class="mb-4"></div>
-      <div id="customerBody"></div>
     </div>
+    <div id="customerSummary" class="customer-metrics"></div>
+    <div id="customerBody"></div>
   </section>
 
   <!-- TODAY -->
@@ -319,20 +578,46 @@
 
   <!-- DASHBOARD -->
   <section id="tab-dashboard" class="tabpane hidden">
-    <div class="card p-5 mb-4">
-      <h2 class="text-xl font-bold mb-1">Margin trend — last 30 days</h2>
-      <p class="text-xs text-slate-500 mb-3">Gross margin per day. Steel price rise marked.</p>
-      <canvas id="trendChart" height="90"></canvas>
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Business overview</div>
+        <h1>Dashboard</h1>
+        <p>Margin, receivables and capital locked in stock.</p>
+      </div>
     </div>
-    <div class="grid md:grid-cols-2 gap-4">
-      <div class="card p-5"><h2 class="text-xl font-bold mb-3">Money position</h2><div id="moneyBody"></div></div>
-      <div class="card p-5"><h2 class="text-xl font-bold mb-3">Frozen capital <span class="text-xs text-slate-400">(0 movement in 60 days)</span></h2><div id="frozenBody"></div></div>
+    <div id="dashboardMetrics" class="dashboard-metrics"></div>
+    <div class="dashboard-grid">
+      <div class="card overflow-hidden">
+        <div class="section-card-head">
+          <div><h2>Margin trend</h2><p>Daily gross margin · last 30 days</p></div>
+          <span class="material-symbols-outlined text-slate-400">monitoring</span>
+        </div>
+        <div class="p-5"><canvas id="trendChart" height="110"></canvas></div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="section-card-head">
+          <div><h2>Money position</h2><p>Receivables and inventory cost</p></div>
+          <span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
+        </div>
+        <div id="moneyBody" class="p-5"></div>
+      </div>
     </div>
-    <div class="card p-5 mt-4">
-      <h2 class="text-xl font-bold mb-1">⚙️ GST rates</h2>
-      <p class="text-xs text-slate-500 mb-3">Bills aur landed-cost isi rate se bante hain. Family-wise set karo.</p>
-      <div id="gstBody" class="grid md:grid-cols-3 gap-3"></div>
-      <button onclick="saveGst()" class="mt-3 btn-primary px-4 py-2.5">Save GST rates</button>
+    <div class="card overflow-hidden mt-4">
+      <div class="section-card-head">
+        <div><h2>Frozen capital</h2><p>No movement in the last 60 days</p></div>
+        <span class="material-symbols-outlined text-slate-400">ac_unit</span>
+      </div>
+      <div id="frozenBody" class="p-5"></div>
+    </div>
+    <div class="card overflow-hidden mt-4">
+      <div class="section-card-head">
+        <div><h2>GST rates</h2><p>Used for invoices and landed-cost calculations</p></div>
+        <span class="material-symbols-outlined text-slate-400">settings</span>
+      </div>
+      <div class="p-5">
+        <div id="gstBody" class="grid md:grid-cols-3 gap-3"></div>
+        <button onclick="saveGst()" class="mt-4 btn-primary px-4 py-2.5">Save GST rates</button>
+      </div>
     </div>
   </section>
     </div>
@@ -402,7 +687,6 @@ async function boot(){
   document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   setCounts(s.learning_counts); setDayUI(s.learning_state);
   renderVoiceUI('sale','auto'); renderVoiceUI('delivery','delivery'); renderVoiceUI('count','count');
-  cacheFillers();  // warm up spoken acknowledgments for the conversational wrapper
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
@@ -418,8 +702,34 @@ async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'da
 function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
-  if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock'){loadStock();loadRecon();}
+  if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
   if(t==='customers') loadCustomers(); }
+async function handleGlobalSearch(q){
+  q=(q||'').trim().toLowerCase();
+  const active=document.querySelector('.tab-btn.active')?.dataset.tab;
+  if(active==='customers'){
+    const local=document.getElementById('customerSearch'); if(local) local.value=q;
+    filterCustomers(q); return;
+  }
+  if(active==='stock'){
+    document.querySelectorAll('#stockList tbody tr').forEach(row=>{
+      row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
+    });
+    return;
+  }
+  if(!q) return;
+  if(!CRM_CUSTOMERS.length){
+    try{ CRM_CUSTOMERS=(await api('/api/customers')).customers||[]; }catch(_){}
+  }
+  const customer=CRM_CUSTOMERS.find(c=>(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q));
+  if(customer){
+    CRM_SELECTED=customer.customer_id; showTab('customers');
+    setTimeout(()=>{ const local=document.getElementById('customerSearch'); if(local)local.value=q; filterCustomers(q); },80);
+  }else{
+    showTab('stock');
+    setTimeout(()=>handleGlobalSearch(q),180);
+  }
+}
 
 // ---------- Voice UI (sale / delivery / count) ----------
 function renderVoiceUI(tab, flow){
@@ -440,21 +750,24 @@ function renderVoiceUI(tab, flow){
       <select id="countType" class="rounded px-2 py-1 text-sm"><option value="opening_balance">Opening balance</option><option value="stock_take">Stock take</option></select>
       <select id="countPrec" class="rounded px-2 py-1 text-sm ml-2"><option value="exact">exact count</option><option value="estimated">estimated (~)</option></select></div>` : '';
   document.getElementById('voiceUI-'+tab).innerHTML = `
-    <div class="card p-6 md:p-8">
-      <div class="mb-7">
-        <div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-500">${flow==='delivery'?'Stock in':isCount?'Physical stock':'Voice entry'}</div>
-        <h2 class="mt-2 text-2xl font-bold tracking-tight">${title}</h2>
-        <p class="mt-1 text-sm text-slate-500">${subtitle}</p>
+    <div class="card voice-entry-card p-6 md:p-8">
+      <div class="voice-entry-head">
+        <div>
+          <div class="eyebrow">${flow==='delivery'?'Stock in':isCount?'Physical stock':'Voice entry'}</div>
+          <h2>${title}</h2>
+          <p>${subtitle}</p>
+        </div>
+        <div class="voice-live-badge">Ready</div>
       </div>
       ${countMode}
-      <div class="rounded-xl bg-slate-50 p-5 md:p-6">
+      <div class="voice-stage">
         <div class="flex flex-col items-center text-center">
-          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="h-20 w-20 rounded-full bg-slate-950 text-3xl text-white shadow-lg transition active:scale-95">🎤</button>
+          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="voice-mic-button transition active:scale-95"><span class="material-symbols-outlined text-[32px]">mic</span></button>
           <div class="mt-4 font-semibold text-slate-900">Boliye, main sun raha hoon</div>
           <div class="mt-1 text-xs text-slate-500">Tap the microphone and speak naturally</div>
         </div>
         <div class="my-5 flex items-center gap-3 text-xs uppercase tracking-widest text-slate-400"><span class="h-px flex-1 bg-slate-200"></span>or type<span class="h-px flex-1 bg-slate-200"></span></div>
-        <div class="flex gap-2">
+        <div class="voice-command-input">
           <input id="txt-${tab}" class="min-w-0 flex-1 px-4 py-3 text-base" placeholder="Type an entry…" onkeydown="if(event.key==='Enter')convStartText('${tab}','${flow}')">
           <button onclick="convStartText('${tab}','${flow}')" class="rounded-lg bg-slate-950 px-5 py-3 font-semibold text-white">Continue</button>
         </div>
@@ -604,7 +917,7 @@ async function convBegin(tab, flow, text, voice){
 async function convTurn(tab, text){
   const C=CONV[tab];
   const panel=document.getElementById('conv-'+tab);
-  // every turn now runs through the LLM (real conversation), so mask each wait
+  // The first turn may use the LLM; follow-up slots reuse the structured draft.
   panel.innerHTML=renderConv(C, '<span class="pulse">🧠 Chhotu soch raha hai<span class="dots"></span></span>');
   playFiller();                         // instant spoken acknowledgment
   let r;
@@ -612,7 +925,13 @@ async function convTurn(tab, text){
       body:JSON.stringify({state:C.state, text, flow:C.flow})}); }
   catch(e){ toast('Error: '+(''+e).slice(0,80),false); return; }
   C.state=r.state; C.lastSay=r.say; C.summary=r.summary; C.done=r.done;
+  C.confirmation=r.confirmation||null;
   if(r.learning_counts) setCounts(r.learning_counts);
+  if(r.confirmation_required){
+    panel.innerHTML=renderVoiceConfirmation(C, r.confirmation);
+    await playSay(r.say_audio_b64);
+    return;
+  }
   panel.innerHTML=renderConv(C, '');
   await playSay(r.say_audio_b64);
   if(r.done){ convFinish(tab, r); return; }
@@ -636,6 +955,36 @@ function convAnswerText(tab){
 }
 function convRepeat(tab){ playSay_fromLast(tab); }
 async function playSay_fromLast(tab){ const C=CONV[tab]; if(C && C.lastSay){ toast('🔊 '+C.lastSay); } }
+
+function renderVoiceConfirmation(C, preview){
+  const customer=preview.customer||{};
+  const payment=[...new Set((preview.items||[]).map(x=>x.payment).filter(Boolean))].join(' + ')||preview.flow;
+  const lines=(preview.items||[]).map(it=>`<div class="confirmation-line">
+    <div><div class="name">${it.canonical}</div>
+      <div class="meta">${fmtNum(it.qty)} ${it.unit}${it.rate!=null?` · ₹${fmtNum(it.rate)} rate`:''}${it.payment?` · ${it.payment}`:''}</div></div>
+    <div class="amount">${it.amount!=null?'₹'+it.amount.toLocaleString('en-IN'):''}</div>
+  </div>`).join('');
+  const deadline=preview.payment_deadline?` · Due ${dayLabel(preview.payment_deadline)}`:'';
+  return `<div class="voice-confirmation">
+    <div class="voice-confirmation-head">
+      <div><div class="eyebrow">AI analysis</div><div class="confirmation-tag">${payment} entry</div></div>
+      <div class="voice-confirmation-total"><strong>₹${Number(preview.total||0).toLocaleString('en-IN')}</strong><span>Confirmed amount</span></div>
+    </div>
+    ${customer.name||customer.phone?`<div class="confirmation-customer">
+      <strong>${customer.name||'Unnamed customer'}</strong>
+      <span>${customer.phone||'No contact'}${deadline}</span></div>`:''}
+    <div class="confirmation-lines">${lines}</div>
+    <div class="confirmation-action">
+      <button onclick="convConfirm('${convTabOf(C)}')" class="btn-primary text-base font-semibold">Confirm Entry ✓</button>
+    </div>
+  </div>`;
+}
+
+async function convConfirm(tab){
+  const C=CONV[tab]; if(!C||!C.confirmation) return;
+  C.confirmation=null;
+  await convTurn(tab,'confirm');
+}
 
 function renderConv(C, statusHtml){
   const s=C.summary||{items:[]};
@@ -677,10 +1026,15 @@ async function convFinish(tab, r){
   const affected=(r.committed&&r.committed.affected_stock)||{};
   let stockRows=Object.entries(affected).map(([sid,st])=>`<div class="flex justify-between text-sm">
     <span>${STATE.byId[sid].canonical}</span><b class="${(st.uncounted||st.oversold)?'text-amber-300':'text-emerald-400'}">${st.display}</b></div>`).join('');
-  let bills=committed.filter(c=>{const it=(C.summary.items||[]).find(x=>x.sku_id===c.sku_id); return it&&it.payment==='cash';})
-    .map(c=>{const it=C.summary.items.find(x=>x.sku_id===c.sku_id);
-      const item={sku_id:c.sku_id,qty:it.qty,unit:it.unit,rate:c.rate,payment:'cash'};
-      return `<button onclick='makeBill(${JSON.stringify(item).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 Bill</button>`;}).join(' ');
+  const billItems=committed.map((c,i)=>{
+    const candidates=C.summary.items||[];
+    const it=candidates[i]||candidates.find(x=>x.sku_id===c.sku_id)||{};
+    return {sku_id:c.sku_id,qty:it.qty,unit:it.unit,rate:c.rate,payment:it.payment||'cash'};
+  });
+  const billCustomer=(r.committed&&r.committed.customer)||null;
+  const bills=billItems.length
+    ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 One bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
+    : '';
   panel.innerHTML=`<div class="card p-4 border-emerald-700">
     <div class="text-emerald-400 font-bold text-lg mb-1">✅ ${C.lastSay||'Likh diya'}</div>
     <div class="mt-2 space-y-1">${stockRows}</div>
@@ -691,49 +1045,6 @@ async function convFinish(tab, r){
 
 // central floating button — start the assistant with any intent
 function centralAssistant(){ showTab('sale'); convStartVoice('sale','auto'); }
-
-// ---------------- Wake word: "Hey Chhotu" (browser hotword, Sarvam does NLU) ----
-let wakeRec=null, wakeOn=false;
-function toggleWake(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!SR){ toast('Is browser mein wake-word support nahi (Chrome use karo)',false); return; }
-  wakeOn=!wakeOn;
-  document.getElementById('wakeState').textContent=wakeOn?'ON':'OFF';
-  document.getElementById('wakeBtn').classList.toggle('!bg-rose-600',wakeOn);
-  if(wakeOn) startWake(SR); else if(wakeRec){ try{wakeRec.stop();}catch(e){} wakeRec=null; }
-}
-function startWake(SR){
-  wakeRec=new SR(); wakeRec.continuous=true; wakeRec.interimResults=true; wakeRec.lang='en-IN';
-  wakeRec.onresult=(ev)=>{
-    for(let i=ev.resultIndex;i<ev.results.length;i++){
-      const t=ev.results[i][0].transcript.toLowerCase();
-      if(/chhotu|chotu|chontu|hey cho|छोटू/.test(t)){
-        try{wakeRec.stop();}catch(e){}
-        onWake(); return;
-      }
-    }
-  };
-  wakeRec.onend=()=>{ if(wakeOn && !wakeBusy){ try{wakeRec.start();}catch(e){} } };
-  try{ wakeRec.start(); }catch(e){}
-}
-let wakeBusy=false;
-async function onWake(){
-  wakeBusy=true;
-  showTab('sale');
-  const proc=document.getElementById('proc-sale'); proc.classList.remove('hidden');
-  proc.innerHTML='<span class="pulse text-rose-300">🔔 "Haan, boliye…"</span>';
-  await playSay(await hindiBeep());  // brief spoken prompt
-  await convStartVoice('sale','auto');   // central assistant: any intent
-  wakeBusy=false;
-  if(wakeOn){ const SR=window.SpeechRecognition||window.webkitSpeechRecognition; startWake(SR); }
-}
-let _beepCache=null;
-async function hindiBeep(){
-  if(_beepCache!==null) return _beepCache;
-  try{ const r=await api('/api/say',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:'Haan, boliye'})});
-    _beepCache=r.audio_b64; }catch(e){ _beepCache=null; }
-  return _beepCache;
-}
 
 async function parseVoice(tab, flow){
   const text=document.getElementById('txt-'+tab).value.trim(); if(!text) return;
@@ -862,9 +1173,8 @@ function renderCommitResult(type,occurred_on,precision,r,before,items){
   }).join('');
   const prov = precision==='week'?'<div class="text-amber-300 text-sm mt-2">Week precision — aaj ke margin mein nahi ginenge, "purani entries" mein jayega.</div>':'';
   let billBtns='';
-  if(type==='sale'){ billBtns = items.map(it=>{
-      const canon=STATE.byId[it.sku_id].canonical;
-      return `<button onclick='makeBill(${JSON.stringify(it).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 Bill: ${canon}</button>`;}).join(' ');
+  if(type==='sale' && items.length){
+    billBtns=`<button onclick='makeBill(${JSON.stringify(items).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 One bill · ${items.length} item${items.length===1?'':'s'}</button>`;
   }
   return `<div class="space-y-2"><div class="text-emerald-400 font-bold text-lg">✅ Likha gaya (${type}, ${dayLabel(occurred_on)}, ${precision})</div>
     ${rows}${prov}<div class="flex gap-2 flex-wrap mt-2">${billBtns}</div>
@@ -873,8 +1183,9 @@ function renderCommitResult(type,occurred_on,precision,r,before,items){
 
 async function stockDisplay(sku_id){ const r=await api('/api/stock?as_of='+STATE.today); const row=r.rows.find(x=>x.sku_id===sku_id); return row?row.display:''; }
 
-async function makeBill(it){
-  const r=await fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[it]})});
+async function makeBill(items,customer=null){
+  if(!Array.isArray(items)) items=[items];
+  const r=await fetch('/api/bill',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items,customer})});
   const blob=await r.blob(); const url=URL.createObjectURL(blob); window.open(url,'_blank'); toast('GST invoice PDF ready');
 }
 
@@ -882,46 +1193,87 @@ async function makeBill(it){
 async function loadStock(){
   const fam=document.getElementById('stockFamily').value;
   const r=await api('/api/stock'); const rows=fam?r.rows.filter(x=>x.family===fam):r.rows;
-  document.getElementById('stockList').innerHTML=rows.map(x=>`<div class="card p-3 flex justify-between items-center">
-    <div class="text-sm">${x.canonical}</div>
-    <div class="font-bold ${(x.uncounted||x.oversold)?'text-amber-300':'text-emerald-400'}">${x.display}</div></div>`).join('');
-}
-async function loadRecon(){
-  const r=await api('/api/reconciliations'); const el=document.getElementById('reconPanel');
-  if(!r.reconciliations.length){ el.innerHTML=''; return; }
-  el.innerHTML=`<div class="card p-5 mb-4 border-amber-700"><h2 class="text-xl font-bold mb-2 text-amber-300">⚖️ Reconciliation — farak jo aapne kabhi nahi dekha</h2>`+
-    r.reconciliations.map(x=>`<div class="mb-2">${x.canonical}: <b>Ledger mein ${x.derived} ${x.unit}, aapne ${x.observed} gina.</b>
-    <span class="text-rose-300">${Math.abs(x.delta)} ${x.unit} ka farak</span> — bina record bikri / wastage / churri.
-    <div class="text-xs text-slate-400">History overwrite nahi hui — ledger yahan se aage khud sahi ho gaya.</div></div>`).join('')+`</div>`;
-}
-
-// ---------- Customers / credit ----------
-async function loadCustomers(){
-  const r=await api('/api/customers'); const rows=r.customers||[];
-  const outstanding=rows.reduce((n,c)=>n+c.outstanding,0);
-  const open=rows.filter(c=>c.outstanding>0).length;
-  document.getElementById('customerSummary').innerHTML=`
-    <div class="ledger-table-wrap"><table class="ledger-table"><tbody>
-      <tr><td>Customers</td><td class="amount">${rows.length}</td></tr>
-      <tr><td>Open credit accounts</td><td class="amount">${open}</td></tr>
-      <tr><td class="font-semibold text-slate-900">Total outstanding</td><td class="amount text-amber-300">₹${outstanding.toLocaleString('en-IN')}</td></tr>
-    </tbody></table></div>`;
-  const body=rows.map(c=>{
-    const due=c.next_deadline?dayLabel(c.next_deadline):'—';
-    const payment=c.outstanding>0?`<div class="flex min-w-[260px] gap-2">
-      <input id="pay-${c.customer_id}" type="number" min="1" max="${c.outstanding}" class="min-w-0 w-32 px-3 py-2 text-sm" placeholder="Amount">
-      <button onclick="recordCustomerPayment('${c.customer_id}')" class="rounded-lg bg-slate-950 px-3 py-2 text-xs font-semibold text-white">Record payment</button>
-    </div>`:'<span class="text-emerald-400 font-semibold">Paid</span>';
+  const icons={tmt:'straighten',cement:'architecture',pipe:'horizontal_rule',fitting:'handyman',fastener:'construction',paint:'format_paint'};
+  const body=rows.map(x=>{
+    const status=x.uncounted?'uncounted':(x.oversold||Number(x.qty)<=5?'attention':'stable');
+    const label=status==='uncounted'?'Uncounted':status==='attention'?'Check stock':'Stable';
     return `<tr>
-      <td><div class="font-semibold text-slate-900">${c.name||'Unnamed'}</div><div class="muted">${c.phone}</div></td>
-      <td class="amount">${c.outstanding?`₹${c.outstanding.toLocaleString('en-IN')}`:'₹0'}</td>
-      <td>${due}</td><td>${payment}</td>
+      <td><div class="stock-product"><div class="stock-icon"><span class="material-symbols-outlined">${icons[x.family]||'inventory_2'}</span></div>
+        <div><div class="font-semibold text-slate-950">${x.canonical}</div><div class="muted">${x.sku_id}</div></div></div></td>
+      <td class="capitalize">${x.family}</td>
+      <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}</td>
+      <td><span class="stock-status ${status}">${label}</span></td>
     </tr>`;
   }).join('');
-  document.getElementById('customerBody').innerHTML=`<div class="ledger-table-wrap"><table class="ledger-table">
-    <thead><tr><th>Customer</th><th class="amount">Outstanding</th><th>Next deadline</th><th>Payment</th></tr></thead>
-    <tbody>${body||'<tr><td colspan="4" class="muted">Sale ke baad customer yahan dikhai denge.</td></tr>'}</tbody>
-  </table></div>`;
+  document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
+    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
+    <tbody>${body}</tbody></table></div>`;
+}
+// ---------- Customers / credit ----------
+let CRM_CUSTOMERS=[], CRM_SELECTED=null;
+async function loadCustomers(){
+  const r=await api('/api/customers'); CRM_CUSTOMERS=r.customers||[];
+  if(!CRM_SELECTED || !CRM_CUSTOMERS.some(c=>c.customer_id===CRM_SELECTED)) CRM_SELECTED=CRM_CUSTOMERS[0]?.customer_id||null;
+  const outstanding=CRM_CUSTOMERS.reduce((n,c)=>n+c.outstanding,0);
+  const open=CRM_CUSTOMERS.filter(c=>c.outstanding>0).length;
+  document.getElementById('customerSummary').innerHTML=`
+    <div class="metric-tile"><div class="label">Active customers</div><div class="value">${CRM_CUSTOMERS.length}</div></div>
+    <div class="metric-tile"><div class="label">Open credit accounts</div><div class="value">${open}</div></div>
+    <div class="metric-tile"><div class="label">Total outstanding</div><div class="value text-amber-300">₹${outstanding.toLocaleString('en-IN')}</div></div>`;
+  renderCustomerCRM(CRM_CUSTOMERS);
+}
+function renderCustomerCRM(rows){
+  const list=rows.map(c=>{
+    const overdue=c.next_deadline && c.next_deadline<STATE.today && c.outstanding>0;
+    return `<button class="customer-row ${c.customer_id===CRM_SELECTED?'active':''}" onclick="selectCustomer('${c.customer_id}')">
+      <div class="row-head"><span class="name">${c.name||'Unnamed'}</span>
+        <span class="stock-status ${overdue?'attention':c.outstanding?'uncounted':'stable'}">${overdue?'Overdue':c.outstanding?'Credit':'Paid'}</span></div>
+      <div class="phone">${c.phone}</div>
+      <div class="balance"><span>${c.next_deadline?`Due ${dayLabel(c.next_deadline)}`:'No open dues'}</span><b>₹${c.outstanding.toLocaleString('en-IN')}</b></div>
+    </button>`;
+  }).join('');
+  document.getElementById('customerBody').innerHTML=`<div class="crm-layout">
+    <div class="customer-list">
+      <div class="customer-list-search"><input id="customerSearch" placeholder="Search name or phone…" oninput="filterCustomers(this.value)"></div>
+      <div id="customerListRows">${list||'<div class="p-6 text-sm text-slate-500">No customers yet.</div>'}</div>
+    </div>
+    <div id="customerDetail" class="customer-detail">${renderCustomerDetail()}</div>
+  </div>`;
+}
+function renderCustomerDetail(){
+  const c=CRM_CUSTOMERS.find(x=>x.customer_id===CRM_SELECTED); if(!c) return '<div class="text-slate-500">Select a customer.</div>';
+  const initials=(c.name||'C').split(/\s+/).map(x=>x[0]).slice(0,2).join('').toUpperCase();
+  const dues=(c.open_dues||[]).map(d=>`<tr><td>${dayLabel(d.deadline)}<div class="muted">${d.deadline}</div></td>
+    <td class="amount">₹${d.amount.toLocaleString('en-IN')}</td><td class="amount text-amber-300">₹${d.remaining.toLocaleString('en-IN')}</td>
+    <td><span class="stock-status ${d.deadline<STATE.today?'attention':'uncounted'}">${d.deadline<STATE.today?'Overdue':'Open'}</span></td></tr>`).join('');
+  const payments=(c.payments||[]).map(p=>`<tr>
+    <td>${dayLabel(p.paid_on)}<div class="muted">${p.created_at?.slice(0,16).replace('T',' ')||p.paid_on}</div></td>
+    <td>${p.note||'Payment received'}</td>
+    <td class="amount text-emerald-700">₹${p.amount.toLocaleString('en-IN')}</td>
+  </tr>`).join('');
+  return `<div class="customer-profile"><div class="customer-avatar">${initials}</div><div>
+      <h3>${c.name||'Unnamed'}</h3><p>${c.phone} · Customer since ${c.created_at.slice(0,10)}</p></div></div>
+    <div class="balance-panel">
+      <div class="balance-card"><div class="eyebrow">Lifetime credit</div><div class="value">₹${c.total_credit.toLocaleString('en-IN')}</div><div class="mt-1 text-xs text-emerald-700">₹${c.total_paid.toLocaleString('en-IN')} settled</div></div>
+      <div class="balance-card dark"><div class="eyebrow text-slate-400">Udhaar balance</div><div class="value">₹${c.outstanding.toLocaleString('en-IN')}</div><div class="mt-1 text-xs text-slate-400">${c.next_deadline?`Next due ${dayLabel(c.next_deadline)}`:'Account settled'}</div></div>
+    </div>
+    ${c.outstanding>0?`<div class="payment-bar"><span class="material-symbols-outlined">payments</span>
+      <input id="pay-${c.customer_id}" type="number" min="1" max="${c.outstanding}" placeholder="Payment amount">
+      <button onclick="recordCustomerPayment('${c.customer_id}')" class="btn-primary px-4 py-3 text-sm font-semibold">Record payment</button></div>`:''}
+    <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Credit history</div><span class="text-xs text-slate-500">${c.open_dues.length} open entries</span></div>
+    <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Deadline</th><th class="amount">Original</th><th class="amount">Balance</th><th>Status</th></tr></thead>
+      <tbody>${dues||'<tr><td colspan="4" class="muted">No outstanding credit.</td></tr>'}</tbody></table></div>
+    <div class="mb-2 mt-6 flex items-center justify-between"><div class="font-semibold">Payment receipts</div><span class="text-xs text-slate-500">${c.payment_count||0} separate records</span></div>
+    <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Received on</th><th>Note</th><th class="amount">Amount</th></tr></thead>
+      <tbody>${payments||'<tr><td colspan="3" class="muted">No payments recorded yet.</td></tr>'}</tbody></table></div>`;
+}
+function selectCustomer(customerId){ CRM_SELECTED=customerId; renderCustomerCRM(CRM_CUSTOMERS); }
+function filterCustomers(q){
+  q=(q||'').toLowerCase().trim();
+  const rows=CRM_CUSTOMERS.filter(c=>(c.name||'').toLowerCase().includes(q)||c.phone.includes(q));
+  const list=document.getElementById('customerListRows');
+  list.innerHTML=rows.map(c=>`<button class="customer-row ${c.customer_id===CRM_SELECTED?'active':''}" onclick="selectCustomer('${c.customer_id}')">
+    <div class="row-head"><span class="name">${c.name}</span><b>₹${c.outstanding.toLocaleString('en-IN')}</b></div><div class="phone">${c.phone}</div></button>`).join('');
 }
 async function recordCustomerPayment(customerId){
   const input=document.getElementById('pay-'+customerId); const amount=Number(input.value);
@@ -932,11 +1284,6 @@ async function recordCustomerPayment(customerId){
     toast('Payment record ho gaya'); loadCustomers();
   }catch(e){ toast((''+e).includes('exceeds')?'Outstanding se zyada payment hai':'Payment record nahi hua',false); }
 }
-async function runReminders(){
-  const r=await api('/api/reminders/run',{method:'POST'});
-  toast(r.due_count?`${r.due_count} reminder ready`:'Koi naya reminder due nahi hai');
-}
-
 // ---------- Today ----------
 async function loadToday(){
   const m=await api('/api/today');
@@ -944,6 +1291,7 @@ async function loadToday(){
       <td><div class="font-semibold text-slate-900">${l.canonical}</div></td>
       <td>${l.qty} ${l.unit}</td>
       <td><span class="${l.payment==='credit'?'text-amber-300':'text-emerald-400'} font-semibold">${l.payment==='credit'?'Udhaar':'Cash'}</span></td>
+      <td class="amount">₹${(l.amount||0).toLocaleString('en-IN')}</td>
       <td class="amount">₹${(l.margin||0).toLocaleString('en-IN')}</td>
     </tr>`).join('');
   document.getElementById('todayBody').innerHTML=`
@@ -951,6 +1299,7 @@ async function loadToday(){
       <table class="ledger-table">
         <thead><tr><th>Summary</th><th class="amount">Amount</th></tr></thead>
         <tbody>
+          <tr><td><div class="font-semibold text-slate-900">Aaj ki total sale</div><div class="muted">Cash + udhaar</div></td><td class="amount text-slate-950">₹${m.total.toLocaleString('en-IN')}</td></tr>
           <tr><td><div class="font-semibold text-slate-900">Aaj ka margin</div><div class="muted">Abhi tak ka</div></td><td class="amount text-emerald-400">₹${m.margin.toLocaleString('en-IN')}</td></tr>
           <tr><td>Cash aaya</td><td class="amount text-emerald-400">₹${m.cash.toLocaleString('en-IN')}</td></tr>
           <tr><td>Udhaar gaya</td><td class="amount text-amber-300">₹${m.credit.toLocaleString('en-IN')}</td></tr>
@@ -961,8 +1310,8 @@ async function loadToday(){
     <div class="mt-6">
       <div class="mb-2 text-sm font-semibold">Aaj ki bikri</div>
       <div class="ledger-table-wrap"><table class="ledger-table">
-        <thead><tr><th>Item</th><th>Quantity</th><th>Payment</th><th class="amount">Margin</th></tr></thead>
-        <tbody>${saleRows||'<tr><td colspan="4" class="muted">Aaj koi sale entry nahi hai.</td></tr>'}</tbody>
+        <thead><tr><th>Item</th><th>Quantity</th><th>Payment</th><th class="amount">Total</th><th class="amount">Margin</th></tr></thead>
+        <tbody>${saleRows||'<tr><td colspan="5" class="muted">Aaj koi sale entry nahi hai.</td></tr>'}</tbody>
       </table></div>
     </div>`;
 }
@@ -990,19 +1339,23 @@ async function loadDashboard(){
     data:{labels,datasets:[{label:'Daily margin ₹',data,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.15)',fill:true,tension:.3,pointRadius:2}]},
     options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:10}},y:{ticks:{color:'#94a3b8'}}}},plugins:[risePlugin]});
   const mp=d.money_position;
+  document.getElementById('dashboardMetrics').innerHTML=`
+    <div class="metric-tile"><div class="label">Outstanding credit</div><div class="value">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div></div>
+    <div class="metric-tile"><div class="label">Inventory value</div><div class="value">₹${mp.inventory_value.toLocaleString('en-IN')}</div></div>
+    <div class="metric-tile"><div class="label">Frozen capital</div><div class="value">₹${d.frozen_total.toLocaleString('en-IN')}</div></div>`;
   document.getElementById('moneyBody').innerHTML=`
-    <div class="mb-3"><div class="text-3xl font-bold text-amber-300">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div><div class="text-slate-400 text-sm">Outstanding udhaar (contractors)</div></div>
-    <div class="mb-2"><div class="text-3xl font-bold text-sky-300">₹${mp.inventory_value.toLocaleString('en-IN')}</div><div class="text-slate-400 text-sm">Inventory value at landed cost</div></div>
+    <div class="mb-5"><div class="text-3xl font-bold text-slate-950">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Outstanding udhaar (contractors)</div></div>
+    <div class="mb-3"><div class="text-3xl font-bold text-emerald-800">₹${mp.inventory_value.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Inventory value at landed cost</div></div>
     <div class="text-xs text-slate-500">${mp.uncounted_excluded} uncounted SKUs excluded (gina nahi — value pata nahi)</div>`;
   const frozenRows=d.frozen_capital.map(f=>`<tr>
       <td><div class="font-semibold text-slate-900">${f.canonical}</div></td>
       <td>${f.stock}</td>
-      <td class="amount text-rose-300">₹${f.value.toLocaleString('en-IN')}</td>
+      <td class="amount text-rose-700">₹${f.value.toLocaleString('en-IN')}</td>
     </tr>`).join('');
   document.getElementById('frozenBody').innerHTML=`
     <div class="mb-3 flex items-center justify-between text-sm">
       <span class="text-slate-500">Total locked capital</span>
-      <b class="text-rose-300">₹${d.frozen_total.toLocaleString('en-IN')}</b>
+      <b class="text-rose-700">₹${d.frozen_total.toLocaleString('en-IN')}</b>
     </div>
     <div class="ledger-table-wrap"><table class="ledger-table">
       <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
