@@ -129,6 +129,22 @@ def _extract_prompt(repo) -> str:
 
 _VALID_INTENTS = {"sale", "delivery", "count", "stock_query", "analytics_query", "unknown"}
 
+# cash/udhaar is a fixed two-word vocabulary, unlike product/qty/price — the
+# LLM has been observed to miss an explicit "udhaar mein becha" and ask "cash
+# ya udhaar?" again. Detect it deterministically from the transcript instead
+# of trusting the extractor's json field, same reasoning as _quick_route().
+_CREDIT_RE = re.compile(r"udhaar|udhar|credit|baaki|khaate")
+_CASH_RE = re.compile(r"\bcash\b|nagad")
+
+
+def _detect_payment(text: str):
+    t = (text or "").lower()
+    if _CREDIT_RE.search(t):
+        return "credit"
+    if _CASH_RE.search(t):
+        return "cash"
+    return None
+
 
 def _extract(state, repo) -> dict:
     joined = " . ".join(s for s in state["said"] if s)
@@ -145,6 +161,7 @@ def _extract(state, repo) -> dict:
             break
     if not isinstance(out, dict):
         out = {}
+    payment = _detect_payment(joined)
     items = []
     for r in out.get("items", []) or []:
         if not isinstance(r, dict):
@@ -160,7 +177,8 @@ def _extract(state, repo) -> dict:
             "qty": r.get("qty") if isinstance(r.get("qty"), (int, float)) else None,
             "unit": unit,
             "rate": r.get("rate") if isinstance(r.get("rate"), (int, float)) else None,
-            "payment": r.get("payment") if r.get("payment") in ("cash", "credit") else None,
+            "payment": payment or (r.get("payment")
+                                   if r.get("payment") in ("cash", "credit") else None),
         })
     raw_intent = out.get("intent")
     intent = raw_intent if raw_intent in _VALID_INTENTS else "unknown"
@@ -174,6 +192,39 @@ def _valid_sku(sid, repo) -> bool:
 # ---------------------------------------------------------------------------
 # Main entry — controller
 # ---------------------------------------------------------------------------
+# Analytics/stock questions use a small, fixed vocabulary ("kitna udhaar",
+# "nahi bika", "stock hai"...) regardless of how they're phrased around it —
+# there's no real ambiguity to resolve, so route them by keyword match
+# instead of paying for (and risking) an LLM classification. This is what
+# actually answers "kaun sa saamaan 60 din mein nahi bika" reliably: a plain
+# sale/delivery utterance never matches these patterns, so it can't misfire
+# on an order. The LLM is reserved for what genuinely needs it — pinning
+# down which product/qty/price was said.
+_QUICK_PATTERNS = [
+    ("frozen", re.compile(r"nahi\s*bika|bika\s*nahi|frozen|phasa|dead\s*stock|"
+                          r"purana\s*maal|move\w*\s*nahi|kaun\s*sa\s*saamaan")),
+    ("udhaar", re.compile(r"kitna\s*udhaar|udhaar\s*kitna|total\s*udhaar|udhaar\s*baaki|"
+                          r"baaki\s*kitna")),
+    ("cash", re.compile(r"aaj\s*(ka\s*)?cash|cash\s*kitna|kitna\s*cash")),
+    ("inventory", re.compile(r"inventory\s*(ki\s*)?value|maal\s*ki\s*value|"
+                             r"stock\s*ki\s*value")),
+    ("margin", re.compile(r"margin|munafa|profit")),
+]
+_STOCK_QUERY_RE = re.compile(r"kitna\s*bacha|stock\s*hai|kitna\s*stock|kitna\s*hai\b")
+
+
+def _quick_route(text: str):
+    """Deterministic fast-path for analytics/stock questions. Returns
+    ("analytics", metric), ("stock", None), or None (fall through to the LLM)."""
+    t = (text or "").lower()
+    for metric, pat in _QUICK_PATTERNS:
+        if pat.search(t):
+            return ("analytics", metric)
+    if _STOCK_QUERY_RE.search(t):
+        return ("stock", None)
+    return None
+
+
 def converse(state, user_text, flow, repo):
     if not sarvam_client.has_key():
         return _reply("Voice ke liye Sarvam API key chahiye.", listen=False, done=True)
@@ -187,6 +238,14 @@ def converse(state, user_text, flow, repo):
     aw = state.get("awaiting")
     if aw in ("customer_phone", "customer_name", "deadline"):
         return _apply_customer_slot(state, aw, user_text, repo)
+
+    if (not flow or flow == "auto") and not state.get("locked_intent"):
+        quick = _quick_route(user_text)
+        if quick == ("stock", None):
+            state["said"].append(user_text or "")
+            return _stock_flow(state, _extract(state, repo)["items"], repo)
+        if quick and quick[0] == "analytics":
+            return _analytics_answer(quick[1], repo)
 
     state["said"].append(user_text or "")
 
@@ -418,8 +477,12 @@ def _analytics_answer(metric, repo):
                f"Aaj {int(t['credit'])} rupaye udhaar gaya.")
     elif metric == "frozen":
         ft = int(d["frozen_total"])
-        say = (f"Frozen capital {ft} rupaye ka phasa hua hai — 60 din se hila nahi."
-               if ft else "Abhi koi capital phasa hua nahi hai, accha hai.")
+        items = d.get("frozen_capital") or []
+        if not items:
+            say = "Abhi koi maal 60 din se pada nahi hai, sab move ho raha hai."
+        else:
+            names = _oxford([f"{f['canonical']} ({f['stock']})" for f in items])
+            say = f"{names} — 60 din se bika nahi, {ft} rupaye phasa hua hai."
     elif metric == "inventory":
         say = f"Inventory ki value {int(mp['inventory_value'])} rupaye hai, landed cost pe."
     else:
