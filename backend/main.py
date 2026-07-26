@@ -58,6 +58,33 @@ def by_id() -> dict:
     return {s["sku_id"]: s for s in repo.load_catalogue()}
 
 
+# Bulbul reads native Devanagari far more reliably than an ad-hoc romanized
+# spelling — "sariya" was coming out as "saariya". Our reply text is written
+# in Hinglish (romanized Hindi) throughout, so swap the common Hindi words
+# to Devanagari right before hi-IN synthesis; borrowed English words
+# (tonne, stock, cash…) are left alone since Hindi speakers/TTS handle those
+# fine as-is.
+_HINGLISH_TO_DEVANAGARI = {
+    "sariya": "सरिया", "saria": "सरिया", "cement": "सीमेंट", "kitna": "कितना",
+    "hai": "है", "becha": "बेचा", "bechi": "बेची", "bori": "बोरी",
+    "diya": "दिया", "likh": "लिख", "mein": "में", "nahi": "नहीं",
+    "udhaar": "उधार", "aur": "और", "chahiye": "चाहिए", "kaunsa": "कौनसा",
+    "theek": "ठीक", "kya": "क्या", "kharida": "खरीदा", "khareeda": "खरीदा",
+    "bika": "बिका", "maal": "माल", "gina": "गिना", "gin": "गिन",
+    "rakhte": "रखते", "hamne": "हमने", "wala": "वाला", "poochho": "पूछो",
+    "bolo": "बोलो", "naam": "नाम", "bataiye": "बताइए", "rupaye": "रुपये",
+    "abhi": "अभी", "tak": "तक", "kab": "कब", "purani": "पुरानी",
+}
+_HINGLISH_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in _HINGLISH_TO_DEVANAGARI) + r")\b",
+    re.I,
+)
+
+
+def _devanagari_for_tts(text: str) -> str:
+    return _HINGLISH_RE.sub(lambda m: _HINGLISH_TO_DEVANAGARI[m.group(1).lower()], text)
+
+
 # ---------------------------------------------------------------------------
 # Static page
 # ---------------------------------------------------------------------------
@@ -224,8 +251,9 @@ def converse(payload: dict = Body(...)):
     tts_lang = "en-IN" if (out.get("state") or {}).get("lang") == "en" else "hi-IN"
     out["say_audio_b64"] = None
     if out.get("say") and sarvam_client.has_key():
+        speak_text = _devanagari_for_tts(out["say"]) if tts_lang == "hi-IN" else out["say"]
         try:
-            out["say_audio_b64"] = sarvam_client.text_to_speech(out["say"], tts_lang)
+            out["say_audio_b64"] = sarvam_client.text_to_speech(speak_text, tts_lang)
         except Exception as e:
             out["tts_error"] = str(e)
     out["learning_counts"] = repo.learning_counts()
@@ -239,7 +267,7 @@ def say(payload: dict = Body(...)):
     if not text or not sarvam_client.has_key():
         return {"audio_b64": None}
     try:
-        return {"audio_b64": sarvam_client.text_to_speech(text, "hi-IN")}
+        return {"audio_b64": sarvam_client.text_to_speech(_devanagari_for_tts(text), "hi-IN")}
     except Exception as e:
         return {"audio_b64": None, "error": str(e)}
 
@@ -436,6 +464,9 @@ def reconciliations():
 def _today_summary() -> dict:
     events = repo.all_events()
     m = L.margin_for_day(by_id(), events, TODAY)
+    for line in m.get("lines", []):
+        cust = repo.customer(line["customer_id"]) if line.get("customer_id") else None
+        line["customer_name"] = cust["name"] if cust else None
     # week-precision sales anywhere in the current week -> "plus N purani entries"
     week_extra = 0
     for e in events:
@@ -464,7 +495,7 @@ def today_tts():
     if not sarvam_client.has_key():
         return {"text": text, "audio_b64": None}
     try:
-        b64 = sarvam_client.text_to_speech(text, language_code="hi-IN")
+        b64 = sarvam_client.text_to_speech(_devanagari_for_tts(text), language_code="hi-IN")
         return {"text": text, "audio_b64": b64}
     except Exception as e:
         return {"text": text, "audio_b64": None, "error": str(e)}

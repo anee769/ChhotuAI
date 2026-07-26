@@ -90,6 +90,34 @@ def parse_phone(text: str):
     return digits[-10:] if len(digits) >= 10 else None
 
 
+def _transliterate_to_latin(text: str) -> str:
+    """Best-effort: a Devanagari name -> its normal English spelling, so
+    customer names are always saved in Latin script regardless of which
+    language the owner spoke in. A no-op (and no API call) when there's no
+    Devanagari to convert."""
+    if not re.search(r"[ऀ-ॿ]", text or ""):
+        return text
+    try:
+        # sarvam-30b spends tokens on reasoning_content BEFORE the answer even
+        # for a trivial ask — max_tokens=30 cut it off mid-reasoning every
+        # time (finish_reason=length, content=None), the same failure mode
+        # fixed earlier for the main extractor. Give it real room, and read
+        # reasoning_content as a last-resort fallback like chat_json does.
+        resp = sarvam_client.chat(
+            [{"role": "system", "content":
+              "Transliterate this Indian person's name into English/Latin "
+              "script, exactly as it is normally spelled in English (not a "
+              "strict letter-by-letter transliteration). Reply with ONLY "
+              "the name — no quotes, no explanation."},
+             {"role": "user", "content": text}],
+            temperature=0.1, reasoning_effort=_EFFORT, max_tokens=4096, timeout=75)
+        msg = sarvam_client.chat_message(resp)
+        out = (msg.get("content") or "").strip().strip('"')
+        return out or text
+    except Exception:
+        return text
+
+
 def _number_in_text(text: str):
     m = re.search(r"\d+(?:\.\d+)?", text or "")
     if m:
@@ -173,8 +201,11 @@ def _extract_prompt(repo) -> str:
         "pachaas=50 pachpan=55 saath=60 chausath=64 assi=80 sau=100 hazaar=1000 "
         "lakh=100000; dhai=2.5 saade=+0.5 sava=+0.25 paune=-0.25. Digits stay as-is.\n\n"
         "Return JSON:\n"
-        '{"intent":"sale|delivery|count|stock_query|analytics_query|unknown",'
+        '{"intent":"sale|delivery|count|stock_query|analytics_query|chitchat|unknown",'
         '"metric":"margin|cash|udhaar|frozen|inventory|null",'
+        '"reply":"<ONLY for intent=chitchat: a short, warm, natural reply in the '
+        'SAME language/script the owner used — a real greeting/thanks/small-talk '
+        'reply, not a canned line. null for every other intent>",'
         '"items":[{"sku_id":"<exact sku_id, or null if not pinned to ONE>",'
         '"family":"tmt|cement|null","name":"<what he called it>",'
         '"in_catalogue":true|false,"qty":<number or null>,"unit":"<unit or empty>",'
@@ -199,6 +230,11 @@ def _extract_prompt(repo) -> str:
         "udhaar/credit/baaki->credit). Else null.\n"
         "- stock question ('kitna bacha/stock hai') -> intent stock_query. "
         "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric.\n"
+        "- Greetings, small talk, thanks, or anything not about the shop's sale/"
+        "purchase/stock/money -> intent=chitchat, with a real warm reply (never "
+        "the literal words 'chitchat' or a business rejection). Only fall back "
+        "to intent=unknown when the owner is CLEARLY trying to transact but you "
+        "genuinely cannot tell what.\n"
         "- intent=delivery when the owner RECEIVED/BOUGHT stock: "
         "'kharida/khareeda/khareedi/खरीदा/खरीदी', 'hamne liya', 'mangwaya', 'aaya', "
         "'delivery aayi', OR in English 'bought', 'buy', 'purchased', 'received', "
@@ -208,12 +244,13 @@ def _extract_prompt(repo) -> str:
         "'sell', 'gave'. Do not confuse the two — 'kharida'/'bought' is ALWAYS "
         "delivery, never sale.\n"
         "- intent MUST be exactly one of: sale, delivery, count, stock_query, "
-        "analytics_query, unknown. Never invent another word.\n"
+        "analytics_query, chitchat, unknown. Never invent another word.\n"
         "- Think briefly, then output the JSON."
     )
 
 
-_VALID_INTENTS = {"sale", "delivery", "count", "stock_query", "analytics_query", "unknown"}
+_VALID_INTENTS = {"sale", "delivery", "count", "stock_query", "analytics_query",
+                  "chitchat", "unknown"}
 
 # cash/udhaar is a fixed two-word vocabulary, unlike product/qty/price — the
 # LLM has been observed to miss an explicit "udhaar mein becha" and ask "cash
@@ -379,7 +416,9 @@ def _extract(state, repo) -> dict:
     # authoritative for richer attributes when it found every spoken segment.
     if len(segmented["items"]) > len(items):
         items = segmented["items"]
-    return {"intent": intent, "metric": out.get("metric"), "items": items}
+    reply = out.get("reply")
+    return {"intent": intent, "metric": out.get("metric"),
+            "reply": reply if isinstance(reply, str) else None, "items": items}
 
 
 def _fallback_extract(text: str, repo) -> dict:
@@ -403,7 +442,7 @@ def _fallback_extract(text: str, repo) -> dict:
             "in_catalogue": bool(family or sid), "qty": row.get("qty"),
             "unit": row.get("unit"), "rate": None, "payment": payment,
         })
-    return {"intent": intent, "metric": None, "items": items}
+    return {"intent": intent, "metric": None, "reply": None, "items": items}
 
 
 def _valid_sku(sid, repo) -> bool:
@@ -499,23 +538,6 @@ _QUICK_PATTERNS = [
 _STOCK_QUERY_RE = re.compile(r"kitna\s*bacha|stock\s*hai|kitna\s*stock|kitna\s*hai\b")
 
 
-_GREETING_PHRASES = {
-    "hi", "hii", "hiii", "hello", "hey", "yo", "namaste", "namaskar", "hola",
-    "how are you", "how are you doing", "whats up", "good morning",
-    "good evening", "good afternoon", "kaise ho", "kaise ho aap",
-    "kya haal hai", "kya haal", "namaste chhotu", "hey chhotu", "hi chhotu",
-    "hello chhotu", "kya kar rahe ho", "sab theek",
-}
-
-
-def _is_greeting(text: str) -> bool:
-    """True only when the WHOLE turn is small talk, not a greeting attached
-    to a real business ask ("hey I bought 100 tiles" must NOT match)."""
-    t = re.sub(r"[^\w\s]", "", (text or "").strip().lower())
-    t = re.sub(r"\s+", " ", t).strip()
-    return t in _GREETING_PHRASES
-
-
 def _quick_route(text: str):
     """Deterministic fast-path for analytics/stock questions. Returns
     ("analytics", metric), ("stock", None), or None (fall through to the LLM)."""
@@ -560,17 +582,6 @@ def converse(state, user_text, flow, repo):
         state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_order_slot(state, user_text, repo)
 
-    # A bare greeting/small-talk turn (only, on its own — not attached to a
-    # real ask) gets a friendly reply instead of being forced through the
-    # business pipeline and rejected as "sirf sariya aur cement rakhte hain".
-    if not state.get("locked_intent") and _is_greeting(user_text):
-        return _reply(_L(state,
-                         "Namaste! Main Chhotu hoon — sale, kharid, stock ya udhaar, "
-                         "jo bhi poochhna ho boliye.",
-                         "Hey! I'm Chhotu — ask me about a sale, a purchase, stock, "
-                         "or credit, whatever you need."),
-                      listen=True, done=False, state=state)
-
     # Voice Entry is a sale-capable screen, but it is also where the owner asks
     # stock and business questions. Route an unambiguous first-turn query before
     # the screen's `live_sale` hint can force it into an order. Analytics are
@@ -606,6 +617,12 @@ def converse(state, user_text, flow, repo):
     elif state.get("locked_intent"):
         intent = state["locked_intent"]
 
+    if intent == "chitchat":
+        # The model writes its own natural reply here — small talk has no
+        # fixed vocabulary to pattern-match, unlike payment/analytics
+        # keywords, so this is the one case genuinely left to the LLM.
+        return _reply(ext.get("reply") or _L(state, "Namaste!", "Hi there!"),
+                      listen=True, done=False, state=state)
     if intent == "analytics_query":
         return _analytics_answer(ext.get("metric"), repo, state)
     if intent == "stock_query":
@@ -991,6 +1008,10 @@ def _apply_customer_slot(state, aw, user_text, repo):
         if not name:
             return _say(state, _L(state, "Naam bataiye.", "Please tell me the name."),
                         listen=True, done=False)
+        # Customer names are always saved in English/Latin script — bills,
+        # receipts and the CRM table read consistently regardless of which
+        # language the owner spoke the name in.
+        name = _transliterate_to_latin(name)
         customer = repo.upsert_customer(state["customer"]["phone"], name)
         state["customer"] = {"phone": customer["phone"],
                              "customer_id": customer["customer_id"],

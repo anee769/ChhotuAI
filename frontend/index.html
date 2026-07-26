@@ -1087,8 +1087,8 @@ function renderResolution(tab){
   html+=`<button onclick="commit('${tab}')" ${ready?'':'disabled'} class="mt-2 px-6 py-3 rounded-xl font-bold text-lg ${ready?'bg-emerald-600':'bg-slate-700 opacity-50'}">✅ Confirm &amp; write to ledger</button>`;
   box.innerHTML=html;
 }
-function dayLabel(iso){ const d=new Date(iso), t=new Date(STATE.today); const diff=Math.round((t-d)/86400000);
-  return diff===0?'Aaj':diff===1?'Kal':diff===2?'Parso':iso.slice(5); }
+function dayLabel(iso){ if(!iso) return '';
+  return new Date(iso).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}); }
 function pickDate(tab,iso,prec){ const P=PENDING[tab]; P.temporal.chosen=iso; P.temporal.chosenWeek=(prec==='week'); P.temporal.precision=prec; renderResolution(tab); }
 
 function renderItemRow(tab,it,idx,gate){
@@ -1297,6 +1297,7 @@ async function loadToday(){
   const saleRows=m.lines.map(l=>`<tr>
       <td><div class="font-semibold text-slate-900">${l.canonical}</div></td>
       <td>${l.qty} ${l.unit}</td>
+      <td>${l.customer_name||'—'}</td>
       <td><span class="${l.payment==='credit'?'text-amber-300':'text-emerald-400'} font-semibold">${l.payment==='credit'?'Udhaar':'Cash'}</span></td>
       <td class="amount">₹${(l.amount||0).toLocaleString('en-IN')}</td>
       <td class="amount">₹${(l.margin||0).toLocaleString('en-IN')}</td>
@@ -1317,8 +1318,8 @@ async function loadToday(){
     <div class="mt-6">
       <div class="mb-2 text-sm font-semibold">Aaj ki bikri</div>
       <div class="ledger-table-wrap"><table class="ledger-table">
-        <thead><tr><th>Item</th><th>Quantity</th><th>Payment</th><th class="amount">Total</th><th class="amount">Margin</th></tr></thead>
-        <tbody>${saleRows||'<tr><td colspan="5" class="muted">Aaj koi sale entry nahi hai.</td></tr>'}</tbody>
+        <thead><tr><th>Item</th><th>Quantity</th><th>Customer</th><th>Payment</th><th class="amount">Total</th><th class="amount">Margin</th></tr></thead>
+        <tbody>${saleRows||'<tr><td colspan="6" class="muted">Aaj koi sale entry nahi hai.</td></tr>'}</tbody>
       </table></div>
     </div>`;
 }

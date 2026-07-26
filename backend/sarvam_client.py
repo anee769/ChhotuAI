@@ -21,7 +21,6 @@ import base64
 import json
 import os
 import time
-import zipfile
 import tempfile
 from pathlib import Path
 from typing import Any, Optional
@@ -275,43 +274,44 @@ def parse_document(file_path: str, language: str = "en-IN") -> dict:
 
     client = SarvamAI(api_subscription_key=API_KEY)
     with tempfile.TemporaryDirectory() as td:
-        out_zip = os.path.join(td, "out.zip")
         try:
+            # job_parameters=dict(...), upload_files(file_paths=[...]) (plural),
+            # download_outputs(output_dir=...) (a directory, not a zip) — the
+            # actual current SDK surface; the previous create_job(language=,
+            # output_format=)/upload_file(path)/download_output(zip_path) shapes
+            # were stale and likely why live digitization wasn't working right.
             job = client.document_intelligence.create_job(
-                language=language, output_format="html"
+                job_parameters=dict(language=language, output_format="html")
             )
-            job.upload_file(file_path)
+            job.upload_files(file_paths=[file_path])
             job.start()
             job.wait_until_complete()
-            job.download_output(out_zip)
+            job.download_outputs(output_dir=td)
         except Exception as e:
             raise SarvamError(f"document_intelligence job failed: {e}")
-        return _read_doc_zip(out_zip)
+        return _read_doc_dir(td)
 
 
-def _read_doc_zip(zip_path: str) -> dict:
+def _read_doc_dir(dir_path: str) -> dict:
     blocks: list = []
     text_files: list = []  # (name, content) for html/md/txt fallback
-    with tempfile.TemporaryDirectory() as d:
-        with zipfile.ZipFile(zip_path, "r") as zf:
-            zf.extractall(d)
-        for root, _dirs, files in os.walk(d):
-            for fn in files:
-                path = os.path.join(root, fn)
-                if fn.endswith(".json"):
-                    try:
-                        with open(path, encoding="utf-8") as f:
-                            data = json.load(f)
-                    except Exception:
-                        continue
-                    if isinstance(data, dict):
-                        blocks.extend(data.get("blocks", []))
-                elif fn.endswith((".html", ".htm", ".md", ".txt")):
-                    try:
-                        with open(path, encoding="utf-8", errors="ignore") as f:
-                            text_files.append((fn, f.read()))
-                    except Exception:
-                        pass
+    for root, _dirs, files in os.walk(dir_path):
+        for fn in files:
+            path = os.path.join(root, fn)
+            if fn.endswith(".json"):
+                try:
+                    with open(path, encoding="utf-8") as f:
+                        data = json.load(f)
+                except Exception:
+                    continue
+                if isinstance(data, dict):
+                    blocks.extend(data.get("blocks", []))
+            elif fn.endswith((".html", ".htm", ".md", ".txt")):
+                try:
+                    with open(path, encoding="utf-8", errors="ignore") as f:
+                        text_files.append((fn, f.read()))
+                except Exception:
+                    pass
     if blocks:
         blocks.sort(key=lambda x: x.get("reading_order", 0))
         skip = {"page_header", "page_footer", "page_number"}

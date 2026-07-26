@@ -216,6 +216,7 @@ def margin_for_day(catalogue_by_sku: dict, events: list, day: date) -> dict:
             "margin": round(line_margin, 2) if line_margin is not None else None,
             "amount": round(revenue, 2),
             "payment": e.get("payment", "cash"),
+            "customer_id": e.get("customer_id"),
         })
     return {
         "date": day.isoformat(),
