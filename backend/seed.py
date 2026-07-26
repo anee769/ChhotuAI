@@ -33,16 +33,18 @@ def piece_kg(d_mm: int) -> float:
 # Catalogue
 # ---------------------------------------------------------------------------
 def build_catalogue() -> list:
-    """A deliberately SMALL, clean catalogue: 2 families, 2 brands, a couple of
-    variants each — enough to show variant disambiguation, margin, udhaar,
-    frozen/uncounted capital and invoice landed-cost, but tidy on the dashboard.
+    """A deliberately SMALL, clean catalogue: 3 families (bar, cement, tiles),
+    one brand each, a couple of variants — enough to show variant
+    disambiguation, margin, udhaar, frozen/uncounted capital and invoice
+    landed-cost, but tidy on the dashboard.
 
-      1. Tata Tiscon TMT 12mm Fe500D   (sariya, the star SKU)
-      2. Tata Tiscon TMT 16mm Fe500D   (sariya, second size)
-      3. UltraTech OPC 53 Cement 50kg  (cement, counted + active)
-      4. UltraTech PPC Cement 50kg     (cement, kept UNCOUNTED in the demo)
-      5. Tata Tiscon TMT 20mm Fe500D   (sariya, counted but FROZEN — dead stock)
-      6. UltraTech PSC Cement 50kg     (cement, counted but FROZEN — dead stock)
+      1. Tata Tiscon TMT 12mm Fe500D     (bar, the star SKU)
+      2. Tata Tiscon TMT 16mm Fe500D     (bar, second size)
+      3. Tata Tiscon TMT 20mm Fe500D     (bar, counted but FROZEN — dead stock)
+      4. UltraTech OPC 53 Cement 50kg    (cement, counted + active)
+      5. UltraTech PPC Cement 50kg       (cement, kept UNCOUNTED in the demo)
+      6. Kajaria Ceramic Floor Tile 2x2ft (tiles, counted + active)
+      7. Kajaria Vitrified Tile 600x600mm (tiles, counted but FROZEN — dead stock)
     """
     cat = []
 
@@ -57,13 +59,12 @@ def build_catalogue() -> list:
             "units": {"kg": 1, "tonne": 1000, "piece": piece_kg(dia)},
             "gst_rate": 18,
             "opening_cost_per_kg": cost,
-            "aliases": ["saria", "sariya", "सरिया", "tmt bar", "rod", "tmt",
+            "aliases": ["saria", "sariya", "सरिया", "tmt bar", "rod", "tmt", "bar",
                         f"{dia}mm rod", f"{dia} mm", "tata", "tiscon"],
         })
 
-    # --- Cement: one brand, three types (PSC kept as frozen stock) ---
-    for typ, tcode, cost in [("OPC 53", "OPC53", 415), ("PPC", "PPC", 385),
-                              ("PSC", "PSC", 370)]:
+    # --- Cement: one brand, two types ---
+    for typ, tcode, cost in [("OPC 53", "OPC53", 415), ("PPC", "PPC", 385)]:
         cat.append({
             "sku_id": f"CEM_ULTRATECH_{tcode}",
             "canonical": f"UltraTech {typ} Cement 50kg",
@@ -75,6 +76,24 @@ def build_catalogue() -> list:
             "opening_cost_per_kg": cost,  # per bori (base unit)
             "aliases": ["cement", "सीमेंट", "bori", "bag", "ultratech",
                         typ.lower(), "ultratech cement"],
+        })
+
+    # --- Tiles: one brand, two types (vitrified kept as frozen stock) ---
+    for typ, tcode, size, cost in [
+        ("Ceramic Floor Tile 2x2ft", "CERAMIC_2X2", "2x2ft", 28.0),
+        ("Vitrified Tile 600x600mm", "VITRIFIED_600", "600x600mm", 42.0),
+    ]:
+        cat.append({
+            "sku_id": f"TILE_KAJARIA_{tcode}",
+            "canonical": f"Kajaria {typ}",
+            "family": "tiles",
+            "attributes": {"brand": "Kajaria", "type": typ, "size": size},
+            "default_unit": "box",
+            "units": {"box": 1, "piece": 0.1},
+            "gst_rate": 28,
+            "opening_cost_per_kg": cost,  # per box (base unit)
+            "aliases": ["tile", "tiles", "टाइल", "kajaria", "box", "floor tile",
+                        "vitrified", "ceramic", typ.lower()],
         })
 
     return cat
@@ -104,21 +123,24 @@ def build_events(cat: list) -> list:
     by_id = {s["sku_id"]: s for s in cat}
 
     TMT12, TMT16, TMT20 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA", "TMT_20_FE500D_TATA"
-    OPC53, PPC, PSC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC", "CEM_ULTRATECH_PSC"
+    OPC53, PPC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC"
+    TILE_C, TILE_V = "TILE_KAJARIA_CERAMIC_2X2", "TILE_KAJARIA_VITRIFIED_600"
 
     # UltraTech PPC is deliberately left UNCOUNTED (no baseline, no activity)
     # so the demo shows a "abhi tak gina nahi" SKU.
-    # TMT 20mm and PSC cement are counted ONCE and then never sold/restocked —
-    # they show up as frozen capital (dead stock, zero movement in 60 days).
-    counted = [TMT12, TMT16, OPC53]
-    frozen_only = [TMT20, PSC]
+    # TMT 20mm and the vitrified tile are counted ONCE and then never
+    # sold/restocked — they show up as frozen capital (dead stock, zero
+    # movement in 60 days), one from each of two different families.
+    counted = [TMT12, TMT16, OPC53, TILE_C]
+    frozen_only = [TMT20, TILE_V]
 
-    # 1) opening_balance at period start for the 3 active + 2 frozen SKUs
+    # 1) opening_balance at period start for the 4 active + 2 frozen SKUs
     opening = {TMT12: (15.0, "tonne", "estimated"),
                TMT16: (10.0, "tonne", "estimated"),
                OPC53: (400, "bori", "exact"),
+               TILE_C: (60, "box", "estimated"),
                TMT20: (1.8, "tonne", "exact"),
-               PSC: (22, "bori", "exact")}
+               TILE_V: (15, "box", "exact")}
     for sid, (qty, unit, cp) in opening.items():
         add(type="opening_balance", sku_id=sid, qty=qty, unit=unit, rate=None,
             payment=None, occurred_on=d(PERIOD_START), precision="day",
@@ -151,6 +173,14 @@ def build_events(cat: list) -> list:
         occurred_at=None, recorded_at=rec(dd), confidence=0.95,
         source="invoice_photo", evidence={"transcript": "delivery"})
 
+    # tile delivery (no dramatic rise)
+    dt2 = PERIOD_START + timedelta(days=18)
+    add(type="delivery", sku_id=TILE_C, qty=40, unit="box",
+        rate=by_id[TILE_C]["opening_cost_per_kg"], payment="cash",
+        occurred_on=d(dt2), precision="day", count_precision=None,
+        occurred_at=None, recorded_at=rec(dt2), confidence=0.95,
+        source="invoice_photo", evidence={"transcript": "delivery"})
+
     # 3) Sales across the period — cash/credit mix, healthy margin.
     for day_off in range(2, 42):
         dt = PERIOD_START + timedelta(days=day_off)
@@ -161,6 +191,8 @@ def build_events(cat: list) -> list:
             markup = random.uniform(1.06, 1.16)
             if sku["family"] == "tmt":
                 qty, unit = round(random.uniform(0.2, 0.8), 1), "tonne"
+            elif sku["family"] == "tiles":
+                qty, unit = random.randint(3, 15), "box"
             else:
                 qty, unit = random.randint(5, 20), "bori"
             pay = "credit" if random.random() < 0.4 else "cash"
@@ -173,14 +205,16 @@ def build_events(cat: list) -> list:
 
     # 4) TODAY's sales so the Today tab shows live numbers (cash + credit)
     today_sales = [
-        (TMT12, 1.5, "tonne", "cash"),
-        (OPC53, 30, "bori", "cash"),
-        (TMT16, 0.8, "tonne", "credit"),
+        (TMT12, 1.5, "tonne", "cash", None),
+        (OPC53, 30, "bori", "cash", None),
+        (TMT16, 0.8, "tonne", "credit", "cust_0001"),
+        (TILE_C, 8, "box", "cash", None),
     ]
-    for sid, qty, unit, pay in today_sales:
+    for sid, qty, unit, pay, cust in today_sales:
         cost = by_id[sid]["opening_cost_per_kg"]
         add(type="sale", sku_id=sid, qty=qty, unit=unit,
-            rate=round(cost * 1.12, 1), payment=pay, occurred_on=d(TODAY),
+            rate=round(cost * 1.12, 1), payment=pay,
+            customer_id=cust, occurred_on=d(TODAY),
             precision="exact", count_precision=None,
             occurred_at=TODAY.isoformat() + "T11:00:00", recorded_at=rec(TODAY),
             confidence=0.9, source="voice_live",
@@ -217,6 +251,7 @@ def learning_day60() -> dict:
     now = TODAY.isoformat()
     T12, T16 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA"
     OPC, PPC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC"
+    TILE_C = "TILE_KAJARIA_CERAMIC_2X2"
     aliases = [
         ("barah mm", T12), ("solah mm", T16), ("tiscon barah", T12),
         ("tiscon solah", T16), ("tata barah mm", T12), ("tata solah mm", T16),
@@ -226,6 +261,7 @@ def learning_day60() -> dict:
         ("ultratech 53", OPC), ("ultratech opc", OPC), ("opc cement", OPC),
         ("ppc cement", PPC), ("ultratech ppc", PPC), ("cement ultratech", OPC),
         ("teri cement", OPC), ("safed cement", PPC), ("bori cement", OPC),
+        ("kajaria tile", TILE_C), ("floor tile", TILE_C), ("chhoti tile", TILE_C),
     ]
     priors = [
         {"family": "tmt", "attribute": "diameter_mm", "value": 12, "count": 19},
@@ -233,6 +269,7 @@ def learning_day60() -> dict:
         {"family": "tmt", "attribute": "brand", "value": "Tata Tiscon", "count": 22},
         {"family": "cement", "attribute": "brand", "value": "UltraTech", "count": 18},
         {"family": "cement", "attribute": "type", "value": "OPC 53", "count": 15},
+        {"family": "tiles", "attribute": "brand", "value": "Kajaria", "count": 9},
     ]
     unit_priors = [
         {"sku_id": T12, "unit": "tonne", "count": 14},

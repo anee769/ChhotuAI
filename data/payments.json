@@ -22,37 +22,5 @@
     "paid_on": "2026-07-25",
     "note": "Bank transfer",
     "created_at": "2026-07-25T16:25:00"
-  },
-  {
-    "payment_id": "pay_0004",
-    "customer_id": "cust_0003",
-    "amount": 10000.0,
-    "paid_on": "2026-07-26",
-    "note": "",
-    "created_at": "2026-07-26T15:27:13"
-  },
-  {
-    "payment_id": "pay_0005",
-    "customer_id": "cust_0003",
-    "amount": 12000.0,
-    "paid_on": "2026-07-26",
-    "note": "",
-    "created_at": "2026-07-26T15:27:33"
-  },
-  {
-    "payment_id": "pay_0006",
-    "customer_id": "cust_0003",
-    "amount": 10000.0,
-    "paid_on": "2026-07-26",
-    "note": "",
-    "created_at": "2026-07-26T15:57:07"
-  },
-  {
-    "payment_id": "pay_0007",
-    "customer_id": "cust_0001",
-    "amount": 10000.0,
-    "paid_on": "2026-07-26",
-    "note": "",
-    "created_at": "2026-07-26T16:28:48"
   }
 ]

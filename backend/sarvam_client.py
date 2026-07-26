@@ -20,6 +20,7 @@ from __future__ import annotations
 import base64
 import json
 import os
+import re
 import time
 import tempfile
 from pathlib import Path
@@ -274,22 +275,56 @@ def parse_document(file_path: str, language: str = "en-IN") -> dict:
 
     client = SarvamAI(api_subscription_key=API_KEY)
     with tempfile.TemporaryDirectory() as td:
+        out_path = os.path.join(td, "output")
         try:
-            # job_parameters=dict(...), upload_files(file_paths=[...]) (plural),
-            # download_outputs(output_dir=...) (a directory, not a zip) — the
-            # actual current SDK surface; the previous create_job(language=,
-            # output_format=)/upload_file(path)/download_output(zip_path) shapes
-            # were stale and likely why live digitization wasn't working right.
+            # This is the ACTUAL installed sarvamai==0.1.28 surface — verified
+            # by introspecting the installed package directly, not assumed.
+            # create_job takes language/output_format as plain kwargs (it
+            # wraps them into job_parameters internally); the job object has
+            # upload_file (singular, one path) and download_output (singular,
+            # downloads ONE file to a path — not necessarily a zip, so
+            # _read_doc_output below handles either case).
             job = client.document_intelligence.create_job(
-                job_parameters=dict(language=language, output_format="html")
+                language=language, output_format="html"
             )
-            job.upload_files(file_paths=[file_path])
+            job.upload_file(file_path)
             job.start()
             job.wait_until_complete()
-            job.download_outputs(output_dir=td)
+            job.download_output(out_path)
         except Exception as e:
             raise SarvamError(f"document_intelligence job failed: {e}")
-        return _read_doc_dir(td)
+        return _read_doc_output(out_path)
+
+
+def _read_doc_output(path: str) -> dict:
+    """download_output saves ONE file — it may be a zip of blocks/html, or
+    the html/json output directly. Handle both rather than assuming."""
+    import zipfile
+    if zipfile.is_zipfile(path):
+        with tempfile.TemporaryDirectory() as d:
+            with zipfile.ZipFile(path) as zf:
+                zf.extractall(d)
+            return _read_doc_dir(d)
+    try:
+        with open(path, encoding="utf-8", errors="ignore") as f:
+            text = f.read()
+    except Exception:
+        return {"ok": False, "markdown": "", "blocks": []}
+    stripped = text.strip()
+    if stripped.startswith("{"):
+        try:
+            data = json.loads(stripped)
+        except Exception:
+            data = None
+        if isinstance(data, dict) and data.get("blocks"):
+            blocks = data["blocks"]
+            blocks.sort(key=lambda x: x.get("reading_order", 0))
+            skip = {"page_header", "page_footer", "page_number"}
+            lines = [b.get("text", "") for b in blocks if b.get("layout_tag") not in skip]
+            return {"ok": True, "markdown": "\n".join(l for l in lines if l), "blocks": blocks}
+    md = re.sub(r"<[^>]+>", " ", text)
+    md = re.sub(r"[ \t]+", " ", md)
+    return {"ok": bool(md.strip()), "markdown": md.strip(), "blocks": []}
 
 
 def _read_doc_dir(dir_path: str) -> dict:

@@ -119,6 +119,21 @@
       "phrase": "bori cement",
       "sku_id": "CEM_ULTRATECH_OPC53",
       "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "kajaria tile",
+      "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "floor tile",
+      "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
+      "confirmed_at": "2026-07-26"
+    },
+    {
+      "phrase": "chhoti tile",
+      "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
+      "confirmed_at": "2026-07-26"
     }
   ],
   "attribute_priors": [
@@ -151,6 +166,12 @@
       "attribute": "type",
       "value": "OPC 53",
       "count": 15
+    },
+    {
+      "family": "tiles",
+      "attribute": "brand",
+      "value": "Kajaria",
+      "count": 9
     }
   ],
   "unit_priors": [

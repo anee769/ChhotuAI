@@ -192,14 +192,6 @@
   .brand-mark { width:38px; height:38px; font-size:18px; }
   .brand-name { font-size:21px; line-height:1.1; font-weight:800; letter-spacing:-.03em; }
   .brand-tagline { margin-top:2px; font-size:11px; color:#73777f; }
-  .global-search {
-    height:48px; display:flex; align-items:center; gap:12px; padding:0 16px;
-    background:#f0f2f4; border:1px solid #c9cdd2; border-radius:14px;
-  }
-  .global-search input {
-    width:100%; padding:0 !important; border:0 !important; outline:0 !important;
-    background:transparent !important; font-size:14px;
-  }
   .app-header .header-tools {
     position:static; justify-self:end; display:flex !important; flex-wrap:nowrap;
   }
@@ -402,7 +394,6 @@
   @media (max-width: 900px) {
     .app-header { height:64px; padding:0 16px; }
     .app-header > .topbar-inner { grid-template-columns:1fr auto; gap:12px; }
-    .global-search { display:none; }
     .brand-tagline, .day-control { display:none !important; }
     .app-nav {
       position:sticky; top:64px; width:100%; height:auto; padding:9px 12px;
@@ -428,10 +419,6 @@
         <div class="brand-name">ChhotuAI</div>
         <div class="brand-tagline">Voice stock ledger</div>
       </div>
-    </div>
-    <div class="global-search">
-      <span class="material-symbols-outlined">search</span>
-      <input id="globalSearch" type="search" placeholder="Search products, customers, or commands…" oninput="handleGlobalSearch(this.value)">
     </div>
     <div class="header-tools flex flex-wrap items-center gap-3">
       <div class="learning-counters flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
@@ -540,12 +527,18 @@
     <div class="card overflow-hidden">
       <div class="inventory-toolbar">
         <div><div class="font-semibold">Current stock</div><div class="text-xs text-slate-500">All quantities replayed from the event log</div></div>
-        <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
-          <option value="">All families</option><option value="tmt">TMT</option>
-          <option value="cement">Cement</option><option value="pipe">Pipe</option>
-          <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
-          <option value="paint">Paint</option><option value="other">Other</option>
-        </select>
+        <div class="flex gap-2">
+          <input id="stockSearch" type="search" placeholder="Search products or SKU…"
+                 oninput="filterStock(this.value)"
+                 class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+          <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
+            <option value="">All families</option><option value="tmt">TMT</option>
+            <option value="cement">Cement</option><option value="tiles">Tiles</option>
+            <option value="pipe">Pipe</option>
+            <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
+            <option value="paint">Paint</option><option value="other">Other</option>
+          </select>
+        </div>
       </div>
       <div id="stockList"></div>
     </div>
@@ -704,31 +697,11 @@ function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classLis
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
   if(t==='customers') loadCustomers(); }
-async function handleGlobalSearch(q){
+function filterStock(q){
   q=(q||'').trim().toLowerCase();
-  const active=document.querySelector('.tab-btn.active')?.dataset.tab;
-  if(active==='customers'){
-    const local=document.getElementById('customerSearch'); if(local) local.value=q;
-    filterCustomers(q); return;
-  }
-  if(active==='stock'){
-    document.querySelectorAll('#stockList tbody tr').forEach(row=>{
-      row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
-    });
-    return;
-  }
-  if(!q) return;
-  if(!CRM_CUSTOMERS.length){
-    try{ CRM_CUSTOMERS=(await api('/api/customers')).customers||[]; }catch(_){}
-  }
-  const customer=CRM_CUSTOMERS.find(c=>(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q));
-  if(customer){
-    CRM_SELECTED=customer.customer_id; showTab('customers');
-    setTimeout(()=>{ const local=document.getElementById('customerSearch'); if(local)local.value=q; filterCustomers(q); },80);
-  }else{
-    showTab('stock');
-    setTimeout(()=>handleGlobalSearch(q),180);
-  }
+  document.querySelectorAll('#stockList tbody tr').forEach(row=>{
+    row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
+  });
 }
 
 // ---------- Voice UI (sale / delivery / count) ----------

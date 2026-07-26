@@ -207,7 +207,7 @@ def _extract_prompt(repo) -> str:
         'SAME language/script the owner used — a real greeting/thanks/small-talk '
         'reply, not a canned line. null for every other intent>",'
         '"items":[{"sku_id":"<exact sku_id, or null if not pinned to ONE>",'
-        '"family":"tmt|cement|null","name":"<what he called it>",'
+        '"family":"tmt|cement|tiles|null","name":"<what he called it>",'
         '"in_catalogue":true|false,"qty":<number or null>,"unit":"<unit or empty>",'
         '"rate":<number or null>,"rate_unit":"kg|tonne|bori|piece|null",'
         '"payment":"cash|credit|null"}]}\n\n'
@@ -215,12 +215,16 @@ def _extract_prompt(repo) -> str:
         "- Combine EVERYTHING said across the whole text (later lines answer earlier "
         "questions). Keep the owner's self-corrections ('do nahi teen' -> 3).\n"
         "- sku_id: set it ONLY when the words pin down exactly ONE product. Just "
-        "'sariya'/'saria/सरिया' -> family tmt, sku_id null (size unknown). Just "
-        "'cement'/'सीमेंट' -> family cement, sku_id null (type unknown). 'barah mm "
+        "'sariya'/'saria/सरिया'/'bar' -> family tmt, sku_id null (size unknown). Just "
+        "'cement'/'सीमेंट' -> family cement, sku_id null (type unknown). Just "
+        "'tiles'/'टाइल' -> family tiles, sku_id null (type unknown). 'barah mm "
         "sariya'/'tata 12' -> TMT_12_FE500D_TATA. 'solah mm' -> TMT_16_FE500D_TATA. "
-        "'ultratech opc'/'53 wala' -> CEM_ULTRATECH_OPC53. 'ppc' -> CEM_ULTRATECH_PPC.\n"
-        "- Anything the shop does NOT stock (tiles, wire, sand, bricks, pipe, paint, "
-        "fittings): in_catalogue=false, sku_id null, family null. NEVER substitute.\n"
+        "'ultratech opc'/'53 wala' -> CEM_ULTRATECH_OPC53. 'ppc' -> CEM_ULTRATECH_PPC. "
+        "'ceramic'/'floor tile' -> TILE_KAJARIA_CERAMIC_2X2. 'vitrified' -> "
+        "TILE_KAJARIA_VITRIFIED_600.\n"
+        "- Anything the shop does NOT stock (wire, sand, bricks, pipe, paint, "
+        "fittings, plywood, marble): in_catalogue=false, sku_id null, family null. "
+        "NEVER substitute.\n"
         "- qty = number of units (ton/bori/piece). A size like '12mm'/'barah mm' is "
         "NOT a quantity.\n"
         "- rate: only if a price was actually spoken (rupaye/rs/@). rate_unit is "
@@ -306,9 +310,10 @@ def _clean_unavailable_name(text: str) -> str:
     cleaned = _DELIVERY_INTENT_RE.sub(" ", original.lower())
     cleaned = _SALE_INTENT_RE.sub(" ", cleaned)
     cleaned = re.sub(
-        r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur|"
+        r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur|mein|ke|liye|"
+        r"laga|aaya|liya|mila|per|kitne|rupaye|"
         r"i|we|you|the|a|an|of|for|in|and|rupees?|rs)\b"
-        r"|है|हैं|था|थी|नकद|उधार|और",
+        r"|है|हैं|था|थी|नकद|उधार|और|में|रुपये",
         " ",
         cleaned,
         flags=re.I,
@@ -450,13 +455,14 @@ def _valid_sku(sid, repo) -> bool:
 
 
 _KNOWN_OUTSIDE_PRODUCTS_RE = re.compile(
-    r"\b(?:tiles?|wire|sand|balu|bricks?|eent|pipes?|paints?|fittings?|"
+    r"\b(?:wire|sand|balu|bricks?|eent|pipes?|paints?|fittings?|"
     r"plywood|marble|granite|stones?)\b|"
-    r"टाइल|वायर|तार|रेत|बालू|ईंट|पाइप|पेंट|फिटिंग|प्लाईवुड|मार्बल|ग्रेनाइट|पत्थर"
+    r"वायर|तार|रेत|बालू|ईंट|पाइप|पेंट|फिटिंग|प्लाईवुड|मार्बल|ग्रेनाइट|पत्थर"
 )
 _FAMILY_HINTS = {
-    "tmt": re.compile(r"\bsari?ya\b|\bsaria\b|\btmt\b|\brods?\b|\bsteel\b|सरिया|स्टील"),
+    "tmt": re.compile(r"\bsari?ya\b|\bsaria\b|\btmt\b|\brods?\b|\bbars?\b|\bsteel\b|सरिया|स्टील"),
     "cement": re.compile(r"\bcement\b|सीमेंट"),
+    "tiles": re.compile(r"\btiles?\b|\bvitrified\b|\bceramic\b|\bkajaria\b|टाइल"),
 }
 
 
@@ -629,10 +635,10 @@ def converse(state, user_text, flow, repo):
         return _stock_flow(state, ext["items"], repo)
     if intent == "unknown" and not ext["items"]:
         return _say(state, _L(state,
-                              "Ye samajh nahi aaya — sirf sariya aur cement rakhte hain. "
-                              "Kya chahiye?",
-                              "Didn't quite catch that — we only stock TMT bars and "
-                              "cement. What do you need?"),
+                              "Ye samajh nahi aaya — sariya, cement, ya tiles mein se "
+                              "kya chahiye?",
+                              "Didn't quite catch that — do you need TMT bars, "
+                              "cement, or tiles?"),
                     listen=True, done=False)
     state["draft_items"] = ext["items"]
     return _order_flow(state, intent, ext["items"], repo)
@@ -711,6 +717,49 @@ def _provision_new_sku(item, family, repo):
     return None
 
 
+# A reference list of common hardware/construction categories the shop
+# doesn't currently stock any variant of. When one of these is bought, we
+# know enough about the category to ask a SENSIBLE follow-up (brand + type)
+# instead of silently creating a vague catalogue entry from whatever bare
+# word was said ("pipe" -> a real "OTHER_PIPE" with no brand/size on file).
+_HARDWARE_TAXONOMY = {
+    "pipe": re.compile(r"\bpipes?\b|पाइप"),
+    "paint": re.compile(r"\bpaints?\b|पेंट"),
+    "wire": re.compile(r"\bwires?\b|\bcables?\b|तार"),
+    "brick": re.compile(r"\bbricks?\b|ईंट"),
+    "sand": re.compile(r"\bsand\b|\bbalu\b|रेत|बालू"),
+    "plywood": re.compile(r"\bplywood\b|प्लाईवुड"),
+    "marble/granite": re.compile(r"\bmarble\b|\bgranite\b|मार्बल|ग्रेनाइट"),
+    "fastener": re.compile(r"\bnuts?\b|\bbolts?\b|\bscrews?\b|\bwashers?\b"),
+    "sanitaryware": re.compile(r"\btoilet\b|\bwashbasin\b|\bcommode\b|\bsanitary"),
+    "lock": re.compile(r"\blocks?\b|ताला"),
+    "switch/socket": re.compile(r"\bswitch(?:es)?\b|\bsockets?\b"),
+    "adhesive": re.compile(r"\badhesive\b|\bfevicol\b|tile.?fix"),
+    "tool": re.compile(r"\bhammer\b|\bdrill\b|\bwrench\b|\bscrewdriver\b"),
+    "roofing sheet": re.compile(r"\broofing\b|\btin sheet\b|\basbestos\b"),
+    "fitting": re.compile(r"\bfittings?\b|फिटिंग"),
+}
+
+
+def _match_hardware_category(name: str):
+    n = (name or "").lower()
+    for cat, pat in _HARDWARE_TAXONOMY.items():
+        if pat.search(n):
+            return cat
+    return None
+
+
+def _has_brand_or_type(name: str) -> bool:
+    """Rough heuristic: more than the bare category word(s) were said, e.g.
+    'Havells 2.5mm copper wire' vs just 'wire'. `name` may be the whole
+    utterance ("I bought 20 pipes"), not just the product phrase, so clean
+    out transaction verbs/fillers/qty/units first — otherwise ordinary
+    sentence words ("I", "bought") get counted as if they were brand/type."""
+    cleaned = _clean_unavailable_name(name)
+    words = re.findall(r"[a-zA-Zऀ-ॿ]+", cleaned)
+    return len(words) >= 2
+
+
 def _provision_generic_sku(item, repo):
     """A delivery/count of a product OUTSIDE tmt/cement — tiles, pipe, paint,
     whatever the owner actually brought in — still extends the catalogue.
@@ -753,8 +802,11 @@ def _ask_product(item, state=None):
     if fam == "cement":
         return _L(state, "Kaunsa cement — OPC 53 ya PPC?",
                   "Which cement — OPC 53 or PPC?")
-    return _L(state, "Kaunsa maal — sariya ya cement? Thoda detail se boliye.",
-              "Which product — TMT bar or cement? A bit more detail please.")
+    if fam == "tiles":
+        return _L(state, "Kaunsi tile — ceramic floor ya vitrified?",
+                  "Which tile — ceramic floor or vitrified?")
+    return _L(state, "Kaunsa maal — sariya, cement, ya tiles? Thoda detail se boliye.",
+              "Which product — TMT bar, cement, or tiles? A bit more detail please.")
 
 
 def _ask_order_slot(state, item_index, slot, text):
@@ -784,8 +836,11 @@ def _sku_from_answer(text, family, repo):
             direct = "CEM_ULTRATECH_OPC53"
         elif re.search(r"\bppc\b|पीपीसी", t):
             direct = "CEM_ULTRATECH_PPC"
-        elif re.search(r"\bpsc\b|पीएससी", t):
-            direct = "CEM_ULTRATECH_PSC"
+    if family == "tiles" or re.search(r"tiles?|टाइल", t):
+        if re.search(r"vitrified|600", t):
+            direct = "TILE_KAJARIA_VITRIFIED_600"
+        elif re.search(r"ceramic|floor|2x2", t):
+            direct = "TILE_KAJARIA_CERAMIC_2X2"
     if direct and repo.sku(direct):
         return direct
     match = M.match(text or "", repo.load_catalogue(), repo.load_learning(), "live_sale")
@@ -850,6 +905,16 @@ def _apply_order_slot(state, user_text, repo):
             return _ask_order_slot(state, idx, slot,
                                    _L(state, "Ye maal becha tha ya khareeda?",
                                       "Was this sold or bought?"))
+    elif slot == "brand_type":
+        extra = (user_text or "").strip()
+        if not extra:
+            return _ask_order_slot(state, idx, slot,
+                                   _L(state, "Brand aur type bataiye.",
+                                      "Please tell me the brand and type."))
+        # Fold the answer into the item's name so provisioning (retried by
+        # falling back into _order_flow below) picks up the real brand/type
+        # instead of a bare category placeholder.
+        item["name"] = f"{item.get('name', '')} {extra}".strip()
     state["draft_items"] = items
     return _order_flow(state, state.get("locked_intent") or state.get("flow"),
                        items, repo)
@@ -871,19 +936,30 @@ def _order_flow(state, intent, items, repo):
     # instead of being rejected as "hum nahi rakhte".
     newly_added = []
     if flow in ("delivery", "count"):
-        for it in items:
+        for idx, it in enumerate(items):
             if it.get("sku_id"):
                 continue
             fam = it.get("family")
             name_l = (it.get("name") or "").lower()
             if not fam:
                 fam = ("cement" if re.search(r"cement|सीमेंट", name_l)
-                       else "tmt" if re.search(r"sari?ya|सरिया|\btmt\b", name_l)
+                       else "tmt" if re.search(r"sari?ya|सरिया|\btmt\b|\bbars?\b", name_l)
+                       else "tiles" if re.search(r"tiles?|टाइल", name_l)
                        else None)
-            sid = _provision_new_sku(it, fam, repo) if fam in ("tmt", "cement") else None
-            # Family-specific provisioning needs a recognizable diameter/type;
-            # fall back to a generic entry rather than dropping the line.
-            sid = sid or _provision_generic_sku(it, repo)
+            if fam in ("tmt", "cement", "tiles"):
+                sid = _provision_new_sku(it, fam, repo) if fam in ("tmt", "cement") else None
+                # Family-specific provisioning needs a recognizable
+                # diameter/type; fall back to generic rather than dropping.
+                sid = sid or _provision_generic_sku(it, repo)
+            else:
+                category = _match_hardware_category(it.get("name"))
+                if category and not _has_brand_or_type(it.get("name")):
+                    state["draft_items"] = items
+                    return _ask_order_slot(
+                        state, idx, "brand_type",
+                        _L(state, f"{category} ke liye kaunsa brand aur type?",
+                           f"What brand and type of {category}?"))
+                sid = _provision_generic_sku(it, repo)
             if sid:
                 it["sku_id"] = sid
                 it["family"] = fam or repo.sku(sid).get("family")
@@ -902,8 +978,8 @@ def _order_flow(state, intent, items, repo):
     if not kept:
         nm = skipped[0] if skipped else _L(state, "wo cheez", "that item")
         return _say(state, _L(state,
-                              f"{nm} hum nahi rakhte — sirf sariya aur cement hai. Kuch aur?",
-                              f"We don't stock {nm} — only TMT bars and cement. "
+                              f"{nm} hum nahi rakhte — sariya, cement, ya tiles hai. Kuch aur?",
+                              f"We don't stock {nm} — only TMT bars, cement, or tiles. "
                               "Anything else?"),
                     listen=True, done=False)
 
@@ -1216,8 +1292,8 @@ def _stock_flow(state, items, repo):
     if not it or (it.get("in_catalogue") is False and not it.get("sku_id")):
         nm = (it or {}).get("name") or _L(state, "Wo cheez", "that item")
         return _say(state, _L(state,
-                              f"{nm} hum nahi rakhte — sirf sariya aur cement hai.",
-                              f"We don't stock {nm} — only TMT bars and cement."),
+                              f"{nm} hum nahi rakhte — sariya, cement, ya tiles hai.",
+                              f"We don't stock {nm} — only TMT bars, cement, or tiles."),
                     listen=True, done=False)
     if not it.get("sku_id"):
         return _say(state, _ask_product(it, state), listen=True, done=False)

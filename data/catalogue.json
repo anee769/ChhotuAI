@@ -15,7 +15,7 @@
       "piece": 10.67
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 58.64,
+    "opening_cost_per_kg": 55.5,
     "aliases": [
       "saria",
       "sariya",
@@ -23,12 +23,12 @@
       "tmt bar",
       "rod",
       "tmt",
+      "bar",
       "12mm rod",
       "12 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 58.64
+    ]
   },
   {
     "sku_id": "TMT_16_FE500D_TATA",
@@ -46,7 +46,7 @@
       "piece": 18.96
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 57.62,
+    "opening_cost_per_kg": 54.5,
     "aliases": [
       "saria",
       "sariya",
@@ -54,12 +54,12 @@
       "tmt bar",
       "rod",
       "tmt",
+      "bar",
       "16mm rod",
       "16 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 57.62
+    ]
   },
   {
     "sku_id": "TMT_20_FE500D_TATA",
@@ -85,6 +85,7 @@
       "tmt bar",
       "rod",
       "tmt",
+      "bar",
       "20mm rod",
       "20 mm",
       "tata",
@@ -107,7 +108,7 @@
       "kg": 0.02
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 423.25,
+    "opening_cost_per_kg": 415,
     "aliases": [
       "cement",
       "सीमेंट",
@@ -116,8 +117,7 @@
       "ultratech",
       "opc 53",
       "ultratech cement"
-    ],
-    "landed_cost_per_kg": 423.25
+    ]
   },
   {
     "sku_id": "CEM_ULTRATECH_PPC",
@@ -147,30 +147,59 @@
     ]
   },
   {
-    "sku_id": "CEM_ULTRATECH_PSC",
-    "canonical": "UltraTech PSC Cement 50kg",
-    "family": "cement",
+    "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
+    "canonical": "Kajaria Ceramic Floor Tile 2x2ft",
+    "family": "tiles",
     "attributes": {
-      "brand": "UltraTech",
-      "type": "PSC",
-      "weight_kg": 50
+      "brand": "Kajaria",
+      "type": "Ceramic Floor Tile 2x2ft",
+      "size": "2x2ft"
     },
-    "default_unit": "bori",
+    "default_unit": "box",
     "units": {
-      "bori": 1,
-      "tonne": 20,
-      "kg": 0.02
+      "box": 1,
+      "piece": 0.1
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 370,
+    "opening_cost_per_kg": 28.0,
     "aliases": [
-      "cement",
-      "सीमेंट",
-      "bori",
-      "bag",
-      "ultratech",
-      "psc",
-      "ultratech cement"
+      "tile",
+      "tiles",
+      "टाइल",
+      "kajaria",
+      "box",
+      "floor tile",
+      "vitrified",
+      "ceramic",
+      "ceramic floor tile 2x2ft"
+    ]
+  },
+  {
+    "sku_id": "TILE_KAJARIA_VITRIFIED_600",
+    "canonical": "Kajaria Vitrified Tile 600x600mm",
+    "family": "tiles",
+    "attributes": {
+      "brand": "Kajaria",
+      "type": "Vitrified Tile 600x600mm",
+      "size": "600x600mm"
+    },
+    "default_unit": "box",
+    "units": {
+      "box": 1,
+      "piece": 0.1
+    },
+    "gst_rate": 28,
+    "opening_cost_per_kg": 42.0,
+    "aliases": [
+      "tile",
+      "tiles",
+      "टाइल",
+      "kajaria",
+      "box",
+      "floor tile",
+      "vitrified",
+      "ceramic",
+      "vitrified tile 600x600mm"
     ]
   }
 ]
