@@ -218,11 +218,14 @@ def converse(payload: dict = Body(...)):
     text = payload.get("text", "")
     flow = payload.get("flow", "live_sale")
     out = conversation.converse(state, text, flow, repo)
-    # speak the question/confirmation
+    # speak the question/confirmation — in whichever language this
+    # conversation has been detected in, or the reply comes out Hindi-accented
+    # even when the text itself is English (e.g. numbers get read the Hindi way).
+    tts_lang = "en-IN" if (out.get("state") or {}).get("lang") == "en" else "hi-IN"
     out["say_audio_b64"] = None
     if out.get("say") and sarvam_client.has_key():
         try:
-            out["say_audio_b64"] = sarvam_client.text_to_speech(out["say"], "hi-IN")
+            out["say_audio_b64"] = sarvam_client.text_to_speech(out["say"], tts_lang)
         except Exception as e:
             out["tts_error"] = str(e)
     out["learning_counts"] = repo.learning_counts()
@@ -399,8 +402,13 @@ def stock(as_of: str = None):
     rows = []
     for sku in repo.load_catalogue():
         det = L._stock_detail(sku, events, ao)
+        attrs = sku.get("attributes") or {}
         rows.append({"sku_id": sku["sku_id"], "canonical": sku["canonical"],
-                     "family": sku["family"], **_stock_view(sku, det)})
+                     "family": sku["family"], "brand": attrs.get("brand"),
+                     "type": attrs.get("type") or (
+                         f"{attrs['diameter_mm']}mm {attrs.get('grade', '')}".strip()
+                         if attrs.get("diameter_mm") else None),
+                     **_stock_view(sku, det)})
     return {"as_of": (as_of or TODAY.isoformat()), "rows": rows}
 
 
@@ -704,24 +712,53 @@ def _lines_from_markdown(md: str) -> list:
 @app.post("/api/invoice/commit")
 def invoice_commit(payload: dict = Body(...)):
     """
-    Commit chosen invoice lines -> catalogue rows + landed cost ONLY.
-    Explicitly does NOT create delivery/stock events (spec 9.1 CRITICAL).
-    Returns the top-30-by-value count checklist.
+    Commit chosen invoice lines -> catalogue rows + landed cost, AND a
+    delivery event for each line's counted quantity — the invoice IS the
+    delivery, so a restock should show up in the ledger, not just the cost
+    basis. A line the owner hasn't confirmed yet (illegible/handwritten qty,
+    "certain": false) still gets NO stock event until they resolve it, same
+    as before. A line that doesn't match any existing SKU (a genuinely new
+    product on this invoice) gets provisioned into the catalogue first,
+    exactly like a voice-reported purchase of something not yet stocked.
     """
+    import conversation as C
     lines = payload.get("lines", [])
-    catalogue_by = by_id()
     committed = []
     for l in lines:
         m = l.get("match", {})
         sku_id = m.get("sku_id") if m.get("status") == "matched" else l.get("sku_id")
         landed = l.get("landed_cost_per_unit")
-        if sku_id and sku_id in catalogue_by and landed:
-            # update cost basis only
-            repo.upsert_sku({"sku_id": sku_id, "landed_cost_per_kg": landed,
-                             "opening_cost_per_kg": landed})
-            committed.append({"sku_id": sku_id, "landed_cost": landed,
-                              "value": l.get("taxable_value")})
-    # top-30 checklist ranked by purchase value; flag which need counting
+        if not landed:
+            continue
+        catalogue_by = by_id()
+        if not (sku_id and sku_id in catalogue_by):
+            phrase = l.get("product_phrase") or ""
+            family = ("cement" if re.search(r"cement", phrase, re.I) else
+                     "tmt" if re.search(r"\btmt\b|sariya|\bbar\b", phrase, re.I) else None)
+            fake_item = {"name": phrase, "unit": l.get("unit")}
+            sid = C._provision_new_sku(fake_item, family, repo) if family else None
+            # Family-specific provisioning needs a recognizable diameter/type
+            # (e.g. "Ambuja Cement 50kg" names no OPC/PPC grade at all) — fall
+            # back to a generic entry rather than silently dropping the line.
+            sid = sid or C._provision_generic_sku(fake_item, repo)
+            if not sid:
+                continue
+            sku_id = sid
+        repo.upsert_sku({"sku_id": sku_id, "landed_cost_per_kg": landed,
+                         "opening_cost_per_kg": landed})
+        sku = repo.sku(sku_id)
+        stock_added = False
+        qty = l.get("qty")
+        if l.get("certain") and qty:
+            _write_events("delivery", [{
+                "sku_id": sku_id, "qty": qty, "unit": l.get("unit") or sku["default_unit"],
+                "rate": landed, "rate_unit": L.base_unit(sku),
+                "spoken": l.get("product_phrase", ""),
+            }], TODAY.isoformat(), "exact", "invoice_photo")
+            stock_added = True
+        committed.append({"sku_id": sku_id, "landed_cost": landed,
+                          "value": l.get("taxable_value"), "stock_added": stock_added})
+    # top-30 checklist ranked by purchase value; flag which still need counting
     events = repo.all_events()
     checklist = []
     ranked = sorted([c for c in committed if c.get("value")],
@@ -734,7 +771,8 @@ def invoice_commit(payload: dict = Body(...)):
                           "needs_count": det["qty"] == L.UNCOUNTED,
                           "stock": _stock_view(sku, det)["display"]})
     return {"committed": committed, "checklist": checklist,
-            "note": "Catalogue + landed cost updated. No stock quantities created."}
+            "note": "Catalogue + landed cost updated, and stock quantity added "
+                    "for every confirmed line."}
 
 
 # ---------------------------------------------------------------------------

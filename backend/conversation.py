@@ -200,11 +200,13 @@ def _extract_prompt(repo) -> str:
         "- stock question ('kitna bacha/stock hai') -> intent stock_query. "
         "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric.\n"
         "- intent=delivery when the owner RECEIVED/BOUGHT stock: "
-        "'kharida/khareeda/khareedi/खरीदा/खरीदी', "
-        "'hamne liya', 'mangwaya', 'aaya', 'delivery aayi'. intent=sale when the owner "
+        "'kharida/khareeda/khareedi/खरीदा/खरीदी', 'hamne liya', 'mangwaya', 'aaya', "
+        "'delivery aayi', OR in English 'bought', 'buy', 'purchased', 'received', "
+        "'got', 'arrived', 'stocked in'. intent=sale when the owner "
         "SOLD/GAVE stock to a customer: "
-        "'becha/bechi/bech diya/बेचा/बेची', 'diya', 'bika'. Do not "
-        "confuse the two — 'kharida' is ALWAYS delivery, never sale.\n"
+        "'becha/bechi/bech diya/बेचा/बेची', 'diya', 'bika', OR in English 'sold', "
+        "'sell', 'gave'. Do not confuse the two — 'kharida'/'bought' is ALWAYS "
+        "delivery, never sale.\n"
         "- intent MUST be exactly one of: sale, delivery, count, stock_query, "
         "analytics_query, unknown. Never invent another word.\n"
         "- Think briefly, then output the JSON."
@@ -231,12 +233,15 @@ def _detect_payment(text: str):
 
 
 _DELIVERY_INTENT_RE = re.compile(
-    r"\b(?:kharid(?:a|i|e)?|khareed(?:a|i|e)?|mangwaya|delivery|aaya|liya)\b"
+    r"\b(?:kharid(?:a|i|e)?|khareed(?:a|i|e)?|mangwaya|delivery|aaya|liya|"
+    r"bought|buy|buying|purchase[ds]?|received?|receiving|got|arrived|"
+    r"stock(?:ed)?\s*in|came\s*in)\b"
     r"|खरीद[ाीे]?|मंगवाया|आया|लिया",
     re.I,
 )
 _SALE_INTENT_RE = re.compile(
-    r"\b(?:bech(?:a|i|ee|e|na)?|bik(?:a|i|ee|e)?|sold|sale|diya)\b"
+    r"\b(?:bech(?:a|i|ee|e|na)?|bik(?:a|i|ee|e)?|sold|sale|sell(?:ing)?|diya|"
+    r"gave|given)\b"
     r"|बेच[ाीे]?|बिक[ाीे]?|दिया",
     re.I,
 )
@@ -264,7 +269,8 @@ def _clean_unavailable_name(text: str) -> str:
     cleaned = _DELIVERY_INTENT_RE.sub(" ", original.lower())
     cleaned = _SALE_INTENT_RE.sub(" ", cleaned)
     cleaned = re.sub(
-        r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur)\b"
+        r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur|"
+        r"i|we|you|the|a|an|of|for|in|and|rupees?|rs)\b"
         r"|है|हैं|था|थी|नकद|उधार|और",
         " ",
         cleaned,
@@ -660,6 +666,40 @@ def _provision_new_sku(item, family, repo):
     return None
 
 
+def _provision_generic_sku(item, repo):
+    """A delivery/count of a product OUTSIDE tmt/cement — tiles, pipe, paint,
+    whatever the owner actually brought in — still extends the catalogue.
+    The owner decides what the shop carries by what they buy; a hardcoded
+    category list shouldn't silently refuse to record it. Only ever runs for
+    delivery/count, never sale (nothing to sell that was never bought)."""
+    label = _clean_unavailable_name(item.get("name") or "").strip()
+    if not label or len(label) < 2:
+        return None
+    catalogue = repo.load_catalogue()
+    existing = next((s for s in catalogue
+                     if s.get("canonical", "").lower() == label.lower()), None)
+    if existing:
+        return existing["sku_id"]
+    slug = re.sub(r"[^A-Z0-9]+", "_", label.upper()).strip("_") or "ITEM"
+    sku_id, n = f"OTHER_{slug}"[:60], 1
+    while repo.sku(sku_id):
+        n += 1
+        sku_id = f"OTHER_{slug}_{n}"[:60]
+    unit = item.get("unit") or "unit"
+    repo.upsert_sku({
+        "sku_id": sku_id,
+        "canonical": label.title(),
+        "family": "other",
+        "attributes": {},
+        "default_unit": unit,
+        "units": {unit: 1},
+        "gst_rate": 18,
+        "opening_cost_per_kg": 0,
+        "aliases": [label.lower()],
+    })
+    return sku_id
+
+
 def _ask_product(item, state=None):
     fam = item.get("family")
     if fam == "tmt":
@@ -795,12 +835,13 @@ def _order_flow(state, intent, items, repo):
                 fam = ("cement" if re.search(r"cement|सीमेंट", name_l)
                        else "tmt" if re.search(r"sari?ya|सरिया|\btmt\b", name_l)
                        else None)
-            if fam not in ("tmt", "cement"):
-                continue
-            sid = _provision_new_sku(it, fam, repo)
+            sid = _provision_new_sku(it, fam, repo) if fam in ("tmt", "cement") else None
+            # Family-specific provisioning needs a recognizable diameter/type;
+            # fall back to a generic entry rather than dropping the line.
+            sid = sid or _provision_generic_sku(it, repo)
             if sid:
                 it["sku_id"] = sid
-                it["family"] = fam
+                it["family"] = fam or repo.sku(sid).get("family")
                 it["in_catalogue"] = True
                 newly_added.append(repo.sku(sid)["canonical"])
 

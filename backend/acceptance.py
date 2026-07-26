@@ -50,7 +50,11 @@ check("handwritten correction surfaced (L4)", any(l.get("handwritten_correction"
 stock_before = call("/api/stock")
 committed = call("/api/invoice/commit", {"lines": inv["lines"]})
 stock_after = call("/api/stock")
-check("invoice created NO stock change", stock_before["rows"] == stock_after["rows"])
+# Invoice IS the delivery — confirmed (certain) lines now add stock; only a
+# line still needing confirmation (illegible/handwritten qty) holds back.
+check("invoice added stock for confirmed lines",
+      stock_before["rows"] != stock_after["rows"]
+      and any(c.get("stock_added") for c in committed["committed"]))
 check("top-N count checklist returned", len(committed["checklist"]) > 0)
 
 # --- #14 not stocked ---

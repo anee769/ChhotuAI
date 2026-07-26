@@ -513,8 +513,8 @@
   <!-- INVOICE -->
   <section id="tab-invoice" class="tabpane hidden">
     <div class="card p-5">
-      <h2 class="text-xl font-bold mb-1">Invoice photo → catalogue + landed cost</h2>
-      <p class="text-sm text-slate-500 mb-4">Purchase invoices build the catalogue and the cost basis. <b class="text-amber-600">No stock quantities are created</b> — a running shop has purchases but no sales history.</p>
+      <h2 class="text-xl font-bold mb-1">Invoice photo → catalogue + landed cost + stock</h2>
+      <p class="text-sm text-slate-500 mb-4">Purchase invoices build the catalogue, the cost basis, <b class="text-emerald-600">and add the delivered quantity to stock</b> — a line still needing confirmation (illegible/handwritten qty) is held back until you resolve it.</p>
       <div class="flex gap-3 flex-wrap items-center">
         <input type="file" id="invoiceFile" accept="image/*,application/pdf" class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm">
         <button onclick="ingestInvoice(true)" class="btn-primary px-4 py-2.5">Parse uploaded</button>
@@ -544,7 +544,7 @@
           <option value="">All families</option><option value="tmt">TMT</option>
           <option value="cement">Cement</option><option value="pipe">Pipe</option>
           <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
-          <option value="paint">Paint</option>
+          <option value="paint">Paint</option><option value="other">Other</option>
         </select>
       </div>
       <div id="stockList"></div>
@@ -1205,13 +1205,15 @@ async function loadStock(){
     return `<tr>
       <td><div class="stock-product"><div class="stock-icon"><span class="material-symbols-outlined">${icons[x.family]||'inventory_2'}</span></div>
         <div><div class="font-semibold text-slate-950">${x.canonical}</div><div class="muted">${x.sku_id}</div></div></div></td>
-      <td class="capitalize">${x.family}</td>
+      <td class="capitalize">${x.family||'other'}</td>
+      <td>${x.brand||'—'}</td>
+      <td>${x.type||'—'}</td>
       <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}</td>
       <td><span class="stock-status ${status}">${label}</span></td>
     </tr>`;
   }).join('');
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
-    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
+    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
 }
 // ---------- Customers / credit ----------
@@ -1427,8 +1429,8 @@ function renderInvoice(r){
     <div class="grid md:grid-cols-2 gap-4">
       <div>${img?`<img src="${img}" class="rounded-lg border border-[#24304f] w-full">`:'<div class="text-slate-500">(no source image)</div>'}</div>
       <div class="space-y-2">${lineHtml}
-        <div class="p-3 rounded-lg bg-blue-900/30 text-sm">✅ Yeh sirf <b>catalogue + landed cost</b> banayega. <b>Koi stock quantity nahi</b> banegi.</div>
-        <button onclick="commitInvoice()" class="bg-emerald-600 px-5 py-3 rounded-xl font-bold w-full">Confirm → catalogue + cost basis</button>
+        <div class="p-3 rounded-lg bg-blue-900/30 text-sm">✅ Yeh <b>catalogue + landed cost</b> banayega, <b>aur confirmed lines ki stock quantity bhi add karega</b>. Uncertain lines rukengi jab tak aap qty confirm na karein.</div>
+        <button onclick="commitInvoice()" class="bg-emerald-600 px-5 py-3 rounded-xl font-bold w-full">Confirm → catalogue + cost + stock</button>
       </div></div>`;
   window._invoiceLines=r.lines;
 }
@@ -1452,11 +1454,12 @@ async function commitInvoice(){
   let cl=r.checklist.map((c,i)=>`<div class="flex justify-between text-sm py-1 border-b border-[#24304f]">
     <span>${i+1}. ${c.canonical} <span class="text-xs text-slate-500">(₹${c.purchase_value.toLocaleString('en-IN')} purchased)</span></span>
     <span class="${c.needs_count?'text-amber-300':'text-emerald-400'}">${c.needs_count?'gin lo →':c.stock}</span></div>`).join('');
+  const stockedCount=(r.committed||[]).filter(c=>c.stock_added).length;
   document.getElementById('invoiceResult').innerHTML=`<div class="card p-5">
-    <div class="text-emerald-400 font-bold text-lg mb-1">✅ ${r.committed.length} SKUs — catalogue + landed cost updated</div>
+    <div class="text-emerald-400 font-bold text-lg mb-1">✅ ${r.committed.length} SKUs — catalogue + landed cost updated, ${stockedCount} stocked</div>
     <div class="text-sm text-slate-400 mb-4">${r.note}</div>
     <h3 class="font-bold mb-2">Ab top ${r.checklist.length} by purchase value — inhe gin lo (baaki apne aap bhar jayega):</h3>${cl}</div>`;
-  toast('Catalogue + cost updated. No stock created.');
+  toast(`Catalogue + cost updated. ${stockedCount} line(s) added to stock.`);
 }
 
 boot();
