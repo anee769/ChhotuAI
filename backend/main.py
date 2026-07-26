@@ -682,31 +682,52 @@ def _lines_from_table(md: str) -> list:
 
 def _lines_from_markdown(md: str) -> list:
     """
-    Structure parsed invoice text into line items. Deterministic HTML-table
-    parse first (Document Digitization returns clean tables); Sarvam-30B only if
-    no table is present.
+    Structure the digitized invoice table into line items. An LLM extraction
+    over the actual markdown/HTML text is the PRIMARY path — real invoice
+    tables vary in column order and count (Description/HSN/Qty/Unit/Rate/
+    Amount, or fewer), and the position-based regex parser below picked the
+    wrong column on a real uploaded invoice (read a per-kg RATE as the line's
+    total taxable Amount, producing an absurd ₹0.95/kg landed cost). The
+    regex table parser is kept only as a fallback for when there's no API
+    key or the model call fails outright.
     """
-    tbl = _lines_from_table(md)
-    if tbl:
-        return tbl
-    if not md.strip() or not sarvam_client.has_key():
-        return []
-    sys_p = ("You convert an invoice into JSON. Do NOT explain or analyse — output "
-             "ONLY the JSON object, nothing else. Schema: "
-             '{"lines":[{"product_phrase":str,"qty":number|null,"unit":str,'
-             '"taxable_value":number,"gst_rate":number,"certain":bool,'
-             '"is_freight":bool,"freight_value":number}]}. '
-             "Use the Amount column as taxable_value (pre-GST). Illegible/smudged "
-             "rows: certain=false. Transport/Freight rows: is_freight=true with "
-             "freight_value. Keep any handwritten/struck value in product_phrase "
-             "and set certain=false. Be terse.")
-    try:
-        out = sarvam_client.chat_json(
-            [{"role": "system", "content": sys_p},
-             {"role": "user", "content": md[:6000]}])
-        return out.get("lines", [])
-    except Exception:
-        return []
+    if md.strip() and sarvam_client.has_key():
+        sys_p = (
+            "You convert a hardware-shop purchase invoice (given as markdown/HTML "
+            "extracted from a scanned document) into JSON. Output ONLY the JSON "
+            "object, nothing else. Schema: "
+            '{"lines":[{"product_phrase":str,"qty":number|null,"unit":str,'
+            '"taxable_value":number,"gst_rate":number,"certain":bool,'
+            '"is_freight":bool,"freight_value":number}]}.\n'
+            "Column rules — the table may have Description/HSN/Qty/Unit/Rate/"
+            "Amount in ANY order, and not every column is always present:\n"
+            "- taxable_value is the line's TOTAL pre-GST value (Amount/Value "
+            "column) — this is qty × rate, NOT the per-unit rate itself. If "
+            "only a per-unit Rate is given with no Amount column, compute "
+            "taxable_value = qty × rate yourself.\n"
+            "- qty and unit come from the Qty/Unit column(s), never confused "
+            "with a rate or amount.\n"
+            "- gst_rate is a percentage (e.g. 18, 28), read from a GST/Tax% "
+            "column if present, else infer 28 for cement and 18 for steel/TMT.\n"
+            "- Illegible/smudged/handwritten-corrected rows: certain=false, and "
+            "keep the struck/handwritten value visible in product_phrase.\n"
+            "- Transport/Freight rows: is_freight=true with freight_value set "
+            "to that row's amount; do not give it a product_phrase or qty.\n"
+            "- Skip header rows and Sub Total/GST/Grand Total rows entirely.\n"
+            "Be terse — no explanation, just the JSON."
+        )
+        try:
+            out = sarvam_client.chat_json(
+                [{"role": "system", "content": sys_p},
+                 {"role": "user", "content": md[:6000]}],
+                temperature=0.1, max_tokens=4096, timeout=75)
+            lines = out.get("lines") if isinstance(out, dict) else None
+            if lines:
+                return lines
+        except Exception as e:
+            print("invoice LLM extraction failed, falling back to table regex:",
+                  repr(e)[:200])
+    return _lines_from_table(md)
 
 
 @app.post("/api/invoice/commit")
@@ -731,7 +752,8 @@ def invoice_commit(payload: dict = Body(...)):
         if not landed:
             continue
         catalogue_by = by_id()
-        if not (sku_id and sku_id in catalogue_by):
+        freshly_provisioned = not (sku_id and sku_id in catalogue_by)
+        if freshly_provisioned:
             phrase = l.get("product_phrase") or ""
             family = ("cement" if re.search(r"cement", phrase, re.I) else
                      "tmt" if re.search(r"\btmt\b|sariya|\bbar\b", phrase, re.I) else None)
@@ -750,11 +772,16 @@ def invoice_commit(payload: dict = Body(...)):
         stock_added = False
         qty = l.get("qty")
         if l.get("certain") and qty:
-            _write_events("delivery", [{
-                "sku_id": sku_id, "qty": qty, "unit": l.get("unit") or sku["default_unit"],
-                "rate": landed, "rate_unit": L.base_unit(sku),
-                "spoken": l.get("product_phrase", ""),
-            }], TODAY.isoformat(), "exact", "invoice_photo")
+            ev = {"sku_id": sku_id, "qty": qty, "unit": l.get("unit") or sku["default_unit"],
+                 "rate": landed, "rate_unit": L.base_unit(sku),
+                 "spoken": l.get("product_phrase", "")}
+            # A product new to the catalogue this call has no prior stock to
+            # reconcile against — this quantity directly becomes the known
+            # count. An EXISTING product's delivery stays a plain delivery —
+            # there could be untracked stock already on the shelf, so it's
+            # left for a real physical count rather than assumed.
+            etype = "opening_balance" if freshly_provisioned else "delivery"
+            _write_events(etype, [ev], TODAY.isoformat(), "exact", "invoice_photo")
             stock_added = True
         committed.append({"sku_id": sku_id, "landed_cost": landed,
                           "value": l.get("taxable_value"), "stock_added": stock_added})

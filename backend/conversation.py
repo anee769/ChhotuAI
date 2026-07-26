@@ -499,6 +499,23 @@ _QUICK_PATTERNS = [
 _STOCK_QUERY_RE = re.compile(r"kitna\s*bacha|stock\s*hai|kitna\s*stock|kitna\s*hai\b")
 
 
+_GREETING_PHRASES = {
+    "hi", "hii", "hiii", "hello", "hey", "yo", "namaste", "namaskar", "hola",
+    "how are you", "how are you doing", "whats up", "good morning",
+    "good evening", "good afternoon", "kaise ho", "kaise ho aap",
+    "kya haal hai", "kya haal", "namaste chhotu", "hey chhotu", "hi chhotu",
+    "hello chhotu", "kya kar rahe ho", "sab theek",
+}
+
+
+def _is_greeting(text: str) -> bool:
+    """True only when the WHOLE turn is small talk, not a greeting attached
+    to a real business ask ("hey I bought 100 tiles" must NOT match)."""
+    t = re.sub(r"[^\w\s]", "", (text or "").strip().lower())
+    t = re.sub(r"\s+", " ", t).strip()
+    return t in _GREETING_PHRASES
+
+
 def _quick_route(text: str):
     """Deterministic fast-path for analytics/stock questions. Returns
     ("analytics", metric), ("stock", None), or None (fall through to the LLM)."""
@@ -542,6 +559,17 @@ def converse(state, user_text, flow, repo):
     if state.get("awaiting_order"):
         state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_order_slot(state, user_text, repo)
+
+    # A bare greeting/small-talk turn (only, on its own — not attached to a
+    # real ask) gets a friendly reply instead of being forced through the
+    # business pipeline and rejected as "sirf sariya aur cement rakhte hain".
+    if not state.get("locked_intent") and _is_greeting(user_text):
+        return _reply(_L(state,
+                         "Namaste! Main Chhotu hoon — sale, kharid, stock ya udhaar, "
+                         "jo bhi poochhna ho boliye.",
+                         "Hey! I'm Chhotu — ask me about a sale, a purchase, stock, "
+                         "or credit, whatever you need."),
+                      listen=True, done=False, state=state)
 
     # Voice Entry is a sale-capable screen, but it is also where the owner asks
     # stock and business questions. Route an unambiguous first-turn query before
@@ -843,6 +871,7 @@ def _order_flow(state, intent, items, repo):
                 it["sku_id"] = sid
                 it["family"] = fam or repo.sku(sid).get("family")
                 it["in_catalogue"] = True
+                it["_freshly_provisioned"] = True
                 newly_added.append(repo.sku(sid)["canonical"])
 
     # drop products the shop does not stock, but tell the owner once
@@ -955,7 +984,10 @@ def _apply_customer_slot(state, aw, user_text, repo):
         return _resume_customer_capture(state, repo)
 
     if aw == "customer_name":
-        name = (user_text or "").strip()
+        # STT auto-punctuates a spoken utterance ("Ramesh." as a full
+        # sentence) — strip trailing punctuation or it doubles up later
+        # ("Customer: Ramesh.." from name "Ramesh." + our own period).
+        name = re.sub(r"[.!?,।]+$", "", (user_text or "").strip()).strip()
         if not name:
             return _say(state, _L(state, "Naam bataiye.", "Please tell me the name."),
                         listen=True, done=False)
@@ -1053,56 +1085,102 @@ def _prepare_confirmation(state, repo):
 
 def _commit(state, flow, items, skipped, repo):
     import main
-    etype = {"sale": "sale", "delivery": "delivery",
-             "count": "opening_balance"}.get(flow, flow)
     customer = state.get("customer") or {}
     deadline = state.get("payment_deadline")
-    ev_items, rows, parts = [], [], []
-    for it in items:
-        sku = repo.sku(it["sku_id"])
-        payment = it.get("payment") or "cash"
-        ev_items.append({"sku_id": sku["sku_id"], "qty": float(it["qty"]),
-                         "unit": it["unit"], "rate": it.get("rate"),
-                         "rate_unit": it.get("rate_unit") or it["unit"],
-                         "payment": payment, "spoken": it.get("name", ""),
-                         "was_tap": False,
-                         "customer_id": customer.get("customer_id"),
-                         "payment_deadline": deadline if payment == "credit" else None})
-        rows.append({"phrase": it.get("name") or sku["canonical"],
-                     "sku_id": sku["sku_id"], "qty": float(it["qty"]),
-                     "unit": it["unit"], "rate": it.get("rate"),
-                     "rate_unit": it.get("rate_unit") or it["unit"],
-                     "payment": payment, "confirmed": True})
-        parts.append(f"{_num(it['qty'])} {it['unit']} {sku['canonical']}")
-    result = main._write_events(etype, ev_items, TODAY.isoformat(), "exact", "voice_live")
+
+    def _rows_for(its):
+        ev, rw = [], []
+        for it in its:
+            sku = repo.sku(it["sku_id"])
+            payment = it.get("payment") or "cash"
+            ev.append({"sku_id": sku["sku_id"], "qty": float(it["qty"]),
+                       "unit": it["unit"], "rate": it.get("rate"),
+                       "rate_unit": it.get("rate_unit") or it["unit"],
+                       "payment": payment, "spoken": it.get("name", ""),
+                       "was_tap": False,
+                       "customer_id": customer.get("customer_id"),
+                       "payment_deadline": deadline if payment == "credit" else None})
+            rw.append({"phrase": it.get("name") or sku["canonical"],
+                       "sku_id": sku["sku_id"], "qty": float(it["qty"]),
+                       "unit": it["unit"], "rate": it.get("rate"),
+                       "rate_unit": it.get("rate_unit") or it["unit"],
+                       "payment": payment, "confirmed": True})
+        return ev, rw
+
+    base_etype = {"sale": "sale", "delivery": "delivery",
+                  "count": "opening_balance"}.get(flow, flow)
+    parts = [f"{_num(it['qty'])} {it['unit']} {repo.sku(it['sku_id'])['canonical']}"
+            for it in items]
+
+    # A delivery of a product provisioned THIS turn has no prior stock to
+    # reconcile against — the delivered quantity directly becomes the known
+    # count (an opening_balance), not a plain delivery layered onto nothing.
+    # A delivery of a product that already existed stays uncounted, even if
+    # it happened to be uncounted before — there could be untracked stock
+    # already on the shelf, so a real physical count is still needed.
+    fresh = [it for it in items if flow == "delivery" and it.get("_freshly_provisioned")]
+    normal = [it for it in items if it not in fresh]
+
+    result = {"committed": [], "affected_stock": {}}
+    rows = []
+    if normal:
+        ev, rw = _rows_for(normal)
+        r = main._write_events(base_etype, ev, TODAY.isoformat(), "exact", "voice_live")
+        result["committed"] += r["committed"]
+        result["affected_stock"].update(r["affected_stock"])
+        rows += rw
+    needs_count = [repo.sku(it["sku_id"])["canonical"] for it in normal
+                  if flow == "delivery"
+                  and result["affected_stock"].get(it["sku_id"], {}).get("uncounted")]
+    if fresh:
+        ev, rw = _rows_for(fresh)
+        r = main._write_events("opening_balance", ev, TODAY.isoformat(), "exact", "voice_live")
+        result["committed"] += r["committed"]
+        result["affected_stock"].update(r["affected_stock"])
+        rows += rw
+        # lock in the actual paid rate as the new SKU's reference cost, since
+        # it's no longer just an estimate from other sizes/types.
+        for it in fresh:
+            if it.get("rate"):
+                repo.upsert_sku({"sku_id": it["sku_id"], "opening_cost_per_kg": it["rate"]})
     result["flow"] = flow  # sale|delivery|count — a bill is only ever ours to GIVE on a sale
     result["customer"] = {
         "customer_id": customer.get("customer_id"),
         "name": customer.get("name"), "phone": customer.get("phone"),
     } if customer else None
     if flow == "sale" and customer.get("customer_id") and deadline:
+        # flow == "sale" never provisions new items, so `items` lines up
+        # 1:1 with result["committed"] in the same order.
         credit_total = sum(c.get("amount") or 0 for i, c in enumerate(result["committed"])
-                           if ev_items[i]["payment"] == "credit")
+                           if (items[i].get("payment") or "cash") == "credit")
         if credit_total:
             result["receivable"] = repo.add_receivable(
                 customer["customer_id"], credit_total, deadline,
                 [c["event_id"] for i, c in enumerate(result["committed"])
-                 if ev_items[i]["payment"] == "credit"])
+                 if (items[i].get("payment") or "cash") == "credit"])
     verb = _L(state,
              {"sale": "bik gaya", "delivery": "aa gaya",
               "count": "gin liya"}.get(flow, "likh diya"),
              {"sale": "sold", "delivery": "received",
               "count": "counted"}.get(flow, "recorded"))
-    say = _L(state, f"Theek hai — {_oxford(parts)} {verb}, likh diya.",
-             f"Done — {_oxford(parts)} {verb}.")
+    # One flowing sentence, comma-joined, exactly one trailing period — not a
+    # stack of separately-punctuated fragments (which doubled up whenever a
+    # captured name already carried STT's own trailing punctuation).
+    bits = [f"{_oxford(parts)} {verb}"]
     if customer.get("name"):
-        say += _L(state, f" Customer: {customer['name']}.",
-                  f" Customer: {customer['name']}.")
+        bits.append(_L(state, f"{customer['name']} ke naam", f"for {customer['name']}"))
     if deadline:
-        say += _L(state, f" Udhaar {deadline} tak.", f" Credit due by {deadline}.")
+        bits.append(_L(state, f"udhaar {deadline} tak", f"on credit, due {deadline}"))
+    say = _L(state, "Theek hai — ", "Done — ") + ", ".join(bits) + "."
     if skipped:
         say += _L(state, f" {_oxford(skipped)} chhod diya, wo stock mein nahi.",
                   f" Skipped {_oxford(skipped)} — not in stock.")
+    if needs_count:
+        say += _L(state,
+                  f" {_oxford(needs_count)} pehle se stock mein ho sakta hai — ek baar "
+                  "gin lo, jab chaho voice se bata dena.",
+                  f" {_oxford(needs_count)} may already have stock on the shelf — do a "
+                  "count when you can, you can tell me the number by voice anytime.")
     out = _say(state, say, listen=False, done=True)
     out["summary"] = {"items": rows}
     out["committed"] = result
