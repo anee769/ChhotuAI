@@ -15,7 +15,7 @@
       "piece": 10.67
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 58.64,
+    "opening_cost_per_kg": 55.5,
     "aliases": [
       "saria",
       "sariya",
@@ -27,8 +27,7 @@
       "12 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 58.64
+    ]
   },
   {
     "sku_id": "TMT_16_FE500D_TATA",
@@ -46,7 +45,7 @@
       "piece": 18.96
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 57.62,
+    "opening_cost_per_kg": 54.5,
     "aliases": [
       "saria",
       "sariya",
@@ -58,8 +57,37 @@
       "16 mm",
       "tata",
       "tiscon"
-    ],
-    "landed_cost_per_kg": 57.62
+    ]
+  },
+  {
+    "sku_id": "TMT_20_FE500D_TATA",
+    "canonical": "Tata Tiscon TMT Bar 20mm Fe500D",
+    "family": "tmt",
+    "attributes": {
+      "diameter_mm": 20,
+      "grade": "Fe500D",
+      "brand": "Tata Tiscon"
+    },
+    "default_unit": "tonne",
+    "units": {
+      "kg": 1,
+      "tonne": 1000,
+      "piece": 29.63
+    },
+    "gst_rate": 18,
+    "opening_cost_per_kg": 53.5,
+    "aliases": [
+      "saria",
+      "sariya",
+      "सरिया",
+      "tmt bar",
+      "rod",
+      "tmt",
+      "20mm rod",
+      "20 mm",
+      "tata",
+      "tiscon"
+    ]
   },
   {
     "sku_id": "CEM_ULTRATECH_OPC53",
@@ -77,7 +105,7 @@
       "kg": 0.02
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 423.25,
+    "opening_cost_per_kg": 415,
     "aliases": [
       "cement",
       "सीमेंट",
@@ -86,8 +114,7 @@
       "ultratech",
       "opc 53",
       "ultratech cement"
-    ],
-    "landed_cost_per_kg": 423.25
+    ]
   },
   {
     "sku_id": "CEM_ULTRATECH_PPC",
@@ -113,6 +140,33 @@
       "bag",
       "ultratech",
       "ppc",
+      "ultratech cement"
+    ]
+  },
+  {
+    "sku_id": "CEM_ULTRATECH_PSC",
+    "canonical": "UltraTech PSC Cement 50kg",
+    "family": "cement",
+    "attributes": {
+      "brand": "UltraTech",
+      "type": "PSC",
+      "weight_kg": 50
+    },
+    "default_unit": "bori",
+    "units": {
+      "bori": 1,
+      "tonne": 20,
+      "kg": 0.02
+    },
+    "gst_rate": 28,
+    "opening_cost_per_kg": 370,
+    "aliases": [
+      "cement",
+      "सीमेंट",
+      "bori",
+      "bag",
+      "ultratech",
+      "psc",
       "ultratech cement"
     ]
   }

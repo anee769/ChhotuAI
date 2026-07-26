@@ -117,8 +117,17 @@ def _extract_prompt(repo) -> str:
         "spoken (cash/nagad->cash; udhaar/credit/baaki->credit). Else null.\n"
         "- stock question ('kitna bacha/stock hai') -> intent stock_query. "
         "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric.\n"
+        "- intent=delivery when the owner RECEIVED/BOUGHT stock: 'kharida/khareeda', "
+        "'hamne liya', 'mangwaya', 'aaya', 'delivery aayi'. intent=sale when the owner "
+        "SOLD/GAVE stock to a customer: 'becha/bech diya', 'diya', 'bika'. Do not "
+        "confuse the two — 'kharida' is ALWAYS delivery, never sale.\n"
+        "- intent MUST be exactly one of: sale, delivery, count, stock_query, "
+        "analytics_query, unknown. Never invent another word.\n"
         "- Think briefly, then output the JSON."
     )
+
+
+_VALID_INTENTS = {"sale", "delivery", "count", "stock_query", "analytics_query", "unknown"}
 
 
 def _extract(state, repo) -> dict:
@@ -153,8 +162,9 @@ def _extract(state, repo) -> dict:
             "rate": r.get("rate") if isinstance(r.get("rate"), (int, float)) else None,
             "payment": r.get("payment") if r.get("payment") in ("cash", "credit") else None,
         })
-    return {"intent": out.get("intent", "sale"),
-            "metric": out.get("metric"), "items": items}
+    raw_intent = out.get("intent")
+    intent = raw_intent if raw_intent in _VALID_INTENTS else "unknown"
+    return {"intent": intent, "metric": out.get("metric"), "items": items}
 
 
 def _valid_sku(sid, repo) -> bool:
@@ -185,6 +195,14 @@ def converse(state, user_text, flow, repo):
     if flow and flow != "auto":
         intent = {"live_sale": "sale", "delivery": "delivery",
                   "opening_balance": "count", "count": "count"}.get(flow, intent)
+    elif intent in ("sale", "delivery", "count"):
+        # Lock the transaction type (bought vs sold) the first time it's
+        # resolved, so a noisy re-classification on a later follow-up turn
+        # (e.g. after the owner just says "cash") can't silently flip a
+        # purchase into a sale mid-conversation.
+        intent = state.setdefault("locked_intent", intent)
+    elif state.get("locked_intent"):
+        intent = state["locked_intent"]
 
     if intent == "analytics_query":
         return _analytics_answer(ext.get("metric"), repo)
@@ -209,6 +227,10 @@ def _ask_product(item):
 
 
 def _order_flow(state, intent, items, repo):
+    if intent not in ("sale", "delivery", "count"):
+        # Never guess bought-vs-sold when the extractor couldn't classify it —
+        # writing the wrong direction silently corrupts stock.
+        return _say(state, "Ye maal aapne becha ya khareeda?", listen=True, done=False)
     flow = intent  # sale | delivery | count
     # drop products the shop does not stock, but tell the owner once
     kept = []

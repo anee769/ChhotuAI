@@ -57,6 +57,44 @@
     "event_id": "evt_0003"
   },
   {
+    "type": "opening_balance",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 1.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 1.8 tonne"
+    },
+    "event_id": "evt_0004"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ULTRATECH_PSC",
+    "qty": 22,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 22 bori"
+    },
+    "event_id": "evt_0005"
+  },
+  {
     "type": "delivery",
     "sku_id": "TMT_12_FE500D_TATA",
     "qty": 4.0,
@@ -73,7 +111,7 @@
     "evidence": {
       "transcript": "delivery received"
     },
-    "event_id": "evt_0004"
+    "event_id": "evt_0006"
   },
   {
     "type": "delivery",
@@ -92,7 +130,7 @@
     "evidence": {
       "transcript": "delivery received (price up)"
     },
-    "event_id": "evt_0005"
+    "event_id": "evt_0007"
   },
   {
     "type": "delivery",
@@ -111,7 +149,7 @@
     "evidence": {
       "transcript": "delivery received"
     },
-    "event_id": "evt_0006"
+    "event_id": "evt_0008"
   },
   {
     "type": "delivery",
@@ -130,7 +168,7 @@
     "evidence": {
       "transcript": "delivery received (price up)"
     },
-    "event_id": "evt_0007"
+    "event_id": "evt_0009"
   },
   {
     "type": "delivery",
@@ -149,7 +187,7 @@
     "evidence": {
       "transcript": "delivery"
     },
-    "event_id": "evt_0008"
+    "event_id": "evt_0010"
   },
   {
     "type": "sale",
@@ -168,7 +206,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0009"
+    "event_id": "evt_0011"
   },
   {
     "type": "sale",
@@ -187,7 +225,7 @@
     "evidence": {
       "transcript": "7 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0010"
+    "event_id": "evt_0012"
   },
   {
     "type": "sale",
@@ -206,7 +244,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0011"
+    "event_id": "evt_0013"
   },
   {
     "type": "sale",
@@ -225,7 +263,7 @@
     "evidence": {
       "transcript": "18 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0012"
+    "event_id": "evt_0014"
   },
   {
     "type": "sale",
@@ -244,7 +282,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0013"
+    "event_id": "evt_0015"
   },
   {
     "type": "sale",
@@ -263,7 +301,7 @@
     "evidence": {
       "transcript": "0.8 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0014"
+    "event_id": "evt_0016"
   },
   {
     "type": "sale",
@@ -282,7 +320,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0015"
+    "event_id": "evt_0017"
   },
   {
     "type": "sale",
@@ -301,7 +339,7 @@
     "evidence": {
       "transcript": "8 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0016"
+    "event_id": "evt_0018"
   },
   {
     "type": "sale",
@@ -320,7 +358,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0017"
+    "event_id": "evt_0019"
   },
   {
     "type": "sale",
@@ -339,7 +377,7 @@
     "evidence": {
       "transcript": "0.6 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0018"
+    "event_id": "evt_0020"
   },
   {
     "type": "sale",
@@ -358,7 +396,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0019"
+    "event_id": "evt_0021"
   },
   {
     "type": "sale",
@@ -377,7 +415,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0020"
+    "event_id": "evt_0022"
   },
   {
     "type": "sale",
@@ -396,7 +434,7 @@
     "evidence": {
       "transcript": "0.4 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0021"
+    "event_id": "evt_0023"
   },
   {
     "type": "sale",
@@ -415,7 +453,7 @@
     "evidence": {
       "transcript": "12 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0022"
+    "event_id": "evt_0024"
   },
   {
     "type": "sale",
@@ -434,7 +472,7 @@
     "evidence": {
       "transcript": "0.6 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0023"
+    "event_id": "evt_0025"
   },
   {
     "type": "sale",
@@ -453,7 +491,7 @@
     "evidence": {
       "transcript": "6 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0024"
+    "event_id": "evt_0026"
   },
   {
     "type": "sale",
@@ -472,7 +510,7 @@
     "evidence": {
       "transcript": "0.2 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0025"
+    "event_id": "evt_0027"
   },
   {
     "type": "sale",
@@ -491,7 +529,7 @@
     "evidence": {
       "transcript": "0.4 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0026"
+    "event_id": "evt_0028"
   },
   {
     "type": "sale",
@@ -510,7 +548,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0027"
+    "event_id": "evt_0029"
   },
   {
     "type": "sale",
@@ -529,7 +567,7 @@
     "evidence": {
       "transcript": "17 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0028"
+    "event_id": "evt_0030"
   },
   {
     "type": "sale",
@@ -548,7 +586,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0029"
+    "event_id": "evt_0031"
   },
   {
     "type": "sale",
@@ -567,7 +605,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0030"
+    "event_id": "evt_0032"
   },
   {
     "type": "sale",
@@ -586,7 +624,7 @@
     "evidence": {
       "transcript": "0.8 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0031"
+    "event_id": "evt_0033"
   },
   {
     "type": "sale",
@@ -605,7 +643,7 @@
     "evidence": {
       "transcript": "13 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0032"
+    "event_id": "evt_0034"
   },
   {
     "type": "sale",
@@ -624,7 +662,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0033"
+    "event_id": "evt_0035"
   },
   {
     "type": "sale",
@@ -643,7 +681,7 @@
     "evidence": {
       "transcript": "13 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0034"
+    "event_id": "evt_0036"
   },
   {
     "type": "sale",
@@ -662,7 +700,7 @@
     "evidence": {
       "transcript": "14 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0035"
+    "event_id": "evt_0037"
   },
   {
     "type": "sale",
@@ -681,7 +719,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0036"
+    "event_id": "evt_0038"
   },
   {
     "type": "sale",
@@ -700,7 +738,7 @@
     "evidence": {
       "transcript": "5 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0037"
+    "event_id": "evt_0039"
   },
   {
     "type": "sale",
@@ -719,7 +757,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0038"
+    "event_id": "evt_0040"
   },
   {
     "type": "sale",
@@ -738,7 +776,7 @@
     "evidence": {
       "transcript": "0.5 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0039"
+    "event_id": "evt_0041"
   },
   {
     "type": "sale",
@@ -757,7 +795,7 @@
     "evidence": {
       "transcript": "0.8 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0040"
+    "event_id": "evt_0042"
   },
   {
     "type": "sale",
@@ -776,7 +814,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0041"
+    "event_id": "evt_0043"
   },
   {
     "type": "sale",
@@ -795,7 +833,7 @@
     "evidence": {
       "transcript": "16 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0042"
+    "event_id": "evt_0044"
   },
   {
     "type": "sale",
@@ -814,7 +852,7 @@
     "evidence": {
       "transcript": "0.2 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0043"
+    "event_id": "evt_0045"
   },
   {
     "type": "sale",
@@ -833,7 +871,7 @@
     "evidence": {
       "transcript": "12 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0044"
+    "event_id": "evt_0046"
   },
   {
     "type": "sale",
@@ -852,7 +890,7 @@
     "evidence": {
       "transcript": "0.2 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0045"
+    "event_id": "evt_0047"
   },
   {
     "type": "sale",
@@ -871,7 +909,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0046"
+    "event_id": "evt_0048"
   },
   {
     "type": "sale",
@@ -890,7 +928,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0047"
+    "event_id": "evt_0049"
   },
   {
     "type": "sale",
@@ -909,7 +947,7 @@
     "evidence": {
       "transcript": "0.4 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0048"
+    "event_id": "evt_0050"
   },
   {
     "type": "sale",
@@ -928,7 +966,7 @@
     "evidence": {
       "transcript": "8 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0049"
+    "event_id": "evt_0051"
   },
   {
     "type": "sale",
@@ -947,7 +985,7 @@
     "evidence": {
       "transcript": "0.3 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0050"
+    "event_id": "evt_0052"
   },
   {
     "type": "sale",
@@ -966,7 +1004,7 @@
     "evidence": {
       "transcript": "0.5 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0051"
+    "event_id": "evt_0053"
   },
   {
     "type": "sale",
@@ -985,7 +1023,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0052"
+    "event_id": "evt_0054"
   },
   {
     "type": "sale",
@@ -1004,7 +1042,7 @@
     "evidence": {
       "transcript": "0.7 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0053"
+    "event_id": "evt_0055"
   },
   {
     "type": "sale",
@@ -1023,7 +1061,7 @@
     "evidence": {
       "transcript": "0.4 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0054"
+    "event_id": "evt_0056"
   },
   {
     "type": "sale",
@@ -1042,7 +1080,7 @@
     "evidence": {
       "transcript": "0.4 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0055"
+    "event_id": "evt_0057"
   },
   {
     "type": "sale",
@@ -1061,7 +1099,7 @@
     "evidence": {
       "transcript": "0.8 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0056"
+    "event_id": "evt_0058"
   },
   {
     "type": "sale",
@@ -1080,7 +1118,7 @@
     "evidence": {
       "transcript": "20 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0057"
+    "event_id": "evt_0059"
   },
   {
     "type": "sale",
@@ -1099,7 +1137,7 @@
     "evidence": {
       "transcript": "0.5 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0058"
+    "event_id": "evt_0060"
   },
   {
     "type": "sale",
@@ -1118,7 +1156,7 @@
     "evidence": {
       "transcript": "6 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0059"
+    "event_id": "evt_0061"
   },
   {
     "type": "sale",
@@ -1137,7 +1175,7 @@
     "evidence": {
       "transcript": "0.2 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0060"
+    "event_id": "evt_0062"
   },
   {
     "type": "sale",
@@ -1156,7 +1194,7 @@
     "evidence": {
       "transcript": "17 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0061"
+    "event_id": "evt_0063"
   },
   {
     "type": "sale",
@@ -1175,7 +1213,7 @@
     "evidence": {
       "transcript": "7 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0062"
+    "event_id": "evt_0064"
   },
   {
     "type": "sale",
@@ -1194,7 +1232,7 @@
     "evidence": {
       "transcript": "0.6 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0063"
+    "event_id": "evt_0065"
   },
   {
     "type": "sale",
@@ -1213,7 +1251,7 @@
     "evidence": {
       "transcript": "0.6 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0064"
+    "event_id": "evt_0066"
   },
   {
     "type": "sale",
@@ -1232,7 +1270,7 @@
     "evidence": {
       "transcript": "1.5 tonne Tata Tiscon TMT Bar 12mm Fe500D"
     },
-    "event_id": "evt_0065"
+    "event_id": "evt_0067"
   },
   {
     "type": "sale",
@@ -1251,7 +1289,7 @@
     "evidence": {
       "transcript": "30 bori UltraTech OPC 53 Cement 50kg"
     },
-    "event_id": "evt_0066"
+    "event_id": "evt_0068"
   },
   {
     "type": "sale",
@@ -1270,7 +1308,7 @@
     "evidence": {
       "transcript": "0.8 tonne Tata Tiscon TMT Bar 16mm Fe500D"
     },
-    "event_id": "evt_0067"
+    "event_id": "evt_0069"
   },
   {
     "type": "sale",
@@ -1289,7 +1327,7 @@
     "evidence": {
       "transcript": "pichle hafte kuch cement gaya tha"
     },
-    "event_id": "evt_0068"
+    "event_id": "evt_0070"
   },
   {
     "type": "stock_take",
@@ -1308,111 +1346,6 @@
     "evidence": {
       "transcript": "aaj gina to 38 bori nikla"
     },
-    "event_id": "evt_0069"
-  },
-  {
-    "type": "sale",
-    "sku_id": "CEM_ULTRATECH_PPC",
-    "qty": 20.0,
-    "unit": "bori",
-    "rate": 423.5,
-    "payment": "cash",
-    "customer_id": null,
-    "payment_deadline": null,
-    "occurred_on": "2026-07-26",
-    "precision": "exact",
-    "count_precision": null,
-    "occurred_at": null,
-    "confidence": 0.9,
-    "source": "voice_live",
-    "evidence": {
-      "transcript": "ultratech ppc bees bori"
-    },
-    "event_id": "evt_0070",
-    "recorded_at": "2026-07-26T15:04:45"
-  },
-  {
-    "type": "opening_balance",
-    "sku_id": "CEM_ULTRATECH_PPC",
-    "qty": 40.0,
-    "unit": "bori",
-    "rate": null,
-    "payment": null,
-    "customer_id": null,
-    "payment_deadline": null,
-    "occurred_on": "2026-07-26",
-    "precision": "day",
-    "count_precision": "estimated",
-    "occurred_at": null,
-    "confidence": 0.81,
-    "source": "voice_live",
-    "evidence": {
-      "transcript": "ultratech ppc chalis bori"
-    },
-    "event_id": "evt_0071",
-    "recorded_at": "2026-07-26T15:04:45"
-  },
-  {
-    "type": "sale",
-    "sku_id": "TMT_12_FE500D_TATA",
-    "qty": 1.0,
-    "unit": "tonne",
-    "rate": 65.9,
-    "payment": "cash",
-    "customer_id": null,
-    "payment_deadline": null,
-    "occurred_on": "2026-07-24",
-    "precision": "day",
-    "count_precision": null,
-    "occurred_at": null,
-    "confidence": 0.68,
-    "source": "voice_recall",
-    "evidence": {
-      "transcript": "parso ek ton barah mm"
-    },
-    "event_id": "evt_0072",
-    "recorded_at": "2026-07-26T15:04:45"
-  },
-  {
-    "type": "sale",
-    "sku_id": "CEM_ULTRATECH_OPC53",
-    "qty": 10.0,
-    "unit": "bori",
-    "rate": 456.5,
-    "payment": "cash",
-    "customer_id": null,
-    "payment_deadline": null,
-    "occurred_on": "2026-07-26",
-    "precision": "week",
-    "count_precision": null,
-    "occurred_at": null,
-    "confidence": 0.63,
-    "source": "voice_recall",
-    "evidence": {
-      "transcript": "pichle hafte cement"
-    },
-    "event_id": "evt_0073",
-    "recorded_at": "2026-07-26T15:04:47"
-  },
-  {
-    "type": "unknown",
-    "sku_id": "CEM_ULTRATECH_OPC53",
-    "qty": 100.0,
-    "unit": "bori",
-    "rate": 50,
-    "payment": null,
-    "customer_id": null,
-    "payment_deadline": null,
-    "occurred_on": "2026-07-26",
-    "precision": "exact",
-    "count_precision": null,
-    "occurred_at": null,
-    "confidence": 0.9,
-    "source": "voice_live",
-    "evidence": {
-      "transcript": "OPC 53"
-    },
-    "event_id": "evt_0074",
-    "recorded_at": "2026-07-26T15:11:04"
+    "event_id": "evt_0071"
   }
 ]

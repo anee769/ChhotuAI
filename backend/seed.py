@@ -41,11 +41,13 @@ def build_catalogue() -> list:
       2. Tata Tiscon TMT 16mm Fe500D   (sariya, second size)
       3. UltraTech OPC 53 Cement 50kg  (cement, counted + active)
       4. UltraTech PPC Cement 50kg     (cement, kept UNCOUNTED in the demo)
+      5. Tata Tiscon TMT 20mm Fe500D   (sariya, counted but FROZEN — dead stock)
+      6. UltraTech PSC Cement 50kg     (cement, counted but FROZEN — dead stock)
     """
     cat = []
 
-    # --- TMT bars: one brand, one grade, two sizes ---
-    for dia, cost in [(12, 55.5), (16, 54.5)]:
+    # --- TMT bars: one brand, one grade, three sizes (20mm kept as frozen stock) ---
+    for dia, cost in [(12, 55.5), (16, 54.5), (20, 53.5)]:
         cat.append({
             "sku_id": f"TMT_{dia}_FE500D_TATA",
             "canonical": f"Tata Tiscon TMT Bar {dia}mm Fe500D",
@@ -59,8 +61,9 @@ def build_catalogue() -> list:
                         f"{dia}mm rod", f"{dia} mm", "tata", "tiscon"],
         })
 
-    # --- Cement: one brand, two types ---
-    for typ, tcode, cost in [("OPC 53", "OPC53", 415), ("PPC", "PPC", 385)]:
+    # --- Cement: one brand, three types (PSC kept as frozen stock) ---
+    for typ, tcode, cost in [("OPC 53", "OPC53", 415), ("PPC", "PPC", 385),
+                              ("PSC", "PSC", 370)]:
         cat.append({
             "sku_id": f"CEM_ULTRATECH_{tcode}",
             "canonical": f"UltraTech {typ} Cement 50kg",
@@ -100,17 +103,22 @@ def build_events(cat: list) -> list:
 
     by_id = {s["sku_id"]: s for s in cat}
 
-    TMT12, TMT16 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA"
-    OPC53, PPC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC"
+    TMT12, TMT16, TMT20 = "TMT_12_FE500D_TATA", "TMT_16_FE500D_TATA", "TMT_20_FE500D_TATA"
+    OPC53, PPC, PSC = "CEM_ULTRATECH_OPC53", "CEM_ULTRATECH_PPC", "CEM_ULTRATECH_PSC"
 
     # UltraTech PPC is deliberately left UNCOUNTED (no baseline, no activity)
     # so the demo shows a "abhi tak gina nahi" SKU.
+    # TMT 20mm and PSC cement are counted ONCE and then never sold/restocked —
+    # they show up as frozen capital (dead stock, zero movement in 60 days).
     counted = [TMT12, TMT16, OPC53]
+    frozen_only = [TMT20, PSC]
 
-    # 1) opening_balance at period start for the 3 counted SKUs
+    # 1) opening_balance at period start for the 3 active + 2 frozen SKUs
     opening = {TMT12: (15.0, "tonne", "estimated"),
                TMT16: (10.0, "tonne", "estimated"),
-               OPC53: (400, "bori", "exact")}
+               OPC53: (400, "bori", "exact"),
+               TMT20: (1.8, "tonne", "exact"),
+               PSC: (22, "bori", "exact")}
     for sid, (qty, unit, cp) in opening.items():
         add(type="opening_balance", sku_id=sid, qty=qty, unit=unit, rate=None,
             payment=None, occurred_on=d(PERIOD_START), precision="day",
