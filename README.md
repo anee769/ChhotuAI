@@ -1,8 +1,8 @@
-# ChhotuAI — Voice-First Stock, Sales & Customer Ledger
+# Chhotu.ai — Awaaz se hisaab
 
 > *Every inventory system assumes discipline. We assume forgetting.*
 
-ChhotuAI is a focused ledger for Indian hardware and building-material shops.
+Chhotu.ai is a focused voice ledger for Indian hardware and building-material shops.
 The owner can record sales and deliveries in Hindi mixed with English product
 terms, manage customer credit, record later payments, and review stock and
 margin without maintaining a conventional inventory database.
@@ -14,8 +14,8 @@ Digitization.
 
 ## Current features
 
-- Clean reference-style interface with seven focused workspaces: Voice Entry,
-  Delivery, Invoice, Inventory, Customers, Today, and Dashboard.
+- Clean reference-style interface with six focused workspaces: Voice Entry,
+  Invoice, Inventory, Customers, Today, and Dashboard.
 - Stateful voice conversations that retain the complete turn history and ask
   only for information that is still missing.
 - Multi-item sale capture from one sentence. All items are kept together in a
@@ -61,8 +61,8 @@ The application loads `.env` automatically. Start it with:
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
 The ledger, customer, Today, and Dashboard screens can be inspected without a
-Sarvam key. A key is required for the conversational Voice Entry and Delivery
-flows, live speech-to-text, text-to-speech, semantic product matching, and live
+Sarvam key. A key is required for the unified conversational Voice Entry flow,
+live speech-to-text, text-to-speech, semantic product matching, and live
 invoice digitization.
 
 ### Reset demo data
@@ -138,8 +138,7 @@ on.
 
 | Workspace | Purpose |
 |---|---|
-| Voice Entry | Record cash or credit sales by voice or text, review, and confirm |
-| Delivery | Record incoming stock through the same stateful conversation flow |
+| Voice Entry | Record sales or incoming stock, ask ledger questions, review, and confirm |
 | Invoice | Digitize supplier invoices and review landed costs without creating stock |
 | Inventory | View event-derived stock, cost, selling price, margin, and count status |
 | Customers | Search customers, review dues, and append individual payments |

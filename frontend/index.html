@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChhotuAI — Awaaz se hisaab</title>
+<title>Chhotu.ai — Awaaz se hisaab</title>
+<link rel="icon" type="image/svg+xml" href="/assets/chhotu-favicon.svg">
+<link rel="shortcut icon" href="/assets/chhotu-favicon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -181,24 +183,29 @@
     border:0; border-bottom:1px solid #c9cdd2; z-index:50;
   }
   .app-header > .topbar-inner {
-    width:100%; display:grid; grid-template-columns:260px minmax(280px,500px) 1fr;
+    width:100%; display:grid; grid-template-columns:260px 1fr;
     align-items:center; gap:26px;
   }
-  .brand-lockup { display:flex; align-items:center; gap:11px; min-width:0; }
-  .brand-mark, .shop-avatar {
+  .brand-lockup { display:flex; align-items:center; gap:9px; min-width:0; }
+  .shop-avatar {
     display:grid; place-items:center; background:#050505; color:#fff;
     font-weight:800; border-radius:12px;
   }
-  .brand-mark { width:38px; height:38px; font-size:18px; }
-  .brand-name { font-size:21px; line-height:1.1; font-weight:800; letter-spacing:-.03em; }
-  .brand-tagline { margin-top:2px; font-size:11px; color:#73777f; }
-  .global-search {
-    height:48px; display:flex; align-items:center; gap:12px; padding:0 16px;
-    background:#f0f2f4; border:1px solid #c9cdd2; border-radius:14px;
+  .brand-symbol {
+    width:36px; height:36px; flex:0 0 36px;
   }
-  .global-search input {
-    width:100%; padding:0 !important; border:0 !important; outline:0 !important;
-    background:transparent !important; font-size:14px;
+  .brand-copy {
+    display:flex; flex-direction:column; justify-content:center;
+    margin-top:0 !important; max-width:none !important;
+  }
+  .brand-name {
+    font-size:21px; line-height:22px; font-weight:800; letter-spacing:-.035em;
+    color:#111827;
+  }
+  .brand-name .brand-ai { color:#006c49; }
+  .brand-tagline {
+    margin-top:1px; font-size:11px; line-height:13px;
+    color:#73777f; letter-spacing:.005em;
   }
   .app-header .header-tools {
     position:static; justify-self:end; display:flex !important; flex-wrap:nowrap;
@@ -267,6 +274,17 @@
     min-height:70px; display:flex; align-items:center; justify-content:space-between;
     gap:16px; padding:14px 18px; border-bottom:1px solid #d8dbe0;
   }
+  .inventory-controls { display:flex; align-items:center; justify-content:flex-end; gap:9px; }
+  .local-search {
+    height:40px; display:flex; align-items:center; gap:8px;
+    padding:0 11px; border:1px solid #e3e6e9; border-radius:9px; background:#fff;
+  }
+  .local-search .material-symbols-outlined { color:#73777f; font-size:19px; }
+  .local-search input {
+    width:100%; min-width:0; padding:0 !important; border:0 !important;
+    outline:0 !important; background:transparent !important; font-size:13px;
+  }
+  .inventory-search { width:250px; }
   .stock-product { display:flex; align-items:center; gap:12px; min-width:250px; }
   .stock-icon {
     width:40px; height:40px; display:grid; place-items:center; flex:0 0 auto;
@@ -291,7 +309,7 @@
   }
   .customer-list { border-right:1px solid #cdd1d6; background:#f8f9fa; }
   .customer-list-search { padding:14px; border-bottom:1px solid #d7dadd; }
-  .customer-list-search input { width:100%; padding:11px 13px; font-size:13px; }
+  .customer-list-search .local-search { width:100%; }
   .customer-row {
     width:100%; display:block; padding:16px 18px; text-align:left;
     border-bottom:1px solid #dde0e3; background:#fff; transition:.15s;
@@ -339,8 +357,62 @@
     border-radius:14px; background:#f5f6f7;
   }
   .voice-mic-button {
+    --mic-ring-scale:1;
+    --mic-ring-opacity:0;
+    position:relative; isolation:isolate;
     width:82px; height:82px; display:grid; place-items:center; border-radius:50%;
     background:#050505; color:#fff; box-shadow:0 11px 24px -15px #000;
+    transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+  }
+  .voice-mic-button::before,
+  .voice-mic-button::after {
+    content:""; position:absolute; pointer-events:none; border-radius:50%;
+    border:1px solid rgba(0,108,73,.32); opacity:0; z-index:-1;
+  }
+  .voice-mic-button::before {
+    inset:-9px; opacity:var(--mic-ring-opacity);
+    transform:scale(var(--mic-ring-scale)); transition:transform .09s linear, opacity .12s ease;
+  }
+  .voice-mic-button::after { inset:-18px; border-color:rgba(0,108,73,.18); }
+  .voice-mic-button .mic-glyph {
+    position:relative; z-index:1; transition:transform .2s ease, opacity .2s ease;
+  }
+  .voice-level-bars {
+    position:absolute; z-index:1; bottom:18px; left:50%; height:18px;
+    display:flex; align-items:flex-end; gap:3px; opacity:0;
+    transform:translateX(-50%) translateY(5px);
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .voice-level-bars i {
+    display:block; width:3px; height:6px; border-radius:999px;
+    background:#fff; transition:height .08s linear;
+  }
+  .voice-mic-button.is-listening {
+    background:#111827; box-shadow:0 12px 28px -14px rgba(0,108,73,.75);
+  }
+  .voice-mic-button.is-listening::after {
+    opacity:1; animation:micListeningRing 1.7s ease-out infinite;
+  }
+  .voice-mic-button.is-listening .mic-glyph {
+    opacity:.58; transform:translateY(-9px) scale(.82);
+  }
+  .voice-mic-button.is-listening .voice-level-bars {
+    opacity:1; transform:translateX(-50%) translateY(0);
+  }
+  @keyframes micListeningRing {
+    0% { transform:scale(.88); opacity:0; }
+    35% { opacity:.72; }
+    100% { transform:scale(1.18); opacity:0; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .voice-mic-button,
+    .voice-mic-button::before,
+    .voice-mic-button::after,
+    .voice-mic-button .mic-glyph,
+    .voice-level-bars,
+    .voice-level-bars i { animation:none !important; transition:none !important; }
+    .voice-mic-button.is-listening::after { opacity:.45; transform:scale(1); }
+    .voice-mic-button.is-listening .voice-level-bars i { height:10px !important; }
   }
   .voice-command-input {
     display:flex; gap:8px; padding:6px; border:1px solid #cfd3d8;
@@ -397,12 +469,14 @@
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
     .balance-panel { grid-template-columns:1fr; }
+    .inventory-toolbar { align-items:flex-start; flex-direction:column; }
+    .inventory-controls { width:100%; }
+    .inventory-search { width:100%; }
   }
 
   @media (max-width: 900px) {
     .app-header { height:64px; padding:0 16px; }
     .app-header > .topbar-inner { grid-template-columns:1fr auto; gap:12px; }
-    .global-search { display:none; }
     .brand-tagline, .day-control { display:none !important; }
     .app-nav {
       position:sticky; top:64px; width:100%; height:auto; padding:9px 12px;
@@ -423,15 +497,14 @@
 <header class="app-header">
   <div class="topbar-inner">
     <div class="brand-lockup">
-      <div class="brand-mark">C</div>
-      <div>
-        <div class="brand-name">ChhotuAI</div>
-        <div class="brand-tagline">Voice stock ledger</div>
+      <svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true">
+        <path d="M32 9.5a16.5 16.5 0 1 0 0 25" fill="none" stroke="#111827" stroke-width="6" stroke-linecap="square"/>
+        <circle cx="34.5" cy="22" r="3.4" fill="#006c49"/>
+      </svg>
+      <div class="brand-copy">
+        <div class="brand-name" aria-label="Chhotu dot ai">Chhotu<span class="brand-ai">.ai</span></div>
+        <div class="brand-tagline">Awaaz se hisaab</div>
       </div>
-    </div>
-    <div class="global-search">
-      <span class="material-symbols-outlined">search</span>
-      <input id="globalSearch" type="search" placeholder="Search products, customers, or commands…" oninput="handleGlobalSearch(this.value)">
     </div>
     <div class="header-tools flex flex-wrap items-center gap-3">
       <div class="learning-counters flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-center">
@@ -458,7 +531,6 @@
   </div>
   <div class="nav-label">Workspace</div>
   <button class="tab-btn active" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
-  <button class="tab-btn" data-tab="delivery" onclick="showTab('delivery')"><span class="material-symbols-outlined">local_shipping</span><span>Delivery</span></button>
   <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span>Invoice</span></button>
   <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span>Inventory</span></button>
   <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span>Customers</span></button>
@@ -466,7 +538,6 @@
   <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
   <div class="nav-footer">
     <button onclick="showTab('dashboard')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
-    <div class="version">ChhotuAI · Local ledger</div>
   </div>
 </nav>
 
@@ -502,12 +573,9 @@
   <div class="workspace-shell grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
     <div class="main-column space-y-6">
 
-  <!-- SALE / DELIVERY (shared voice UI) -->
+  <!-- UNIFIED VOICE ENTRY -->
   <section id="tab-sale" class="tabpane">
     <div id="voiceUI-sale"></div>
-  </section>
-  <section id="tab-delivery" class="tabpane hidden">
-    <div id="voiceUI-delivery"></div>
   </section>
 
   <!-- INVOICE -->
@@ -532,20 +600,23 @@
         <h1>Inventory Ledger</h1>
         <p>Derived stock with full event history and reconciliation.</p>
       </div>
-      <button onclick="document.getElementById('countPanel').classList.toggle('hidden')" class="btn-primary px-5 py-3 font-semibold">
-        <span class="material-symbols-outlined align-middle mr-1">mic</span> Quick Adjust
-      </button>
     </div>
     <div id="countPanel" class="hidden mb-5"><div id="voiceUI-count"></div></div>
     <div class="card overflow-hidden">
       <div class="inventory-toolbar">
         <div><div class="font-semibold">Current stock</div><div class="text-xs text-slate-500">All quantities replayed from the event log</div></div>
-        <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
-          <option value="">All families</option><option value="tmt">TMT</option>
-          <option value="cement">Cement</option><option value="pipe">Pipe</option>
-          <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
-          <option value="paint">Paint</option>
-        </select>
+        <div class="inventory-controls">
+          <label class="local-search inventory-search">
+            <span class="material-symbols-outlined">search</span>
+            <input id="stockSearch" type="search" placeholder="Search products or SKU…" oninput="filterStockRows(this.value)">
+          </label>
+          <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
+            <option value="">All families</option><option value="tmt">TMT</option>
+            <option value="cement">Cement</option><option value="pipe">Pipe</option>
+            <option value="fitting">Fittings</option><option value="fastener">Fasteners</option>
+            <option value="paint">Paint</option>
+          </select>
+        </div>
       </div>
       <div id="stockList"></div>
     </div>
@@ -686,7 +757,7 @@ async function boot(){
   document.getElementById('heroShop').textContent=s.shop;
   document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   setCounts(s.learning_counts); setDayUI(s.learning_state);
-  renderVoiceUI('sale','auto'); renderVoiceUI('delivery','delivery'); renderVoiceUI('count','count');
+  renderVoiceUI('sale','auto'); renderVoiceUI('count','count');
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
@@ -704,34 +775,8 @@ function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classLis
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
   if(t==='customers') loadCustomers(); }
-async function handleGlobalSearch(q){
-  q=(q||'').trim().toLowerCase();
-  const active=document.querySelector('.tab-btn.active')?.dataset.tab;
-  if(active==='customers'){
-    const local=document.getElementById('customerSearch'); if(local) local.value=q;
-    filterCustomers(q); return;
-  }
-  if(active==='stock'){
-    document.querySelectorAll('#stockList tbody tr').forEach(row=>{
-      row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
-    });
-    return;
-  }
-  if(!q) return;
-  if(!CRM_CUSTOMERS.length){
-    try{ CRM_CUSTOMERS=(await api('/api/customers')).customers||[]; }catch(_){}
-  }
-  const customer=CRM_CUSTOMERS.find(c=>(c.name||'').toLowerCase().includes(q)||(c.phone||'').includes(q));
-  if(customer){
-    CRM_SELECTED=customer.customer_id; showTab('customers');
-    setTimeout(()=>{ const local=document.getElementById('customerSearch'); if(local)local.value=q; filterCustomers(q); },80);
-  }else{
-    showTab('stock');
-    setTimeout(()=>handleGlobalSearch(q),180);
-  }
-}
 
-// ---------- Voice UI (sale / delivery / count) ----------
+// ---------- Unified voice UI (sale / delivery / questions) + stock count ----------
 function renderVoiceUI(tab, flow){
   const isCount = flow==='count';
   const examples = flow==='auto'
@@ -744,7 +789,7 @@ function renderVoiceUI(tab, flow){
   const title = flow==='auto' ? 'Chhotu se baat karo — bolo, likho, ya poochho'
     : (flow==='delivery'?'Delivery':isCount?'Count':'Sale')+' — Chhotu se baat karo';
   const subtitle = flow==='auto'
-    ? 'Sale likhwao ya stock aur margin poochho.'
+    ? 'Sale likhwao, delivery add karo, ya stock aur margin poochho.'
     : 'Ek baar bolo. Zaroorat hui to Chhotu sawaal poochhega.';
   const countMode = isCount ? `<div class="mb-5 flex flex-wrap gap-3"><label class="text-sm mr-2">Count type:</label>
       <select id="countType" class="rounded px-2 py-1 text-sm"><option value="opening_balance">Opening balance</option><option value="stock_take">Stock take</option></select>
@@ -762,7 +807,10 @@ function renderVoiceUI(tab, flow){
       ${countMode}
       <div class="voice-stage">
         <div class="flex flex-col items-center text-center">
-          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="voice-mic-button transition active:scale-95"><span class="material-symbols-outlined text-[32px]">mic</span></button>
+          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="voice-mic-button active:scale-95" aria-label="Start voice recording" aria-pressed="false">
+            <span class="mic-glyph material-symbols-outlined text-[32px]">mic</span>
+            <span class="voice-level-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
           <div class="mt-4 font-semibold text-slate-900">Boliye, main sun raha hoon</div>
           <div class="mt-1 text-xs text-slate-500">Tap the microphone and speak naturally</div>
         </div>
@@ -783,6 +831,29 @@ function renderVoiceUI(tab, flow){
 }
 
 let mediaRec=null, mediaChunks=[], recTab=null;
+const reduceMicMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+function setMicListening(tab, listening){
+  const btn=document.getElementById('mic-'+tab); if(!btn) return;
+  btn.classList.toggle('is-listening', listening);
+  btn.setAttribute('aria-pressed', listening?'true':'false');
+  btn.setAttribute('aria-label', listening?'Stop voice recording':'Start voice recording');
+  if(!listening){
+    btn.style.setProperty('--mic-ring-scale','1');
+    btn.style.setProperty('--mic-ring-opacity','0');
+    btn.querySelectorAll('.voice-level-bars i').forEach(bar=>bar.style.height='6px');
+  }
+}
+function paintMicLevel(tab, rms){
+  if(reduceMicMotion) return;
+  const btn=document.getElementById('mic-'+tab); if(!btn) return;
+  const level=Math.min(1,Math.max(0,((rms||0)-.012)*18));
+  btn.style.setProperty('--mic-ring-scale',(1+level*.13).toFixed(3));
+  btn.style.setProperty('--mic-ring-opacity',(.12+level*.48).toFixed(2));
+  const factors=[.58,1,.78,.46];
+  btn.querySelectorAll('.voice-level-bars i').forEach((bar,i)=>{
+    bar.style.height=(5+level*14*factors[i]).toFixed(1)+'px';
+  });
+}
 async function micRecord(tab, flow){
   const btn=document.getElementById('mic-'+tab);
   // tap again to stop
@@ -796,7 +867,7 @@ async function micRecord(tab, flow){
     mediaRec.ondataavailable=e=>{ if(e.data && e.data.size) mediaChunks.push(e.data); };
     mediaRec.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
-      btn.classList.remove('pulse'); btn.textContent='🎤';
+      setMicListening(tab,false);
       const blob=new Blob(mediaChunks,{type:(mediaRec.mimeType||'audio/webm')});
       const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
       proc.innerHTML='<span class="pulse">🎧 Aapki awaaz sun rahe hain (Saaras STT)…</span>';
@@ -808,7 +879,7 @@ async function micRecord(tab, flow){
       }catch(e){ proc.innerHTML=''; toast('STT fail — '+(''+e).slice(0,80)+' — Upload audio use karo',false); }
     };
     mediaRec.start();
-    btn.classList.add('pulse'); btn.textContent='⏹️';
+    setMicListening(tab,true);
     toast('🎤 Bol rahe ho… phir se tap karke rok do');
   }catch(e){ toast('Mic access nahi mila — Upload audio use karo',false); }
 }
@@ -891,9 +962,11 @@ function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Ma
 async function convStartVoice(tab, flow){
   const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
   proc.innerHTML='<span class="pulse">🎤 Bol rahe ho… (ruk jao to apne aap sun lega)</span>';
+  setMicListening(tab,true);
   let blob;
-  try{ blob=await recordUntilSilence(); }
+  try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
   catch(e){ proc.innerHTML=''; toast('Mic nahi mila — likh ke ya Upload audio se karo',false); return; }
+  finally{ setMicListening(tab,false); }
   proc.innerHTML='<span class="pulse">🎧 Sun rahe hain (Saaras)…</span>';
   let roman='', disp=''; try{ const o=await transcribeBlob(blob); roman=o.roman; disp=o.disp; }catch(e){}
   if(!roman){ proc.innerHTML=''; toast('Kuch suna nahi — dobara boliye',false); return; }
@@ -942,8 +1015,10 @@ async function convListen(tab){
   const C=CONV[tab]; const panel=document.getElementById('conv-'+tab);
   if(!C.voice){ return; } // typed mode waits for the answer box
   panel.innerHTML=renderConv(C, '<span class="pulse text-rose-300">🎤 aapka jawaab sun raha hoon… (bolo)</span>');
-  let blob; try{ blob=await recordUntilSilence(); }
+  setMicListening(tab,true);
+  let blob; try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
   catch(e){ C.voice=false; panel.innerHTML=renderConv(C, '<span class="text-amber-300">Mic nahi — neeche likh ke jawaab do</span>'); return; }
+  finally{ setMicListening(tab,false); }
   let ans=''; try{ const o=await transcribeBlob(blob); ans=o.roman; }catch(e){}
   if(!ans){ toast('Suna nahi — phir se',false); return convListen(tab); }
   await convTurn(tab, ans);
@@ -1213,6 +1288,13 @@ async function loadStock(){
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
     <thead><tr><th>Product &amp; SKU</th><th>Family</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
+  filterStockRows(document.getElementById('stockSearch')?.value);
+}
+function filterStockRows(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#stockList tbody tr').forEach(row=>{
+    row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
+  });
 }
 // ---------- Customers / credit ----------
 let CRM_CUSTOMERS=[], CRM_SELECTED=null;
@@ -1239,7 +1321,12 @@ function renderCustomerCRM(rows){
   }).join('');
   document.getElementById('customerBody').innerHTML=`<div class="crm-layout">
     <div class="customer-list">
-      <div class="customer-list-search"><input id="customerSearch" placeholder="Search name or phone…" oninput="filterCustomers(this.value)"></div>
+      <div class="customer-list-search">
+        <label class="local-search">
+          <span class="material-symbols-outlined">search</span>
+          <input id="customerSearch" type="search" placeholder="Search name or phone…" oninput="filterCustomers(this.value)">
+        </label>
+      </div>
       <div id="customerListRows">${list||'<div class="p-6 text-sm text-slate-500">No customers yet.</div>'}</div>
     </div>
     <div id="customerDetail" class="customer-detail">${renderCustomerDetail()}</div>

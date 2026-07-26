@@ -31,9 +31,10 @@ from repo import JsonRepo
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
+FRONTEND_ASSETS = ROOT / "frontend" / "assets"
 TODAY = date(2026, 7, 26)  # fixed "today" so the seeded demo is stable
 
-app = FastAPI(title="ChhotuAI")
+app = FastAPI(title="Chhotu.ai — Awaaz se hisaab")
 repo = JsonRepo()
 
 # uvicorn loads this file as the package module "backend.main", but it also
@@ -52,6 +53,7 @@ repo = JsonRepo()
 # to this exact object instead of creating a shadow one.
 sys.modules.setdefault("main", sys.modules[__name__])
 app.mount("/data", StaticFiles(directory=str(DATA)), name="data")
+app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
 
 
 def by_id() -> dict:
