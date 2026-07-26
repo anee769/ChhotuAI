@@ -1033,7 +1033,10 @@ async function convFinish(tab, r){
       rate_unit:c.rate_unit||it.rate_unit||null,payment:it.payment||'cash'};
   });
   const billCustomer=(r.committed&&r.committed.customer)||null;
-  const bills=billItems.length
+  // A bill is what WE hand a customer for a sale. For delivery/count (we bought
+  // it, or we're just counting stock) the bill comes from the supplier, not us.
+  const committedFlow=(r.committed&&r.committed.flow)||'sale';
+  const bills=(billItems.length&&committedFlow==='sale')
     ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 One bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
     : '';
   panel.innerHTML=`<div class="card p-4 border-emerald-700">

@@ -55,6 +55,35 @@ _HINDI_NUMBERS = {
 # 'medium' = slower (~30s/turn) but firmer on spelled-out Hindi number WORDS.
 _EFFORT = os.environ.get("CHHOTU_REASONING", "low")
 
+# Dynamic language: Chhotu's default voice is Hindi/Hinglish, but the owner
+# may speak (and expect replies) in plain English. Detected once from the
+# FIRST utterance and locked into state — like locked_intent — so a later
+# short answer ("12mm", a phone number) can't flip the language mid-order.
+_HINDI_MARK_RE = re.compile(
+    r"[ऀ-ॿ]|"  # Devanagari script
+    r"\b(hai|hain|kya|kitna|kitne|bacha|bika|becha|bech|khareed|kharida|"
+    r"udhaar|udhar|mein|nahi|haan|aur|sariya|saria|paisa|rupaye|rupaya|"
+    r"bataiye|dabaiye|maal|kaunsa|wala|theek|thik|gaya|gayi|diya|hafte|"
+    r"mahine|bori)\b",
+    re.I,
+)
+
+
+def _detect_lang(text: str):
+    t = (text or "").strip()
+    if not t:
+        return None
+    if _HINDI_MARK_RE.search(t):
+        return "hi"
+    if re.search(r"[A-Za-z]", t):
+        return "en"
+    return None
+
+
+def _L(state, hi: str, en: str) -> str:
+    """Pick the reply string for the conversation's detected language."""
+    return en if (state or {}).get("lang") == "en" else hi
+
 
 def parse_phone(text: str):
     digits = "".join(ch for ch in str(text or "") if ch.isdigit())
@@ -481,6 +510,10 @@ def converse(state, user_text, flow, repo):
         state = {"flow": flow, "said": [], "history": []}
 
     state.setdefault("history", [])
+    if not state.get("lang"):
+        detected = _detect_lang(user_text)
+        if detected:
+            state["lang"] = detected
     if not state.get("original_transcript") and user_text:
         # Keep the exact first sentence alongside the structured draft through
         # product/rate/customer follow-ups, confirmation, and bill creation.
@@ -511,14 +544,16 @@ def converse(state, user_text, flow, repo):
     if not state.get("locked_intent"):
         quick = _quick_route(user_text)
         if quick and quick[0] == "analytics":
-            return _analytics_answer(quick[1], repo)
+            return _analytics_answer(quick[1], repo, state)
         if quick == ("stock", None) and sarvam_client.has_key():
             state["said"].append(user_text or "")
             state["history"].append({"role": "user", "content": user_text or ""})
             return _stock_flow(state, _extract(state, repo)["items"], repo)
 
     if not sarvam_client.has_key():
-        return _reply("Voice ke liye Sarvam API key chahiye.", listen=False, done=True)
+        return _reply(_L(state, "Voice ke liye Sarvam API key chahiye.",
+                         "A Sarvam API key is needed for voice."),
+                      listen=False, done=True)
 
     state["said"].append(user_text or "")
     state["history"].append({"role": "user", "content": user_text or ""})
@@ -538,12 +573,16 @@ def converse(state, user_text, flow, repo):
         intent = state["locked_intent"]
 
     if intent == "analytics_query":
-        return _analytics_answer(ext.get("metric"), repo)
+        return _analytics_answer(ext.get("metric"), repo, state)
     if intent == "stock_query":
         return _stock_flow(state, ext["items"], repo)
     if intent == "unknown" and not ext["items"]:
-        return _say(state, "Ye samajh nahi aaya — sirf sariya aur cement rakhte hain. "
-                    "Kya chahiye?", listen=True, done=False)
+        return _say(state, _L(state,
+                              "Ye samajh nahi aaya — sirf sariya aur cement rakhte hain. "
+                              "Kya chahiye?",
+                              "Didn't quite catch that — we only stock TMT bars and "
+                              "cement. What do you need?"),
+                    listen=True, done=False)
     state["draft_items"] = ext["items"]
     return _order_flow(state, intent, ext["items"], repo)
 
@@ -551,13 +590,86 @@ def converse(state, user_text, flow, repo):
 # ---------------------------------------------------------------------------
 # Sale / delivery / count
 # ---------------------------------------------------------------------------
-def _ask_product(item):
+def _provision_new_sku(item, family, repo):
+    """A delivery/count of a sariya size or cement type the shop doesn't
+    stock yet EXTENDS the catalogue instead of being rejected or stuck asking
+    a disambiguation that only ever offers the old sizes/types. We can never
+    sell what isn't in the catalogue, so this only ever runs for
+    delivery/count — never for a sale. Returns the sku_id, or None if the
+    name didn't carry enough (e.g. no diameter/type spoken at all)."""
+    name = item.get("name") or ""
+    attrs = M.extract_attrs(name)
+    catalogue = repo.load_catalogue()
+
+    if family == "tmt":
+        dia = attrs.get("diameter_mm")
+        if not dia:
+            return None
+        existing = next((s for s in catalogue if s.get("family") == "tmt"
+                         and s.get("attributes", {}).get("diameter_mm") == dia), None)
+        if existing:
+            return existing["sku_id"]
+        grade = attrs.get("grade") or "Fe500D"
+        brand = attrs.get("brand") or "Tata Tiscon"
+        sku_id = f"TMT_{dia}_{grade.upper()}_{brand.split()[0].upper()}"
+        tmt_costs = [s["opening_cost_per_kg"] for s in catalogue if s.get("family") == "tmt"]
+        cost = round(sum(tmt_costs) / len(tmt_costs), 1) if tmt_costs else 55.0
+        repo.upsert_sku({
+            "sku_id": sku_id,
+            "canonical": f"{brand} TMT Bar {dia}mm {grade}",
+            "family": "tmt",
+            "attributes": {"diameter_mm": dia, "grade": grade, "brand": brand},
+            "default_unit": "tonne",
+            "units": {"kg": 1, "tonne": 1000, "piece": round((dia * dia) / 162.0 * 12.0, 2)},
+            "gst_rate": 18,
+            "opening_cost_per_kg": cost,
+            "aliases": ["saria", "sariya", "सरिया", "tmt bar", "rod", "tmt",
+                        f"{dia}mm", f"{dia} mm", brand.split()[0].lower()],
+        })
+        return sku_id
+
+    if family == "cement":
+        typ = attrs.get("type")
+        if not typ:
+            m = re.search(r"\b(opc\s*\d{2}|ppc|psc|src|pcc)\b", name.lower())
+            typ = m.group(1).upper() if m else None
+        if not typ:
+            return None
+        existing = next((s for s in catalogue if s.get("family") == "cement"
+                         and (s.get("attributes", {}).get("type") or "").upper()
+                         == typ.upper()), None)
+        if existing:
+            return existing["sku_id"]
+        brand = attrs.get("brand") or "UltraTech"
+        sku_id = f"CEM_{brand.split()[0].upper()}_{typ.upper().replace(' ', '')}"
+        cement_costs = [s["opening_cost_per_kg"] for s in catalogue if s.get("family") == "cement"]
+        cost = round(sum(cement_costs) / len(cement_costs), 1) if cement_costs else 400.0
+        repo.upsert_sku({
+            "sku_id": sku_id,
+            "canonical": f"{brand} {typ} Cement 50kg",
+            "family": "cement",
+            "attributes": {"brand": brand, "type": typ, "weight_kg": 50},
+            "default_unit": "bori",
+            "units": {"bori": 1, "tonne": 20, "kg": 0.02},
+            "gst_rate": 28,
+            "opening_cost_per_kg": cost,
+            "aliases": ["cement", "सीमेंट", "bori", "bag", brand.lower(), typ.lower()],
+        })
+        return sku_id
+
+    return None
+
+
+def _ask_product(item, state=None):
     fam = item.get("family")
     if fam == "tmt":
-        return "Kaunsa sariya — barah mm ya solah mm?"
+        return _L(state, "Kaunsa sariya — barah mm ya solah mm?",
+                  "Which size TMT bar — 12mm or 16mm?")
     if fam == "cement":
-        return "Kaunsa cement — OPC 53 ya PPC?"
-    return "Kaunsa maal — sariya ya cement? Thoda detail se boliye."
+        return _L(state, "Kaunsa cement — OPC 53 ya PPC?",
+                  "Which cement — OPC 53 or PPC?")
+    return _L(state, "Kaunsa maal — sariya ya cement? Thoda detail se boliye.",
+              "Which product — TMT bar or cement? A bit more detail please.")
 
 
 def _ask_order_slot(state, item_index, slot, text):
@@ -601,19 +713,23 @@ def _apply_order_slot(state, user_text, repo):
     idx = int(waiting.get("item_index", 0))
     slot = waiting.get("slot")
     if idx >= len(items):
-        return _say(state, "Order ka context kho gaya — poori entry ek baar phir boliye.",
+        return _say(state, _L(state,
+                              "Order ka context kho gaya — poori entry ek baar phir boliye.",
+                              "Lost track of the order — please say the whole entry again."),
                     listen=True, done=False)
     item = items[idx]
     if slot == "product":
         sid = _sku_from_answer(user_text, item.get("family"), repo)
         if not sid:
-            return _ask_order_slot(state, idx, slot, _ask_product(item))
+            return _ask_order_slot(state, idx, slot, _ask_product(item, state))
         item["sku_id"] = sid
         item["family"] = repo.sku(sid).get("family")
     elif slot == "qty":
         qty = _answer_number(user_text)
         if qty is None or qty <= 0:
-            return _ask_order_slot(state, idx, slot, "Quantity samajh nahi aayi — kitna?")
+            return _ask_order_slot(state, idx, slot,
+                                   _L(state, "Quantity samajh nahi aayi — kitna?",
+                                      "Didn't catch the quantity — how much?"))
         item["qty"] = qty
         unit = nlp._find_unit((user_text or "").lower())
         if unit:
@@ -621,7 +737,9 @@ def _apply_order_slot(state, user_text, repo):
     elif slot == "rate":
         rate = _answer_number(user_text)
         if rate is None or rate <= 0:
-            return _ask_order_slot(state, idx, slot, "Rate number mein bataiye.")
+            return _ask_order_slot(state, idx, slot,
+                                   _L(state, "Rate number mein bataiye.",
+                                      "Please give the rate as a number."))
         item["rate"] = rate
         # The question names the item's unit ("per tonne", "per bori", etc.).
         # Respect a different unit only when the owner explicitly says one.
@@ -633,7 +751,9 @@ def _apply_order_slot(state, user_text, repo):
     elif slot == "payment":
         payment = _detect_payment(user_text)
         if not payment:
-            return _ask_order_slot(state, idx, slot, "Payment cash hai ya udhaar?")
+            return _ask_order_slot(state, idx, slot,
+                                   _L(state, "Payment cash hai ya udhaar?",
+                                      "Is the payment cash or credit?"))
         for row in items:
             if not row.get("payment"):
                 row["payment"] = payment
@@ -642,7 +762,9 @@ def _apply_order_slot(state, user_text, repo):
         if detected in ("sale", "delivery", "count"):
             state["locked_intent"] = detected
         else:
-            return _ask_order_slot(state, idx, slot, "Ye maal becha tha ya khareeda?")
+            return _ask_order_slot(state, idx, slot,
+                                   _L(state, "Ye maal becha tha ya khareeda?",
+                                      "Was this sold or bought?"))
     state["draft_items"] = items
     return _order_flow(state, state.get("locked_intent") or state.get("flow"),
                        items, repo)
@@ -654,9 +776,34 @@ def _order_flow(state, intent, items, repo):
         # writing the wrong direction silently corrupts stock.
         state["draft_items"] = items
         return _ask_order_slot(state, 0, "intent",
-                               "Ye maal aapne becha ya khareeda?")
+                               _L(state, "Ye maal aapne becha ya khareeda?",
+                                  "Was this sold or bought?"))
     flow = intent  # sale | delivery | count
     state["locked_intent"] = flow
+    # We can only ever ADD to what the shop carries on a delivery/count — a
+    # sale can't invent stock that never arrived. So a sariya size or cement
+    # type we don't have yet gets provisioned into the catalogue right here,
+    # instead of being rejected as "hum nahi rakhte".
+    newly_added = []
+    if flow in ("delivery", "count"):
+        for it in items:
+            if it.get("sku_id"):
+                continue
+            fam = it.get("family")
+            name_l = (it.get("name") or "").lower()
+            if not fam:
+                fam = ("cement" if re.search(r"cement|सीमेंट", name_l)
+                       else "tmt" if re.search(r"sari?ya|सरिया|\btmt\b", name_l)
+                       else None)
+            if fam not in ("tmt", "cement"):
+                continue
+            sid = _provision_new_sku(it, fam, repo)
+            if sid:
+                it["sku_id"] = sid
+                it["family"] = fam
+                it["in_catalogue"] = True
+                newly_added.append(repo.sku(sid)["canonical"])
+
     # drop products the shop does not stock, but tell the owner once
     kept = []
     skipped = []
@@ -666,9 +813,12 @@ def _order_flow(state, intent, items, repo):
         else:
             kept.append(it)
     if not kept:
-        nm = skipped[0] if skipped else "wo cheez"
-        return _say(state, f"{nm} hum nahi rakhte — sirf sariya aur cement hai. "
-                    "Kuch aur?", listen=True, done=False)
+        nm = skipped[0] if skipped else _L(state, "wo cheez", "that item")
+        return _say(state, _L(state,
+                              f"{nm} hum nahi rakhte — sirf sariya aur cement hai. Kuch aur?",
+                              f"We don't stock {nm} — only TMT bars and cement. "
+                              "Anything else?"),
+                    listen=True, done=False)
 
     # Keep rejected product names across all follow-up turns. Previously this
     # local list disappeared as soon as we asked the first rate/product
@@ -679,20 +829,35 @@ def _order_flow(state, intent, items, repo):
         if name not in remembered_skipped:
             remembered_skipped.append(name)
             newly_skipped.append(name)
+    notice = ""
+    if newly_added:
+        notice += _L(state, f"{_oxford(newly_added)} inventory mein naya add ho gaya. ",
+                     f"{_oxford(newly_added)} added to inventory as a new item. ")
     if newly_skipped:
-        state["pending_notice"] = (
-            f"{_oxford(newly_skipped)} inventory mein nahi hai, isliye add nahi kiya. "
-        )
+        notice += _L(state,
+                     f"{_oxford(newly_skipped)} inventory mein nahi hai, isliye add nahi kiya. ",
+                     f"{_oxford(newly_skipped)} isn't in inventory, so it wasn't added. ")
+    if notice:
+        state["pending_notice"] = notice
 
     state["draft_items"] = kept
-    # Resolve product identity and quantity for every line first.
+    # Resolve product identity and quantity for every line first. A delivery/
+    # count of a size/type still unresolved here (ambiguous, not merely
+    # missing) gets one more provisioning attempt before falling back to
+    # asking — otherwise a genuinely new size (e.g. 25mm) loops forever on a
+    # disambiguation question that only ever offers the OLD sizes.
     for idx, it in enumerate(kept):
+        if not it.get("sku_id") and flow in ("delivery", "count") and it.get("family"):
+            sid = _provision_new_sku(it, it["family"], repo)
+            if sid:
+                it["sku_id"] = sid
         if not it.get("sku_id"):
-            return _ask_order_slot(state, idx, "product", _ask_product(it))
+            return _ask_order_slot(state, idx, "product", _ask_product(it, state))
         sku = repo.sku(it["sku_id"])
         if it.get("qty") in (None, ""):
             return _ask_order_slot(state, idx, "qty",
-                                   f"{sku['canonical']} — kitna?")
+                                   _L(state, f"{sku['canonical']} — kitna?",
+                                      f"{sku['canonical']} — how much?"))
         if not it.get("unit") or it["unit"] not in sku.get("units", {}):
             it["unit"] = sku.get("default_unit")
 
@@ -702,8 +867,11 @@ def _order_flow(state, intent, items, repo):
         sku = repo.sku(it["sku_id"])
         if flow in ("sale", "delivery") and it.get("rate") is None:
             per = it["unit"]
-            q = (f"{sku['canonical']} kitne mein aaya, per {per}?" if flow == "delivery"
-                 else f"{sku['canonical']} ka rate kya laga, per {per}?")
+            q = _L(state,
+                   f"{sku['canonical']} kitne mein aaya, per {per}?" if flow == "delivery"
+                   else f"{sku['canonical']} ka rate kya laga, per {per}?",
+                   f"What was the rate for {sku['canonical']}, per {per}?" if flow == "delivery"
+                   else f"What did {sku['canonical']} sell for, per {per}?")
             return _ask_order_slot(state, idx, "rate", q)
         if flow in ("sale", "delivery") and it.get("rate") is not None:
             it["rate_unit"] = it.get("rate_unit") or it["unit"]
@@ -711,7 +879,8 @@ def _order_flow(state, intent, items, repo):
     if flow == "sale" and any(not it.get("payment") for it in kept):
         first_missing = next(i for i, it in enumerate(kept) if not it.get("payment"))
         return _ask_order_slot(state, first_missing, "payment",
-                               "Is poori sale ka payment cash hai ya udhaar?")
+                               _L(state, "Is poori sale ka payment cash hai ya udhaar?",
+                                  "Is this whole sale cash or credit?"))
 
     if flow == "sale":
         state["pending_commit"] = {
@@ -734,7 +903,8 @@ def _apply_customer_slot(state, aw, user_text, repo):
     if aw == "customer_phone":
         phone = parse_phone(user_text)
         if not phone:
-            return _say(state, "Customer ka 10 digit contact number bataiye.",
+            return _say(state, _L(state, "Customer ka 10 digit contact number bataiye.",
+                                  "Please give the customer's 10-digit phone number."),
                         listen=True, done=False)
         known = repo.customer_by_phone(phone)
         state["customer"] = {"phone": repo.normalize_phone(phone),
@@ -746,7 +916,8 @@ def _apply_customer_slot(state, aw, user_text, repo):
     if aw == "customer_name":
         name = (user_text or "").strip()
         if not name:
-            return _say(state, "Naam bataiye.", listen=True, done=False)
+            return _say(state, _L(state, "Naam bataiye.", "Please tell me the name."),
+                        listen=True, done=False)
         customer = repo.upsert_customer(state["customer"]["phone"], name)
         state["customer"] = {"phone": customer["phone"],
                              "customer_id": customer["customer_id"],
@@ -757,8 +928,12 @@ def _apply_customer_slot(state, aw, user_text, repo):
     if aw == "deadline":
         deadline = parse_deadline(user_text)
         if not deadline:
-            return _say(state, "Date samajh nahi aayi — jaise 'kal', 'agle hafte', "
-                        "ya '5 din baad' bataiye.", listen=True, done=False)
+            return _say(state, _L(state,
+                                  "Date samajh nahi aayi — jaise 'kal', 'agle hafte', "
+                                  "ya '5 din baad' bataiye.",
+                                  "Didn't catch the date — try 'tomorrow', 'next week', "
+                                  "or 'in 5 days'."),
+                        listen=True, done=False)
         state["payment_deadline"] = deadline
         state["awaiting"] = None
         return _resume_customer_capture(state, repo)
@@ -768,18 +943,24 @@ def _resume_customer_capture(state, repo):
     customer = state.get("customer") or {}
     if not customer.get("phone"):
         state["awaiting"] = "customer_phone"
-        return _say(state, "Customer ka 10 digit contact number bataiye.",
+        return _say(state, _L(state, "Customer ka 10 digit contact number bataiye.",
+                              "Please give the customer's 10-digit phone number."),
                     listen=True, done=False)
     if not customer.get("customer_id"):
         state["awaiting"] = "customer_name"
-        return _say(state, "Naya customer hai — naam kya hai?", listen=True, done=False)
+        return _say(state, _L(state, "Naya customer hai — naam kya hai?",
+                              "New customer — what's their name?"), listen=True, done=False)
     pending = state.get("pending_commit") or {}
     needs_deadline = any(it.get("payment") == "credit"
                          for it in pending.get("items", []))
     if needs_deadline and not state.get("payment_deadline"):
         state["awaiting"] = "deadline"
-        return _say(state, f"{customer['name']} — payment kab tak? Date ya kitne din "
-                    "baad bataiye.", listen=True, done=False)
+        return _say(state, _L(state,
+                              f"{customer['name']} — payment kab tak? Date ya kitne din "
+                              "baad bataiye.",
+                              f"{customer['name']} — when will they pay? A date or "
+                              "'in N days'."),
+                    listen=True, done=False)
     return _prepare_confirmation(state, repo)
 
 
@@ -820,7 +1001,9 @@ def _prepare_confirmation(state, repo):
         } if customer else None,
         "payment_deadline": state.get("payment_deadline"),
     }
-    out = _say(state, "Saari details taiyaar hain. Check karke Confirm Entry dabaiye.",
+    out = _say(state, _L(state,
+                         "Saari details taiyaar hain. Check karke Confirm Entry dabaiye.",
+                         "Everything's ready. Please check and press Confirm Entry."),
                listen=False, done=False)
     out["confirmation_required"] = True
     out["confirmation"] = preview
@@ -851,6 +1034,7 @@ def _commit(state, flow, items, skipped, repo):
                      "payment": payment, "confirmed": True})
         parts.append(f"{_num(it['qty'])} {it['unit']} {sku['canonical']}")
     result = main._write_events(etype, ev_items, TODAY.isoformat(), "exact", "voice_live")
+    result["flow"] = flow  # sale|delivery|count — a bill is only ever ours to GIVE on a sale
     result["customer"] = {
         "customer_id": customer.get("customer_id"),
         "name": customer.get("name"), "phone": customer.get("phone"),
@@ -863,15 +1047,21 @@ def _commit(state, flow, items, skipped, repo):
                 customer["customer_id"], credit_total, deadline,
                 [c["event_id"] for i, c in enumerate(result["committed"])
                  if ev_items[i]["payment"] == "credit"])
-    verb = {"sale": "bik gaya", "delivery": "aa gaya",
-            "count": "gin liya"}.get(flow, "likh diya")
-    say = f"Theek hai — {_oxford(parts)} {verb}, likh diya."
+    verb = _L(state,
+             {"sale": "bik gaya", "delivery": "aa gaya",
+              "count": "gin liya"}.get(flow, "likh diya"),
+             {"sale": "sold", "delivery": "received",
+              "count": "counted"}.get(flow, "recorded"))
+    say = _L(state, f"Theek hai — {_oxford(parts)} {verb}, likh diya.",
+             f"Done — {_oxford(parts)} {verb}.")
     if customer.get("name"):
-        say += f" Customer: {customer['name']}."
+        say += _L(state, f" Customer: {customer['name']}.",
+                  f" Customer: {customer['name']}.")
     if deadline:
-        say += f" Udhaar {deadline} tak."
+        say += _L(state, f" Udhaar {deadline} tak.", f" Credit due by {deadline}.")
     if skipped:
-        say += f" {_oxford(skipped)} chhod diya, wo stock mein nahi."
+        say += _L(state, f" {_oxford(skipped)} chhod diya, wo stock mein nahi.",
+                  f" Skipped {_oxford(skipped)} — not in stock.")
     out = _say(state, say, listen=False, done=True)
     out["summary"] = {"items": rows}
     out["committed"] = result
@@ -884,25 +1074,35 @@ def _commit(state, flow, items, skipped, repo):
 def _stock_flow(state, items, repo):
     it = items[0] if items else None
     if not it or (it.get("in_catalogue") is False and not it.get("sku_id")):
-        nm = (it or {}).get("name") or "Wo cheez"
-        return _say(state, f"{nm} hum nahi rakhte — sirf sariya aur cement hai.",
+        nm = (it or {}).get("name") or _L(state, "Wo cheez", "that item")
+        return _say(state, _L(state,
+                              f"{nm} hum nahi rakhte — sirf sariya aur cement hai.",
+                              f"We don't stock {nm} — only TMT bars and cement."),
                     listen=True, done=False)
     if not it.get("sku_id"):
-        return _say(state, _ask_product(it), listen=True, done=False)
-    return _answer_stock(repo.sku(it["sku_id"]), repo)
+        return _say(state, _ask_product(it, state), listen=True, done=False)
+    return _answer_stock(repo.sku(it["sku_id"]), repo, state)
 
 
-def _answer_stock(sku, repo):
+def _answer_stock(sku, repo, state=None):
     import main
     import ledger
     det = ledger._stock_detail(sku, repo.all_events())
     view = main._stock_view(sku, det)
     if view.get("uncounted"):
-        say = f"{sku['canonical']} abhi tak gina nahi gaya — ek baar gin lo to ledger mein aa jayega."
+        say = _L(state,
+                 f"{sku['canonical']} abhi tak gina nahi gaya — ek baar gin lo to "
+                 "ledger mein aa jayega.",
+                 f"{sku['canonical']} hasn't been counted yet — do a stock count "
+                 "and it'll show up in the ledger.")
     elif view.get("oversold"):
-        say = f"{sku['canonical']} recorded se zyada bik gaya lagta hai — ek baar gin lo."
+        say = _L(state,
+                 f"{sku['canonical']} recorded se zyada bik gaya lagta hai — ek baar gin lo.",
+                 f"{sku['canonical']} looks oversold versus what's recorded — please "
+                 "do a stock count.")
     else:
-        say = f"{sku['canonical']} ka stock {view['display']} hai."
+        say = _L(state, f"{sku['canonical']} ka stock {view['display']} hai.",
+                 f"{sku['canonical']} stock is {view['display']}.")
     return _reply(say, listen=False, done=True,
                   summary={"items": [{"phrase": sku["canonical"],
                                       "sku_id": sku["sku_id"],
@@ -913,29 +1113,41 @@ def _answer_stock(sku, repo):
 # ---------------------------------------------------------------------------
 # Analytics question (exact numbers from the ledger)
 # ---------------------------------------------------------------------------
-def _analytics_answer(metric, repo):
+def _analytics_answer(metric, repo, state=None):
     import main
     t = main._today_summary()
     d = main.dashboard()
     mp = d["money_position"]
     if metric == "cash":
-        say = f"Aaj cash {int(t['cash'])} rupaye aaya."
+        say = _L(state, f"Aaj cash {int(t['cash'])} rupaye aaya.",
+                 f"₹{int(t['cash'])} cash came in today.")
     elif metric == "udhaar":
-        say = (f"Total udhaar {int(mp['outstanding_credit'])} rupaye baaki hai. "
-               f"Aaj {int(t['credit'])} rupaye udhaar gaya.")
+        say = _L(state,
+                 f"Total udhaar {int(mp['outstanding_credit'])} rupaye baaki hai. "
+                 f"Aaj {int(t['credit'])} rupaye udhaar gaya.",
+                 f"Total outstanding credit is ₹{int(mp['outstanding_credit'])}. "
+                 f"₹{int(t['credit'])} went out on credit today.")
     elif metric == "frozen":
         ft = int(d["frozen_total"])
         items = d.get("frozen_capital") or []
         if not items:
-            say = "Abhi koi maal 60 din se pada nahi hai, sab move ho raha hai."
+            say = _L(state, "Abhi koi maal 60 din se pada nahi hai, sab move ho raha hai.",
+                     "Nothing has been sitting unsold for 60 days — everything's moving.")
         else:
             names = _oxford([f"{f['canonical']} ({f['stock']})" for f in items])
-            say = f"{names} — 60 din se bika nahi, {ft} rupaye phasa hua hai."
+            say = _L(state,
+                     f"{names} — 60 din se bika nahi, {ft} rupaye phasa hua hai.",
+                     f"{names} — unsold for 60 days, ₹{ft} locked up in it.")
     elif metric == "inventory":
-        say = f"Inventory ki value {int(mp['inventory_value'])} rupaye hai, landed cost pe."
+        say = _L(state,
+                 f"Inventory ki value {int(mp['inventory_value'])} rupaye hai, landed cost pe.",
+                 f"Inventory value is ₹{int(mp['inventory_value'])}, at landed cost.")
     else:
-        say = (f"Aaj ka margin abhi tak {int(t['margin'])} rupaye. "
-               f"Cash {int(t['cash'])}, udhaar {int(t['credit'])} rupaye.")
+        say = _L(state,
+                 f"Aaj ka margin abhi tak {int(t['margin'])} rupaye. "
+                 f"Cash {int(t['cash'])}, udhaar {int(t['credit'])} rupaye.",
+                 f"Today's margin so far is ₹{int(t['margin'])}. "
+                 f"Cash ₹{int(t['cash'])}, credit ₹{int(t['credit'])}.")
     return _reply(say, listen=False, done=True, summary={"items": [], "answer": say})
 
 

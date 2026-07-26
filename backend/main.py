@@ -35,6 +35,22 @@ TODAY = date(2026, 7, 26)  # fixed "today" so the seeded demo is stable
 
 app = FastAPI(title="ChhotuAI")
 repo = JsonRepo()
+
+# uvicorn loads this file as the package module "backend.main", but it also
+# inserts backend/ onto sys.path (above) so that bare imports like
+# `import matcher` work everywhere in this codebase. That same sys.path entry
+# means a bare `import main` (used throughout conversation.py, lazily, inside
+# request handlers) does NOT resolve to this already-loaded module — it
+# re-executes this entire file as a SECOND, independent top-level module,
+# with its OWN `repo = JsonRepo()`. Every commit made via conversation.py's
+# `import main; main._write_events(...)` was silently writing into that
+# shadow copy's repo instead of this one: correctly persisted to disk (both
+# instances point at the same files), but invisible to /api/dashboard and any
+# other read on THIS running app until the process was restarted and both
+# happened to reload from the same now-consistent files. Registering this
+# module under the bare name up front makes any later `import main` resolve
+# to this exact object instead of creating a shadow one.
+sys.modules.setdefault("main", sys.modules[__name__])
 app.mount("/data", StaticFiles(directory=str(DATA)), name="data")
 
 
