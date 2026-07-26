@@ -1,0 +1,11 @@
+{
+  "gst_default": 18,
+  "gst_by_family": {
+    "tmt": 18,
+    "cement": 28,
+    "pipe": 18,
+    "fitting": 18,
+    "fastener": 18,
+    "paint": 18
+  }
+}

@@ -1,0 +1,3251 @@
+[
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_6_FE500_TATA",
+    "qty": 4.9,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 4.9 tonne"
+    },
+    "event_id": "evt_0001"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_6_FE500_JINDAL",
+    "qty": 2.2,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.2 tonne"
+    },
+    "event_id": "evt_0002"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 1.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 1.6 tonne"
+    },
+    "event_id": "evt_0003"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500_JINDAL",
+    "qty": 5.3,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 5.3 tonne"
+    },
+    "event_id": "evt_0004"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500_SRMB",
+    "qty": 4.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 4.6 tonne"
+    },
+    "event_id": "evt_0005"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 3.5,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.5 tonne"
+    },
+    "event_id": "evt_0006"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500D_JINDAL",
+    "qty": 2.1,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.1 tonne"
+    },
+    "event_id": "evt_0007"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_8_FE500D_SRMB",
+    "qty": 2.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.6 tonne"
+    },
+    "event_id": "evt_0008"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500_TATA",
+    "qty": 4.4,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 4.4 tonne"
+    },
+    "event_id": "evt_0009"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 3.1,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.1 tonne"
+    },
+    "event_id": "evt_0010"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500_SRMB",
+    "qty": 5.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 5.8 tonne"
+    },
+    "event_id": "evt_0011"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 1.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 1.6 tonne"
+    },
+    "event_id": "evt_0012"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500D_JINDAL",
+    "qty": 2.2,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.2 tonne"
+    },
+    "event_id": "evt_0013"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_10_FE500D_SRMB",
+    "qty": 3.5,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.5 tonne"
+    },
+    "event_id": "evt_0014"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500_TATA",
+    "qty": 3.2,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.2 tonne"
+    },
+    "event_id": "evt_0015"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 3.5,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.5 tonne"
+    },
+    "event_id": "evt_0016"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500_SRMB",
+    "qty": 1.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 1.8 tonne"
+    },
+    "event_id": "evt_0017"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 2.1,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.1 tonne"
+    },
+    "event_id": "evt_0018"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500D_JINDAL",
+    "qty": 3.2,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.2 tonne"
+    },
+    "event_id": "evt_0019"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_12_FE500D_SRMB",
+    "qty": 2.9,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.9 tonne"
+    },
+    "event_id": "evt_0020"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 2.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.8 tonne"
+    },
+    "event_id": "evt_0021"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_16_FE500D_JINDAL",
+    "qty": 5.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 5.8 tonne"
+    },
+    "event_id": "evt_0022"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 1.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 1.6 tonne"
+    },
+    "event_id": "evt_0023"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 2.3,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 2.3 tonne"
+    },
+    "event_id": "evt_0024"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_20_FE500D_SRMB",
+    "qty": 3.8,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 3.8 tonne"
+    },
+    "event_id": "evt_0025"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "TMT_25_FE500D_TATA",
+    "qty": 5.6,
+    "unit": "tonne",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "estimated",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 5.6 tonne"
+    },
+    "event_id": "evt_0026"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 70,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 70 bori"
+    },
+    "event_id": "evt_0027"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 107,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 107 bori"
+    },
+    "event_id": "evt_0028"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 106,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 106 bori"
+    },
+    "event_id": "evt_0029"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_ACC_PPC",
+    "qty": 220,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 220 bori"
+    },
+    "event_id": "evt_0030"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_AMBUJA_OPC53",
+    "qty": 154,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 154 bori"
+    },
+    "event_id": "evt_0031"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_AMBUJA_PPC",
+    "qty": 94,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 94 bori"
+    },
+    "event_id": "evt_0032"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "CEM_JK_OPC43",
+    "qty": 196,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 196 bori"
+    },
+    "event_id": "evt_0033"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_05_C3",
+    "qty": 93,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 93 piece"
+    },
+    "event_id": "evt_0034"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_05_C5",
+    "qty": 145,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 145 piece"
+    },
+    "event_id": "evt_0035"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_075_C3",
+    "qty": 71,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 71 piece"
+    },
+    "event_id": "evt_0036"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_075_C5",
+    "qty": 51,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 51 piece"
+    },
+    "event_id": "evt_0037"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_10_C3",
+    "qty": 54,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 54 piece"
+    },
+    "event_id": "evt_0038"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_10_C5",
+    "qty": 38,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 38 piece"
+    },
+    "event_id": "evt_0039"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PIPE_15_C5",
+    "qty": 135,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 135 piece"
+    },
+    "event_id": "evt_0040"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 118,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 118 piece"
+    },
+    "event_id": "evt_0041"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "FIT_TEE_1",
+    "qty": 257,
+    "unit": "piece",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 257 piece"
+    },
+    "event_id": "evt_0042"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PAINT_AP_EMUL_W",
+    "qty": 74,
+    "unit": "litre",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 74 litre"
+    },
+    "event_id": "evt_0043"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PAINT_AP_TRACTOR",
+    "qty": 193,
+    "unit": "litre",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 193 litre"
+    },
+    "event_id": "evt_0044"
+  },
+  {
+    "type": "opening_balance",
+    "sku_id": "PAINT_BRG_ENAMEL_W",
+    "qty": 207,
+    "unit": "litre",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-06-14",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-06-14T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "opening stock 207 litre"
+    },
+    "event_id": "evt_0045"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 4.1,
+    "unit": "tonne",
+    "rate": 54.9,
+    "payment": "credit",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received"
+    },
+    "event_id": "evt_0046"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 3.6,
+    "unit": "tonne",
+    "rate": 59.9,
+    "payment": "credit",
+    "occurred_on": "2026-07-10",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received (price up)"
+    },
+    "event_id": "evt_0047"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 2.9,
+    "unit": "tonne",
+    "rate": 52.5,
+    "payment": "credit",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received"
+    },
+    "event_id": "evt_0048"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 2.9,
+    "unit": "tonne",
+    "rate": 57.2,
+    "payment": "credit",
+    "occurred_on": "2026-07-10",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received (price up)"
+    },
+    "event_id": "evt_0049"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 2.5,
+    "unit": "tonne",
+    "rate": 57.9,
+    "payment": "credit",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received"
+    },
+    "event_id": "evt_0050"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 4.1,
+    "unit": "tonne",
+    "rate": 63.2,
+    "payment": "credit",
+    "occurred_on": "2026-07-10",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received (price up)"
+    },
+    "event_id": "evt_0051"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 4.1,
+    "unit": "tonne",
+    "rate": 54.0,
+    "payment": "credit",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received"
+    },
+    "event_id": "evt_0052"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 2.5,
+    "unit": "tonne",
+    "rate": 58.9,
+    "payment": "credit",
+    "occurred_on": "2026-07-10",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery received (price up)"
+    },
+    "event_id": "evt_0053"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 105,
+    "unit": "bori",
+    "rate": 415,
+    "payment": "credit",
+    "occurred_on": "2026-06-27",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-27T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery"
+    },
+    "event_id": "evt_0054"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 55,
+    "unit": "bori",
+    "rate": 372,
+    "payment": "credit",
+    "occurred_on": "2026-06-25",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-25T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery"
+    },
+    "event_id": "evt_0055"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "PIPE_10_C3",
+    "qty": 57,
+    "unit": "piece",
+    "rate": 270.0,
+    "payment": "credit",
+    "occurred_on": "2026-06-25",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-25T20:40:00",
+    "confidence": 0.95,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "delivery"
+    },
+    "event_id": "evt_0056"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PAINT_AP_EMUL_W",
+    "qty": 10,
+    "unit": "litre",
+    "rate": 221.2,
+    "payment": "cash",
+    "occurred_on": "2026-06-16",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-16T13:20:00",
+    "recorded_at": "2026-06-16T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "10 litre Asian Paints Apcolite Emulsion White"
+    },
+    "event_id": "evt_0057"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_10_C3",
+    "qty": 19,
+    "unit": "piece",
+    "rate": 311.7,
+    "payment": "credit",
+    "occurred_on": "2026-06-16",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-16T13:20:00",
+    "recorded_at": "2026-06-16T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "19 piece Supreme PVC Pipe 1\" Class 3"
+    },
+    "event_id": "evt_0058"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_JINDAL",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 66.0,
+    "payment": "cash",
+    "occurred_on": "2026-06-17",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-17T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne Jindal Panther TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0059"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 4,
+    "unit": "piece",
+    "rate": 208.3,
+    "payment": "credit",
+    "occurred_on": "2026-06-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-18T13:20:00",
+    "recorded_at": "2026-06-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "4 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0060"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 60.6,
+    "payment": "cash",
+    "occurred_on": "2026-06-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-18T13:20:00",
+    "recorded_at": "2026-06-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0061"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 40,
+    "unit": "bori",
+    "rate": 442.7,
+    "payment": "cash",
+    "occurred_on": "2026-06-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-18T13:20:00",
+    "recorded_at": "2026-06-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "40 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0062"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_SRMB",
+    "qty": 0.4,
+    "unit": "tonne",
+    "rate": 65.0,
+    "payment": "cash",
+    "occurred_on": "2026-06-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-18T13:20:00",
+    "recorded_at": "2026-06-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.4 tonne SRMB TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0063"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 62.6,
+    "payment": "credit",
+    "occurred_on": "2026-06-19",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-19T13:20:00",
+    "recorded_at": "2026-06-19T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0064"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 38,
+    "unit": "bori",
+    "rate": 486.9,
+    "payment": "cash",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "38 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0065"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_SRMB",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 64.4,
+    "payment": "cash",
+    "occurred_on": "2026-06-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-20T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne SRMB TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0066"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 0.3,
+    "unit": "tonne",
+    "rate": 59.3,
+    "payment": "cash",
+    "occurred_on": "2026-06-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-21T13:20:00",
+    "recorded_at": "2026-06-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.3 tonne SRMB TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0067"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 62.7,
+    "payment": "cash",
+    "occurred_on": "2026-06-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-21T13:20:00",
+    "recorded_at": "2026-06-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne Tata Tiscon TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0068"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_JINDAL",
+    "qty": 0.2,
+    "unit": "tonne",
+    "rate": 68.3,
+    "payment": "credit",
+    "occurred_on": "2026-06-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-22T13:20:00",
+    "recorded_at": "2026-06-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.2 tonne Jindal Panther TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0069"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_JINDAL",
+    "qty": 1.2,
+    "unit": "tonne",
+    "rate": 61.8,
+    "payment": "cash",
+    "occurred_on": "2026-06-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-22T13:20:00",
+    "recorded_at": "2026-06-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.2 tonne Jindal Panther TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0070"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 66.9,
+    "payment": "credit",
+    "occurred_on": "2026-06-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-22T13:20:00",
+    "recorded_at": "2026-06-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne Tata Tiscon TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0071"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 14,
+    "unit": "piece",
+    "rate": 30.3,
+    "payment": "cash",
+    "occurred_on": "2026-06-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "14 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0072"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 58.2,
+    "payment": "credit",
+    "occurred_on": "2026-06-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne SRMB TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0073"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 8,
+    "unit": "piece",
+    "rate": 200.3,
+    "payment": "credit",
+    "occurred_on": "2026-06-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "8 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0074"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 62.2,
+    "payment": "cash",
+    "occurred_on": "2026-06-24",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-24T13:20:00",
+    "recorded_at": "2026-06-24T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0075"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 13,
+    "unit": "bori",
+    "rate": 488.4,
+    "payment": "cash",
+    "occurred_on": "2026-06-24",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-24T13:20:00",
+    "recorded_at": "2026-06-24T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "13 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0076"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 0.4,
+    "unit": "tonne",
+    "rate": 57.9,
+    "payment": "cash",
+    "occurred_on": "2026-06-25",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-25T13:20:00",
+    "recorded_at": "2026-06-25T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.4 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0077"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_TATA",
+    "qty": 1.4,
+    "unit": "tonne",
+    "rate": 60.2,
+    "payment": "cash",
+    "occurred_on": "2026-06-26",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-26T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.4 tonne Tata Tiscon TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0078"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 7,
+    "unit": "piece",
+    "rate": 194.8,
+    "payment": "cash",
+    "occurred_on": "2026-06-26",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-26T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "7 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0079"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_TATA",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 62.1,
+    "payment": "cash",
+    "occurred_on": "2026-06-27",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-27T13:20:00",
+    "recorded_at": "2026-06-27T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Tata Tiscon TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0080"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PAINT_AP_EMUL_W",
+    "qty": 9,
+    "unit": "litre",
+    "rate": 244.5,
+    "payment": "credit",
+    "occurred_on": "2026-06-27",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-27T13:20:00",
+    "recorded_at": "2026-06-27T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "9 litre Asian Paints Apcolite Emulsion White"
+    },
+    "event_id": "evt_0081"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_AMBUJA_OPC53",
+    "qty": 20,
+    "unit": "bori",
+    "rate": 451.9,
+    "payment": "credit",
+    "occurred_on": "2026-06-27",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-27T13:20:00",
+    "recorded_at": "2026-06-27T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "20 bori Ambuja OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0082"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 65.0,
+    "payment": "cash",
+    "occurred_on": "2026-06-28",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-28T13:20:00",
+    "recorded_at": "2026-06-28T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0083"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 2,
+    "unit": "piece",
+    "rate": 30.4,
+    "payment": "cash",
+    "occurred_on": "2026-06-28",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-28T13:20:00",
+    "recorded_at": "2026-06-28T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "2 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0084"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C5",
+    "qty": 10,
+    "unit": "piece",
+    "rate": 259.4,
+    "payment": "cash",
+    "occurred_on": "2026-06-28",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-28T13:20:00",
+    "recorded_at": "2026-06-28T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "10 piece Supreme PVC Pipe ½\" Class 5"
+    },
+    "event_id": "evt_0085"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 8,
+    "unit": "bori",
+    "rate": 406.5,
+    "payment": "cash",
+    "occurred_on": "2026-06-29",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-29T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "8 bori UltraTech PPC Cement 50kg"
+    },
+    "event_id": "evt_0086"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_TATA",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 59.2,
+    "payment": "credit",
+    "occurred_on": "2026-06-29",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-29T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Tata Tiscon TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0087"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_075_C3",
+    "qty": 10,
+    "unit": "piece",
+    "rate": 258.6,
+    "payment": "cash",
+    "occurred_on": "2026-06-29",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-29T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "10 piece Supreme PVC Pipe ¾\" Class 3"
+    },
+    "event_id": "evt_0088"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 0.3,
+    "unit": "tonne",
+    "rate": 59.7,
+    "payment": "credit",
+    "occurred_on": "2026-06-29",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-06-29T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.3 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0089"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 17,
+    "unit": "bori",
+    "rate": 442.0,
+    "payment": "cash",
+    "occurred_on": "2026-06-30",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-30T13:20:00",
+    "recorded_at": "2026-06-30T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "17 bori UltraTech PPC Cement 50kg"
+    },
+    "event_id": "evt_0090"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_AMBUJA_OPC53",
+    "qty": 7,
+    "unit": "bori",
+    "rate": 451.6,
+    "payment": "credit",
+    "occurred_on": "2026-06-30",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-30T13:20:00",
+    "recorded_at": "2026-06-30T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "7 bori Ambuja OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0091"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_25_FE500D_TATA",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 61.8,
+    "payment": "credit",
+    "occurred_on": "2026-06-30",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-06-30T13:20:00",
+    "recorded_at": "2026-06-30T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne Tata Tiscon TMT Bar 25mm Fe500D"
+    },
+    "event_id": "evt_0092"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 62.7,
+    "payment": "credit",
+    "occurred_on": "2026-07-01",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-01T13:20:00",
+    "recorded_at": "2026-07-01T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0093"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 59.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-01",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-01T13:20:00",
+    "recorded_at": "2026-07-01T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne SRMB TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0094"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 0.2,
+    "unit": "tonne",
+    "rate": 58.4,
+    "payment": "credit",
+    "occurred_on": "2026-07-02",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-02T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.2 tonne SRMB TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0095"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 65.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-02",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-02T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0096"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 67.7,
+    "payment": "cash",
+    "occurred_on": "2026-07-02",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-02T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne Tata Tiscon TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0097"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_SRMB",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 59.5,
+    "payment": "credit",
+    "occurred_on": "2026-07-02",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-02T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne SRMB TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0098"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 67.7,
+    "payment": "cash",
+    "occurred_on": "2026-07-03",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-03T13:20:00",
+    "recorded_at": "2026-07-03T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne Tata Tiscon TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0099"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 60.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-03",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-03T13:20:00",
+    "recorded_at": "2026-07-03T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0100"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 15,
+    "unit": "piece",
+    "rate": 205.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-03",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-03T13:20:00",
+    "recorded_at": "2026-07-03T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "15 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0101"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 13,
+    "unit": "piece",
+    "rate": 32.6,
+    "payment": "cash",
+    "occurred_on": "2026-07-03",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-03T13:20:00",
+    "recorded_at": "2026-07-03T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "13 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0102"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 59.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-04",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-04T13:20:00",
+    "recorded_at": "2026-07-04T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne Jindal Panther TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0103"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 16,
+    "unit": "bori",
+    "rate": 405.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-04",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-04T13:20:00",
+    "recorded_at": "2026-07-04T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "16 bori ACC OPC 43 Cement 50kg"
+    },
+    "event_id": "evt_0104"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 21,
+    "unit": "bori",
+    "rate": 472.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-05",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-05T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "21 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0105"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_TATA",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 63.4,
+    "payment": "credit",
+    "occurred_on": "2026-07-05",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-05T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Tata Tiscon TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0106"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_SRMB",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 60.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-05",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-05T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne SRMB TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0107"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 59.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-06",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-06T13:20:00",
+    "recorded_at": "2026-07-06T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0108"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_SRMB",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 58.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-06",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-06T13:20:00",
+    "recorded_at": "2026-07-06T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne SRMB TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0109"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_AMBUJA_OPC53",
+    "qty": 14,
+    "unit": "bori",
+    "rate": 468.3,
+    "payment": "credit",
+    "occurred_on": "2026-07-06",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-06T13:20:00",
+    "recorded_at": "2026-07-06T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "14 bori Ambuja OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0110"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 0.3,
+    "unit": "tonne",
+    "rate": 64.0,
+    "payment": "cash",
+    "occurred_on": "2026-07-06",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-06T13:20:00",
+    "recorded_at": "2026-07-06T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.3 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0111"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 15,
+    "unit": "piece",
+    "rate": 30.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-07",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-07T13:20:00",
+    "recorded_at": "2026-07-07T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "15 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0112"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_SRMB",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 57.1,
+    "payment": "cash",
+    "occurred_on": "2026-07-07",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-07T13:20:00",
+    "recorded_at": "2026-07-07T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne SRMB TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0113"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 1.4,
+    "unit": "tonne",
+    "rate": 58.6,
+    "payment": "credit",
+    "occurred_on": "2026-07-07",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-07T13:20:00",
+    "recorded_at": "2026-07-07T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.4 tonne Tata Tiscon TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0114"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 65.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-08",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-08T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0115"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_SRMB",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 57.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-08",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-08T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne SRMB TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0116"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 5,
+    "unit": "piece",
+    "rate": 31.1,
+    "payment": "cash",
+    "occurred_on": "2026-07-09",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-09T13:20:00",
+    "recorded_at": "2026-07-09T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "5 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0117"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 1.0,
+    "unit": "tonne",
+    "rate": 59.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-09",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-09T13:20:00",
+    "recorded_at": "2026-07-09T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.0 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0118"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_SRMB",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 67.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-09",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-09T13:20:00",
+    "recorded_at": "2026-07-09T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne SRMB TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0119"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_JINDAL",
+    "qty": 0.4,
+    "unit": "tonne",
+    "rate": 69.0,
+    "payment": "cash",
+    "occurred_on": "2026-07-09",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-09T13:20:00",
+    "recorded_at": "2026-07-09T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.4 tonne Jindal Panther TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0120"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_JINDAL",
+    "qty": 0.7,
+    "unit": "tonne",
+    "rate": 69.6,
+    "payment": "cash",
+    "occurred_on": "2026-07-10",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-10T13:20:00",
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.7 tonne Jindal Panther TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0121"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 0.2,
+    "unit": "tonne",
+    "rate": 63.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-10",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-10T13:20:00",
+    "recorded_at": "2026-07-10T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.2 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0122"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_25_FE500D_TATA",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 58.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-11",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-11T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne Tata Tiscon TMT Bar 25mm Fe500D"
+    },
+    "event_id": "evt_0123"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_SRMB",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 63.8,
+    "payment": "credit",
+    "occurred_on": "2026-07-12",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-12T13:20:00",
+    "recorded_at": "2026-07-12T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne SRMB TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0124"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 1.2,
+    "unit": "tonne",
+    "rate": 61.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-12",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-12T13:20:00",
+    "recorded_at": "2026-07-12T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.2 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0125"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_SRMB",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 59.4,
+    "payment": "credit",
+    "occurred_on": "2026-07-12",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-12T13:20:00",
+    "recorded_at": "2026-07-12T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne SRMB TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0126"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_TATA",
+    "qty": 1.3,
+    "unit": "tonne",
+    "rate": 57.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-12",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-12T13:20:00",
+    "recorded_at": "2026-07-12T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.3 tonne Tata Tiscon TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0127"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PAINT_AP_TRACTOR",
+    "qty": 8,
+    "unit": "litre",
+    "rate": 180.3,
+    "payment": "cash",
+    "occurred_on": "2026-07-13",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-13T13:20:00",
+    "recorded_at": "2026-07-13T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "8 litre Asian Paints Tractor Emulsion"
+    },
+    "event_id": "evt_0128"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_SRMB",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 66.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-13",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-13T13:20:00",
+    "recorded_at": "2026-07-13T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne SRMB TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0129"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_6_FE500_TATA",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 69.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-13",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-13T13:20:00",
+    "recorded_at": "2026-07-13T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne Tata Tiscon TMT Bar 6mm Fe500"
+    },
+    "event_id": "evt_0130"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_25_FE500D_TATA",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 58.3,
+    "payment": "credit",
+    "occurred_on": "2026-07-13",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-13T13:20:00",
+    "recorded_at": "2026-07-13T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne Tata Tiscon TMT Bar 25mm Fe500D"
+    },
+    "event_id": "evt_0131"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 0.4,
+    "unit": "tonne",
+    "rate": 58.7,
+    "payment": "credit",
+    "occurred_on": "2026-07-14",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-14T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.4 tonne Tata Tiscon TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0132"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_AMBUJA_OPC53",
+    "qty": 24,
+    "unit": "bori",
+    "rate": 461.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-14",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-14T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "24 bori Ambuja OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0133"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 59.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-14",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-14T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0134"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 64.9,
+    "payment": "credit",
+    "occurred_on": "2026-07-15",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-15T13:20:00",
+    "recorded_at": "2026-07-15T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne Tata Tiscon TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0135"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 14,
+    "unit": "piece",
+    "rate": 32.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-15",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-15T13:20:00",
+    "recorded_at": "2026-07-15T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "14 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0136"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 60.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-15",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-15T13:20:00",
+    "recorded_at": "2026-07-15T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne Jindal Panther TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0137"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_SRMB",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 66.5,
+    "payment": "credit",
+    "occurred_on": "2026-07-15",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-15T13:20:00",
+    "recorded_at": "2026-07-15T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne SRMB TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0138"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 1.4,
+    "unit": "tonne",
+    "rate": 71.2,
+    "payment": "credit",
+    "occurred_on": "2026-07-16",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-16T13:20:00",
+    "recorded_at": "2026-07-16T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.4 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0139"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_JINDAL",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 62.8,
+    "payment": "credit",
+    "occurred_on": "2026-07-17",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-17T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne Jindal Panther TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0140"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 60.6,
+    "payment": "cash",
+    "occurred_on": "2026-07-17",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-17T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Jindal Panther TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0141"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 0.9,
+    "unit": "tonne",
+    "rate": 68.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-18T13:20:00",
+    "recorded_at": "2026-07-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.9 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0142"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 69.0,
+    "payment": "credit",
+    "occurred_on": "2026-07-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-18T13:20:00",
+    "recorded_at": "2026-07-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0143"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 1.3,
+    "unit": "tonne",
+    "rate": 66.1,
+    "payment": "cash",
+    "occurred_on": "2026-07-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-18T13:20:00",
+    "recorded_at": "2026-07-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.3 tonne Tata Tiscon TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0144"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_JINDAL",
+    "qty": 0.6,
+    "unit": "tonne",
+    "rate": 63.9,
+    "payment": "credit",
+    "occurred_on": "2026-07-18",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-18T13:20:00",
+    "recorded_at": "2026-07-18T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.6 tonne Jindal Panther TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0145"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_JINDAL",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 71.3,
+    "payment": "credit",
+    "occurred_on": "2026-07-19",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-19T13:20:00",
+    "recorded_at": "2026-07-19T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Jindal Panther TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0146"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_SRMB",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 63.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-20T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne SRMB TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0147"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 14,
+    "unit": "piece",
+    "rate": 197.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-20",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-20T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "14 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0148"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 39,
+    "unit": "bori",
+    "rate": 394.5,
+    "payment": "credit",
+    "occurred_on": "2026-07-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-21T13:20:00",
+    "recorded_at": "2026-07-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "39 bori ACC OPC 43 Cement 50kg"
+    },
+    "event_id": "evt_0149"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 39,
+    "unit": "bori",
+    "rate": 442.2,
+    "payment": "credit",
+    "occurred_on": "2026-07-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-21T13:20:00",
+    "recorded_at": "2026-07-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "39 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0150"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_SRMB",
+    "qty": 0.5,
+    "unit": "tonne",
+    "rate": 63.0,
+    "payment": "credit",
+    "occurred_on": "2026-07-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-21T13:20:00",
+    "recorded_at": "2026-07-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.5 tonne SRMB TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0151"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 70.6,
+    "payment": "cash",
+    "occurred_on": "2026-07-21",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-21T13:20:00",
+    "recorded_at": "2026-07-21T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Tata Tiscon TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0152"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 20,
+    "unit": "bori",
+    "rate": 430.4,
+    "payment": "cash",
+    "occurred_on": "2026-07-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-22T13:20:00",
+    "recorded_at": "2026-07-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "20 bori ACC OPC 43 Cement 50kg"
+    },
+    "event_id": "evt_0153"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_TATA",
+    "qty": 1.4,
+    "unit": "tonne",
+    "rate": 63.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-22T13:20:00",
+    "recorded_at": "2026-07-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.4 tonne Tata Tiscon TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0154"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500_JINDAL",
+    "qty": 1.1,
+    "unit": "tonne",
+    "rate": 59.0,
+    "payment": "cash",
+    "occurred_on": "2026-07-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-22T13:20:00",
+    "recorded_at": "2026-07-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.1 tonne Jindal Panther TMT Bar 10mm Fe500"
+    },
+    "event_id": "evt_0155"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500_TATA",
+    "qty": 0.3,
+    "unit": "tonne",
+    "rate": 64.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-22",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-22T13:20:00",
+    "recorded_at": "2026-07-22T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.3 tonne Tata Tiscon TMT Bar 8mm Fe500"
+    },
+    "event_id": "evt_0156"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_8_FE500D_TATA",
+    "qty": 0.3,
+    "unit": "tonne",
+    "rate": 66.5,
+    "payment": "cash",
+    "occurred_on": "2026-07-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.3 tonne Tata Tiscon TMT Bar 8mm Fe500D"
+    },
+    "event_id": "evt_0157"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500_JINDAL",
+    "qty": 1.2,
+    "unit": "tonne",
+    "rate": 60.8,
+    "payment": "credit",
+    "occurred_on": "2026-07-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.2 tonne Jindal Panther TMT Bar 12mm Fe500"
+    },
+    "event_id": "evt_0158"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 1.4,
+    "unit": "tonne",
+    "rate": 58.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.4 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0159"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_20_FE500D_TATA",
+    "qty": 1.3,
+    "unit": "tonne",
+    "rate": 57.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-23",
+    "precision": "day",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-23T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.3 tonne Tata Tiscon TMT Bar 20mm Fe500D"
+    },
+    "event_id": "evt_0160"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 3,
+    "unit": "piece",
+    "rate": 196.0,
+    "payment": "cash",
+    "occurred_on": "2026-07-24",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-24T13:20:00",
+    "recorded_at": "2026-07-24T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "3 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0161"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_10_FE500D_SRMB",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 63.9,
+    "payment": "cash",
+    "occurred_on": "2026-07-24",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-24T13:20:00",
+    "recorded_at": "2026-07-24T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne SRMB TMT Bar 10mm Fe500D"
+    },
+    "event_id": "evt_0162"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 25,
+    "unit": "bori",
+    "rate": 428.6,
+    "payment": "cash",
+    "occurred_on": "2026-07-25",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-25T13:20:00",
+    "recorded_at": "2026-07-25T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "25 bori ACC OPC 43 Cement 50kg"
+    },
+    "event_id": "evt_0163"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_05_C3",
+    "qty": 14,
+    "unit": "piece",
+    "rate": 192.5,
+    "payment": "credit",
+    "occurred_on": "2026-07-25",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-25T13:20:00",
+    "recorded_at": "2026-07-25T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "14 piece Supreme PVC Pipe ½\" Class 3"
+    },
+    "event_id": "evt_0164"
+  },
+  {
+    "type": "sale",
+    "sku_id": "FIT_ELBOW_1",
+    "qty": 5,
+    "unit": "piece",
+    "rate": 30.3,
+    "payment": "credit",
+    "occurred_on": "2026-07-25",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-25T13:20:00",
+    "recorded_at": "2026-07-25T20:40:00",
+    "confidence": 0.85,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "5 piece PVC Elbow 1\""
+    },
+    "event_id": "evt_0165"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 1.5,
+    "unit": "tonne",
+    "rate": 62.2,
+    "payment": "cash",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-26T11:00:00",
+    "recorded_at": "2026-07-26T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "1.5 tonne Tata Tiscon TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0166"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 30,
+    "unit": "bori",
+    "rate": 464.8,
+    "payment": "cash",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-26T11:00:00",
+    "recorded_at": "2026-07-26T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "30 bori UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0167"
+  },
+  {
+    "type": "sale",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 0.8,
+    "unit": "tonne",
+    "rate": 61.0,
+    "payment": "credit",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-26T11:00:00",
+    "recorded_at": "2026-07-26T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "0.8 tonne Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0168"
+  },
+  {
+    "type": "sale",
+    "sku_id": "PIPE_10_C3",
+    "qty": 12,
+    "unit": "piece",
+    "rate": 302.4,
+    "payment": "credit",
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": "2026-07-26T11:00:00",
+    "recorded_at": "2026-07-26T20:40:00",
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "12 piece Supreme PVC Pipe 1\" Class 3"
+    },
+    "event_id": "evt_0169"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ACC_OPC43",
+    "qty": 15,
+    "unit": "bori",
+    "rate": 409.20000000000005,
+    "payment": "cash",
+    "occurred_on": "2026-07-23",
+    "precision": "week",
+    "count_precision": null,
+    "occurred_at": null,
+    "recorded_at": "2026-07-26T20:40:00",
+    "confidence": 0.6,
+    "source": "voice_recall",
+    "evidence": {
+      "transcript": "pichle hafte kuch cement gaya tha"
+    },
+    "event_id": "evt_0170"
+  },
+  {
+    "type": "stock_take",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 38,
+    "unit": "bori",
+    "rate": null,
+    "payment": null,
+    "occurred_on": "2026-07-25",
+    "precision": "day",
+    "count_precision": "exact",
+    "occurred_at": null,
+    "recorded_at": "2026-07-25T20:40:00",
+    "confidence": 0.92,
+    "source": "voice_count",
+    "evidence": {
+      "transcript": "aaj gina to 48 bori nikla"
+    },
+    "event_id": "evt_0171"
+  }
+]
