@@ -17,7 +17,7 @@ from datetime import date, datetime
 from pathlib import Path
 
 from fastapi import FastAPI, UploadFile, File, Form, Body, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
+from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -55,8 +55,24 @@ repo = JsonRepo()
 # module under the bare name up front makes any later `import main` resolve
 # to this exact object instead of creating a shadow one.
 sys.modules.setdefault("main", sys.modules[__name__])
-app.mount("/data", StaticFiles(directory=str(DATA)), name="data")
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
+
+# The invoice tab previews a scanned bill out of data/, but mounting the whole
+# directory served the ledger with it — customers.json (names and phone
+# numbers), events.json, receivables.json were all a plain GET away with no
+# auth. Serve image files only, by extension, and resolve the path to prove it
+# stays inside data/ so "../.env" style names can't escape.
+_VIEWABLE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif", ".pdf"}
+
+
+@app.get("/data/{name}")
+def data_file(name: str):
+    target = (DATA / name).resolve()
+    if (target.suffix.lower() not in _VIEWABLE_SUFFIXES
+            or DATA.resolve() not in target.parents
+            or not target.is_file()):
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(target)
 
 
 def by_id() -> dict:
