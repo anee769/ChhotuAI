@@ -2,3 +2,5 @@
 .venv/
 debug/
 __pycache__/
+.vercel
+.env*
