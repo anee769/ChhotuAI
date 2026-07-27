@@ -192,3 +192,54 @@ class ConcurrentInstanceTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class NameScriptTests(unittest.TestCase):
+    """Customer names are always stored in Latin script, whatever the caller
+    passes in — the LLM transliteration can fail silently, and the CRM's own
+    POST /api/customers never transliterated at all."""
+
+    def setUp(self):
+        import repo as R
+        self.R = R
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        (self.dir / "customers.json").write_text("[]", encoding="utf-8")
+        self.repo = R.JsonRepo(self.dir)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_a_devanagari_name_is_stored_in_latin(self):
+        row = self.repo.upsert_customer("9812345670", "अनु देवनाथ")
+        self.assertEqual(row["name"], "Anu Devanath")
+        stored = self.R.JsonRepo(self.dir).customers()[0]["name"]
+        self.assertFalse(__import__("translit").has_devanagari(stored))
+
+    def test_a_latin_name_is_left_alone(self):
+        self.assertEqual(
+            self.repo.upsert_customer("9812345671", "Ravi Builder")["name"],
+            "Ravi Builder")
+
+    def test_renaming_an_existing_customer_also_transliterates(self):
+        self.repo.upsert_customer("9812345672", "Temp")
+        row = self.repo.upsert_customer("9812345672", "पंकज शर्मा")
+        self.assertEqual(row["name"], "Pankaj Sharma")
+
+
+class TransliterationTests(unittest.TestCase):
+    def test_common_names(self):
+        import translit as T
+        for src, want in (("पंकज शर्मा", "Pankaj Sharma"),
+                          ("रमेश कुमार", "Ramesh Kumar"),
+                          ("कृष्णा", "Krishna"),
+                          ("ज़ाकिर", "Zakir"),
+                          ("दीपक", "Dipak")):
+            with self.subTest(src=src):
+                self.assertEqual(T.to_latin_name(src), want)
+
+    def test_never_returns_devanagari(self):
+        import translit as T
+        for src in ("अनु देवनाथ", "क़ुरैशी", "श्रीमती", "०१२", "मैं"):
+            with self.subTest(src=src):
+                self.assertFalse(T.has_devanagari(T.to_latin_name(src)), src)

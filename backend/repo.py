@@ -16,6 +16,7 @@ from pathlib import Path
 from typing import Optional
 
 import store
+import translit
 
 DATA_DIR = Path(os.environ.get("CHHOTU_DATA_DIR",
                                Path(__file__).resolve().parent.parent / "data"))
@@ -284,6 +285,13 @@ class JsonRepo(Repo):
         norm = self.normalize_phone(phone)
         if not norm:
             raise ValueError("valid phone number required")
+        # Enforced HERE rather than at the call site so it holds for every
+        # path into the customer table. conversation.py transliterates via the
+        # LLM for a nicer spelling, but that can fail silently and return the
+        # input unchanged, and the CRM's own POST /api/customers never
+        # transliterated at all — which is how a Devanagari name got stored.
+        if name:
+            name = translit.to_latin_name(name)
         def _upsert(customers):
             row = next((c for c in customers if c.get("phone") == norm), None)
             if row:

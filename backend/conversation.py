@@ -39,6 +39,7 @@ from datetime import date, timedelta
 
 import clock
 import matcher as M
+import translit
 import nlp
 import sarvam_client
 
@@ -140,9 +141,14 @@ def _transliterate_to_latin(text: str) -> str:
             temperature=0.1, reasoning_effort=_EFFORT, max_tokens=4096, timeout=75)
         msg = sarvam_client.chat_message(resp)
         out = (msg.get("content") or "").strip().strip('"')
-        return out or text
+        # The model sometimes echoes the Devanagari back, and on a serverless
+        # host this call can time out entirely. Either way the name must not
+        # stay in Devanagari, so fall through to the deterministic mapping.
+        if out and not translit.has_devanagari(out):
+            return out
     except Exception:
-        return text
+        pass
+    return translit.to_latin_name(text)
 
 
 def _number_in_text(text: str):
