@@ -4,10 +4,19 @@ from __future__ import annotations
 import json
 import sys
 import unittest
+from datetime import date
 from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+# Deadline maths ("kal" -> a date) is only assertable against a known day, so
+# pin the clock before importing anything that reads it. Must precede the
+# imports below.
+import os
+os.environ.setdefault("CHHOTU_TODAY", "2026-07-26")
+
+import clock
 import conversation
 import ledger
 import main
@@ -628,6 +637,35 @@ class LearnedAliasTests(unittest.TestCase):
         out = conversation._order_flow(state, "sale", items, self.repo)
         self.assertEqual(out["state"]["awaiting_order"]["slot"], "rate")
         self.assertIn("16mm", out["say"])
+
+
+class ClockTests(unittest.TestCase):
+    """Anything scheduled — udhaar reminders, a nightly summary — is only
+    correct if "today" actually advances."""
+
+    def tearDown(self):
+        os.environ["CHHOTU_TODAY"] = "2026-07-26"
+
+    def test_pin_is_read_on_every_call_not_cached_at_import(self):
+        os.environ["CHHOTU_TODAY"] = "2026-07-26"
+        self.assertEqual(clock.today(), date(2026, 7, 26))
+        # A long-running server must not keep insisting it is still yesterday.
+        os.environ["CHHOTU_TODAY"] = "2026-07-27"
+        self.assertEqual(clock.today(), date(2026, 7, 27))
+
+    def test_unpinned_clock_is_the_real_date(self):
+        os.environ.pop("CHHOTU_TODAY", None)
+        self.assertEqual(clock.today(), date.today())
+
+    def test_a_malformed_pin_falls_back_instead_of_freezing(self):
+        os.environ["CHHOTU_TODAY"] = "not-a-date"
+        self.assertEqual(clock.today(), date.today())
+
+    def test_deadlines_follow_the_moving_clock(self):
+        os.environ["CHHOTU_TODAY"] = "2026-07-26"
+        self.assertEqual(conversation.parse_deadline("kal"), "2026-07-27")
+        os.environ["CHHOTU_TODAY"] = "2026-12-31"
+        self.assertEqual(conversation.parse_deadline("kal"), "2027-01-01")
 
 
 class SummaryRoutingTests(unittest.TestCase):

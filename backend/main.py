@@ -24,6 +24,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import sarvam_client
 import matcher as M
 import ledger as L
+# Real date, not a constant frozen at import; CHHOTU_TODAY pins it for the demo.
+# Qualified on purpose: this module already has an /api/today route handler
+# named today(), which would shadow a bare `from clock import today`.
+import clock
 import learning as LEARN
 import nlp
 import crm
@@ -32,7 +36,6 @@ from repo import JsonRepo
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 FRONTEND_ASSETS = ROOT / "frontend" / "assets"
-TODAY = date(2026, 7, 26)  # fixed "today" so the seeded demo is stable
 
 app = FastAPI(title="Chhotu.ai — Awaaz se hisaab")
 repo = JsonRepo()
@@ -102,7 +105,7 @@ def index():
 def state():
     return {
         "shop": "Sharma Building Materials",
-        "today": TODAY.isoformat(),
+        "today": clock.today().isoformat(),
         "catalogue": repo.load_catalogue(),
         "learning_state": repo.learning_state(),
         "learning_counts": repo.learning_counts(),
@@ -228,7 +231,7 @@ async def parse(payload: dict = Body(...)):
     else:
         items = _llm_items(text) or nlp.parse_sale_utterance(text)
     resolved = _resolve_items(items, flow, learning, catalogue)
-    temporal = M.resolve_temporal(text, TODAY)
+    temporal = M.resolve_temporal(text, clock.today())
     temporal["date"] = temporal["date"].isoformat()
     return {"transcript": text, "items": resolved, "temporal": temporal}
 
@@ -295,7 +298,7 @@ def commit(payload: dict = Body(...)):
     stock recomputed from the log (so back-dated inserts show recompute).
     """
     etype = payload["type"]
-    occurred_on = payload.get("occurred_on") or TODAY.isoformat()
+    occurred_on = payload.get("occurred_on") or clock.today().isoformat()
     precision = payload.get("precision", "exact")
     result = _write_events(etype, payload.get("items", []), occurred_on, precision,
                            payload.get("source", "voice_live"))
@@ -400,7 +403,7 @@ def record_payment(customer_id: str, payload: dict = Body(...)):
     if not account or amount > account["outstanding"] + 0.01:
         raise HTTPException(400, "payment exceeds outstanding credit")
     row = repo.add_payment(
-        customer_id, amount, payload.get("paid_on") or TODAY.isoformat(),
+        customer_id, amount, payload.get("paid_on") or clock.today().isoformat(),
         payload.get("note", ""),
     )
     return {"payment": row, "account": crm.account(repo, customer_id)}
@@ -439,7 +442,7 @@ def stock(as_of: str = None):
                          f"{attrs['diameter_mm']}mm {attrs.get('grade', '')}".strip()
                          if attrs.get("diameter_mm") else None),
                      **_stock_view(sku, det)})
-    return {"as_of": (as_of or TODAY.isoformat()), "rows": rows}
+    return {"as_of": (as_of or clock.today().isoformat()), "rows": rows}
 
 
 @app.get("/api/reconciliations")
@@ -465,7 +468,7 @@ def reconciliations():
 # ---------------------------------------------------------------------------
 def _today_summary() -> dict:
     events = repo.all_events()
-    m = L.margin_for_day(by_id(), events, TODAY)
+    m = L.margin_for_day(by_id(), events, clock.today())
     for line in m.get("lines", []):
         cust = repo.customer(line["customer_id"]) if line.get("customer_id") else None
         line["customer_name"] = cust["name"] if cust else None
@@ -474,7 +477,7 @@ def _today_summary() -> dict:
     for e in events:
         if e["type"] == "sale" and e.get("precision") == "week":
             d = L._d(e["occurred_on"])
-            if 0 <= (TODAY - d).days <= 7:
+            if 0 <= (clock.today() - d).days <= 7:
                 week_extra += 1
     m["provisional_extra"] = max(m["provisional_extra"], week_extra)
     return m
@@ -516,7 +519,7 @@ def dashboard():
     # margin trend, last 30 days
     trend = []
     for i in range(29, -1, -1):
-        d = TODAY - timedelta(days=i)
+        d = clock.today() - timedelta(days=i)
         mm = L.margin_for_day(catalogue_by, events, d)
         trend.append({"date": d.isoformat(), "margin": mm["margin"]})
 
@@ -541,18 +544,18 @@ def dashboard():
     excluded = 0
     frozen = []
     for sku in catalogue:
-        det = L._stock_detail(sku, events, TODAY)
+        det = L._stock_detail(sku, events, clock.today())
         if det["qty"] == L.UNCOUNTED:
             excluded += 1
             continue
-        cost = L.landed_cost_as_of(sku, events, TODAY) or 0
+        cost = L.landed_cost_as_of(sku, events, clock.today()) or 0
         base_qty = det.get("base") or 0
         val = cost * base_qty
         inv_value += val
         # frozen capital: counted, zero movement in 60 days
         sales = [e for e in events if e["sku_id"] == sku["sku_id"]
                  and e["type"] in ("sale", "delivery")
-                 and 0 <= (TODAY - L._d(e["occurred_on"])).days <= 60]
+                 and 0 <= (clock.today() - L._d(e["occurred_on"])).days <= 60]
         if not sales and base_qty > 0:
             frozen.append({"sku_id": sku["sku_id"], "canonical": sku["canonical"],
                            "value": round(val, 0),
@@ -634,7 +637,7 @@ async def invoice(file: UploadFile = File(None)):
         meta = {k: fx[k] for k in ("supplier", "invoice_no", "invoice_date", "image")}
     else:
         meta = {"supplier": "Parsed invoice", "invoice_no": "-",
-                "invoice_date": TODAY.isoformat(), "image": None}
+                "invoice_date": clock.today().isoformat(), "image": None}
 
     priced = _compute_landed(lines)
     return {"used_fixture": used_fixture, "meta": meta, "lines": priced,
@@ -814,7 +817,7 @@ def invoice_commit(payload: dict = Body(...)):
             # there could be untracked stock already on the shelf, so it's
             # left for a real physical count rather than assumed.
             etype = "opening_balance" if freshly_provisioned else "delivery"
-            _write_events(etype, [ev], TODAY.isoformat(), "exact", "invoice_photo")
+            _write_events(etype, [ev], clock.today().isoformat(), "exact", "invoice_photo")
             stock_added = True
         committed.append({"sku_id": sku_id, "landed_cost": landed,
                           "value": l.get("taxable_value"), "stock_added": stock_added})
@@ -825,7 +828,7 @@ def invoice_commit(payload: dict = Body(...)):
                     key=lambda c: -c["value"])
     for c in ranked[:30]:
         sku = repo.sku(c["sku_id"])
-        det = L._stock_detail(sku, events, TODAY)
+        det = L._stock_detail(sku, events, clock.today())
         checklist.append({"sku_id": c["sku_id"], "canonical": sku["canonical"],
                           "purchase_value": c["value"],
                           "needs_count": det["qty"] == L.UNCOUNTED,
@@ -858,7 +861,7 @@ def bill(payload: dict = Body(...)):
     c.setFont("Helvetica", 8)
     y -= 6 * mm
     c.drawString(15 * mm, y, "Tax Invoice (GST)")
-    c.drawRightString(w - 15 * mm, y, f"Date: {TODAY.isoformat()}")
+    c.drawRightString(w - 15 * mm, y, f"Date: {clock.today().isoformat()}")
     if customer.get("name") or customer.get("phone"):
         y -= 5 * mm
         c.setFont("Helvetica-Bold", 8)

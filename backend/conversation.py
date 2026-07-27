@@ -37,11 +37,11 @@ import re
 import unicodedata
 from datetime import date, timedelta
 
+import clock
 import matcher as M
 import nlp
 import sarvam_client
 
-TODAY = date(2026, 7, 26)
 _FAMILIES = ("tmt", "cement", "pipe", "fitting", "fastener", "paint")
 _HINDI_NUMBERS = {
     "ek": 1, "do": 2, "teen": 3, "char": 4, "chaar": 4, "paanch": 5,
@@ -168,18 +168,18 @@ def parse_deadline(text: str):
     dm = re.search(r"\b(\d{1,2})[/-](\d{1,2})(?:[/-](20\d{2}))?\b", t)
     if dm:
         try:
-            return date(int(dm.group(3) or TODAY.year), int(dm.group(2)),
+            return date(int(dm.group(3) or clock.today().year), int(dm.group(2)),
                         int(dm.group(1))).isoformat()
         except ValueError:
             return None
     if re.search(r"agle hafte|next week|ek hafta|अगले हफ्ते|एक हफ्ता", t):
-        return (TODAY + timedelta(days=7)).isoformat()
+        return (clock.today() + timedelta(days=7)).isoformat()
     if re.search(r"agle mahine|next month|ek mahina|एक महीना|अगले महीने", t):
-        return (TODAY + timedelta(days=30)).isoformat()
+        return (clock.today() + timedelta(days=30)).isoformat()
     if re.search(r"kal|tomorrow|कल", t):
-        return (TODAY + timedelta(days=1)).isoformat()
+        return (clock.today() + timedelta(days=1)).isoformat()
     if re.search(r"parso|परसों|परसो|day after tomorrow", t):
-        return (TODAY + timedelta(days=2)).isoformat()
+        return (clock.today() + timedelta(days=2)).isoformat()
     relative = re.search(
         r"([\w\u0900-\u097f.]+)\s*(din|days?|दिन|hafte|weeks?|हफ्ते|"
         r"mahine|months?|महीने|महीना)", t)
@@ -189,7 +189,7 @@ def parse_deadline(text: str):
             unit = relative.group(2)
             multiplier = 30 if re.search(r"mahine|month|मही", unit) else \
                 (7 if re.search(r"hafte|week|हफ्ते", unit) else 1)
-            return (TODAY + timedelta(days=int(number * multiplier))).isoformat()
+            return (clock.today() + timedelta(days=int(number * multiplier))).isoformat()
     months = {
         "january": 1, "jan": 1, "february": 2, "feb": 2, "march": 3,
         "april": 4, "may": 5, "june": 6, "july": 7, "august": 8,
@@ -199,7 +199,7 @@ def parse_deadline(text: str):
     named = re.search(r"\b(\d{1,2})\s+([a-z]+)\b", t)
     if named and named.group(2) in months:
         try:
-            return date(TODAY.year, months[named.group(2)],
+            return date(clock.today().year, months[named.group(2)],
                         int(named.group(1))).isoformat()
         except ValueError:
             return None
@@ -221,7 +221,7 @@ def _extract_prompt(repo) -> str:
     return (
         "You read an Indian hardware-shop owner speaking (Hindi/English/Devanagari "
         "mix) and EXTRACT what he means as JSON. Output ONLY the JSON object.\n\n"
-        f"Today: {TODAY.isoformat()}.\n"
+        f"Today: {clock.today().isoformat()}.\n"
         "The shop stocks ONLY these products:\n" + _catalogue_lines(repo) + "\n\n"
         "Hindi numbers: ek=1 do=2 teen=3 char=4 paanch=5 chhe=6 saat=7 aath=8 "
         "nau=9 das=10 barah=12 solah=16 bees=20 pachees=25 tees=30 chalees=40 "
@@ -706,7 +706,7 @@ def converse(state, user_text, flow, repo):
     if intent == "analytics_query":
         metric = ext.get("metric")
         # The extractor has no reliable sense of period, and its fallback for a
-        # summary-shaped question is "margin" — which answers with TODAY's
+        # summary-shaped question is "margin" — which answers with today's
         # numbers. An explicit week word in the transcript overrules it.
         if _WEEK_RE.search(_fold(user_text)) and metric in (
                 None, "margin", "day_summary", "week_summary"):
@@ -1584,7 +1584,7 @@ def _commit(state, flow, items, skipped, repo):
     rows = []
     if normal:
         ev, rw = _rows_for(normal)
-        r = main._write_events(base_etype, ev, TODAY.isoformat(), "exact", "voice_live")
+        r = main._write_events(base_etype, ev, clock.today().isoformat(), "exact", "voice_live")
         result["committed"] += r["committed"]
         result["affected_stock"].update(r["affected_stock"])
         rows += rw
@@ -1593,7 +1593,7 @@ def _commit(state, flow, items, skipped, repo):
                   and result["affected_stock"].get(it["sku_id"], {}).get("uncounted")]
     if fresh:
         ev, rw = _rows_for(fresh)
-        r = main._write_events("opening_balance", ev, TODAY.isoformat(), "exact", "voice_live")
+        r = main._write_events("opening_balance", ev, clock.today().isoformat(), "exact", "voice_live")
         result["committed"] += r["committed"]
         result["affected_stock"].update(r["affected_stock"])
         rows += rw
@@ -1711,7 +1711,7 @@ def _business_summary(metric, repo, state):
         events = repo.all_events()
         total = margin = cash = credit = 0.0
         for i in range(7):
-            m = L.margin_for_day(catalogue_by, events, TODAY - timedelta(days=i))
+            m = L.margin_for_day(catalogue_by, events, clock.today() - timedelta(days=i))
             total += m["total"]
             margin += m["margin"]
             cash += m["cash"]

@@ -15,11 +15,13 @@ import random
 from datetime import date, timedelta
 from pathlib import Path
 
+import clock
+
 random.seed(42)
 DATA = Path(os.environ.get(
     "CHHOTU_DATA_DIR", Path(__file__).resolve().parent.parent / "data"
 ))
-TODAY = date(2026, 7, 26)
+TODAY = clock.today()
 PERIOD_START = TODAY - timedelta(days=42)  # ~6 weeks
 DEVANAGARI = {"tmt": "सरिया", "cement": "सीमेंट", "pipe": "पाइप"}
 
