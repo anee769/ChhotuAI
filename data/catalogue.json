@@ -15,7 +15,7 @@
       "piece": 10.67
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 55.5,
+    "opening_cost_per_kg": 58.47,
     "aliases": [
       "saria",
       "sariya",
@@ -28,7 +28,8 @@
       "12 mm",
       "tata",
       "tiscon"
-    ]
+    ],
+    "landed_cost_per_kg": 58.47
   },
   {
     "sku_id": "TMT_16_FE500D_TATA",
@@ -46,7 +47,7 @@
       "piece": 18.96
     },
     "gst_rate": 18,
-    "opening_cost_per_kg": 54.5,
+    "opening_cost_per_kg": 57.45,
     "aliases": [
       "saria",
       "sariya",
@@ -59,7 +60,8 @@
       "16 mm",
       "tata",
       "tiscon"
-    ]
+    ],
+    "landed_cost_per_kg": 57.45
   },
   {
     "sku_id": "TMT_20_FE500D_TATA",
@@ -108,7 +110,7 @@
       "kg": 0.02
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 415,
+    "opening_cost_per_kg": 421.98,
     "aliases": [
       "cement",
       "सीमेंट",
@@ -117,7 +119,8 @@
       "ultratech",
       "opc 53",
       "ultratech cement"
-    ]
+    ],
+    "landed_cost_per_kg": 421.98
   },
   {
     "sku_id": "CEM_ULTRATECH_PPC",
@@ -135,7 +138,7 @@
       "kg": 0.02
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 385,
+    "opening_cost_per_kg": 396.56,
     "aliases": [
       "cement",
       "सीमेंट",
@@ -144,7 +147,8 @@
       "ultratech",
       "ppc",
       "ultratech cement"
-    ]
+    ],
+    "landed_cost_per_kg": 396.56
   },
   {
     "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
@@ -161,7 +165,7 @@
       "piece": 0.1
     },
     "gst_rate": 28,
-    "opening_cost_per_kg": 28.0,
+    "opening_cost_per_kg": 711.78,
     "aliases": [
       "tile",
       "tiles",
@@ -172,7 +176,8 @@
       "vitrified",
       "ceramic",
       "ceramic floor tile 2x2ft"
-    ]
+    ],
+    "landed_cost_per_kg": 711.78
   },
   {
     "sku_id": "TILE_KAJARIA_VITRIFIED_600",
@@ -200,51 +205,6 @@
       "vitrified",
       "ceramic",
       "vitrified tile 600x600mm"
-    ]
-  },
-  {
-    "sku_id": "OTHER_CEMENT",
-    "canonical": "हमन ब र Cement",
-    "family": "other",
-    "attributes": {},
-    "default_unit": "bori",
-    "units": {
-      "bori": 1
-    },
-    "gst_rate": 18,
-    "opening_cost_per_kg": 0,
-    "aliases": [
-      "हमन ब र cement"
-    ]
-  },
-  {
-    "sku_id": "OTHER_CEMENT_2",
-    "canonical": "म न ब र Cement",
-    "family": "other",
-    "attributes": {},
-    "default_unit": "bori",
-    "units": {
-      "bori": 1
-    },
-    "gst_rate": 18,
-    "opening_cost_per_kg": 0,
-    "aliases": [
-      "म न ब र cement"
-    ]
-  },
-  {
-    "sku_id": "OTHER_CEMENT_3",
-    "canonical": "ब र Cement",
-    "family": "other",
-    "attributes": {},
-    "default_unit": "bori",
-    "units": {
-      "bori": 1
-    },
-    "gst_rate": 18,
-    "opening_cost_per_kg": 0,
-    "aliases": [
-      "ब र cement"
     ]
   }
 ]
