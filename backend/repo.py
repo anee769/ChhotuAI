@@ -15,6 +15,8 @@ from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
 
+import store
+
 DATA_DIR = Path(os.environ.get("CHHOTU_DATA_DIR",
                                Path(__file__).resolve().parent.parent / "data"))
 
@@ -39,7 +41,9 @@ class Repo:
 class JsonRepo(Repo):
     def __init__(self, data_dir: Path = DATA_DIR):
         self.dir = Path(data_dir)
-        self.dir.mkdir(parents=True, exist_ok=True)
+        # Files locally, Postgres when DATABASE_URL is set. Both speak the same
+        # two primitives, so nothing below this line changes between them.
+        self._store = store.make_store(self.dir)
         self._lock = threading.Lock()
         self._catalogue = self._read("catalogue.json", default=[])
         self._by_sku = {s["sku_id"]: s for s in self._catalogue}
@@ -53,26 +57,15 @@ class JsonRepo(Repo):
             "gst_default": 18, "gst_by_family": {}})
         self._counter = self._max_event_num()
 
-    # ---- file helpers ----
+    # ---- document helpers (see store.py for where they actually land) ----
     def _path(self, name: str) -> Path:
         return self.dir / name
 
     def _read(self, name: str, default):
-        p = self._path(name)
-        if not p.exists():
-            return default
-        with open(p, encoding="utf-8") as f:
-            return json.load(f)
+        return self._store.read(name, default)
 
     def _write(self, name: str, obj) -> None:
-        # flush on every write: temp file + atomic replace
-        p = self._path(name)
-        tmp = p.with_suffix(p.suffix + ".tmp")
-        with open(tmp, "w", encoding="utf-8") as f:
-            json.dump(obj, f, ensure_ascii=False, indent=2)
-            f.flush()
-            os.fsync(f.fileno())
-        os.replace(tmp, p)
+        self._store.write(name, obj)
 
     @staticmethod
     def _empty_learning() -> dict:

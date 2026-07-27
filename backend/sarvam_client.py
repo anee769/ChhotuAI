@@ -50,9 +50,26 @@ _load_dotenv()
 BASE_URL = "https://api.sarvam.ai"
 API_KEY = os.environ.get("SARVAM_API_KEY", "")
 TIMEOUT = 20  # seconds, per spec
+# Serverless hosts kill a request at their own hard limit (60s on Vercel
+# Hobby), which surfaces as an opaque platform 504 with no reply for the
+# owner. Cap our own timeout below that ceiling so a slow model call fails as
+# a normal, handled error instead. Unset locally, where a long-running uvicorn
+# has no such limit.
+MAX_TIMEOUT = float(os.environ.get("SARVAM_MAX_TIMEOUT") or 0) or None
 MAX_RETRIES = 3
-DEBUG_SAVE_RESPONSES = os.environ.get("DEBUG_SAVE_RESPONSES", "1") == "1"
+
+
+# Response dumps go to a repo directory, which is read-only on serverless.
+# _dump() already swallows the failure, but default it off there rather than
+# attempt a doomed write on every single API call. VERCEL is set by the platform.
+DEBUG_SAVE_RESPONSES = os.environ.get(
+    "DEBUG_SAVE_RESPONSES", "0" if os.environ.get("VERCEL") else "1") == "1"
 DEBUG_DIR = Path(__file__).resolve().parent.parent / "debug"
+
+
+def _capped(timeout):
+    t = timeout or TIMEOUT
+    return min(t, MAX_TIMEOUT) if MAX_TIMEOUT else t
 
 STT_MODEL = "saaras:v3"
 TTS_MODEL = "bulbul:v3"
@@ -110,7 +127,7 @@ def _request(method: str, path: str, *, files=None, data=None, json_body=None,
                 files=files,
                 data=data,
                 json=json_body,
-                timeout=timeout or TIMEOUT,
+                timeout=_capped(timeout),
             )
             if resp.status_code == 200:
                 out = resp.json()

@@ -6,3 +6,4 @@ rapidfuzz==3.9.7
 reportlab==4.2.2
 python-dateutil==2.9.0.post0
 sarvamai==0.1.28
+psycopg[binary]==3.2.13
