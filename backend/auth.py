@@ -104,11 +104,20 @@ def _deliver(phone: str, code: str) -> str:
     Returns the channel name. WhatsApp goes here once an authentication
     template is approved; the signature does not change.
     """
+    body = (f"{code} is your Chhotu.ai login code. It expires in "
+            f"{OTP_TTL_MINUTES} minutes.\nDo not share this code with anyone.")
     try:
         import whatsapp
         if whatsapp.is_configured():
-            whatsapp.send_otp(phone, code)
-            return "whatsapp"
+            # SMS first for login: it reaches any handset, whereas WhatsApp
+            # needs the recipient to have opted in to the sandbox — which a
+            # brand-new user signing up obviously has not.
+            try:
+                whatsapp.send_sms(phone, body)
+                return "sms"
+            except Exception:
+                whatsapp.send_whatsapp(phone, body)
+                return "whatsapp"
     except Exception:
         # A delivery failure must not lose the code that was just stored —
         # dev mode still returns it, and the user can retry.
@@ -210,3 +219,14 @@ def revoke_session(token: str) -> None:
         return
     with db.connect() as conn:
         conn.execute("DELETE FROM sessions WHERE token_hash = %s", (_hash(token),))
+
+
+def all_users() -> list:
+    """Every registered shop — used by the nightly reminder run, which has no
+    logged-in user to act as."""
+    with db.connect() as conn:
+        rows = conn.execute(
+            "SELECT user_id, phone, name, shop_name FROM users"
+            " WHERE onboarded_at IS NOT NULL").fetchall()
+    return [{"user_id": r[0], "phone": r[1], "name": r[2], "shop_name": r[3],
+             "onboarded": True} for r in rows]

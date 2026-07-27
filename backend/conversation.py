@@ -591,6 +591,27 @@ def _summary_metric(text: str) -> str:
     return "week_summary" if _WEEK_RE.search(_fold(text)) else "day_summary"
 
 
+# "Bhej do" is a small, closed vocabulary with a real side effect — a message
+# leaves the shop and reaches a customer. Detect it deterministically rather
+# than letting an LLM misread "bhej" in a sentence about deliveries.
+_SEND_RE = re.compile(
+    r"\b(?:bhej|bhej|bhejo|bhejdo|bhej\s*do|bhej\s*dijiye|bhej\s*dena|"
+    r"send|share|forward|whatsapp\s*(?:kar|karo|kardo|par|pe))\b"
+    r"|भेज|व्हाट्सएप|व्हाट्सऐप",
+    re.I,
+)
+_BILL_RE = re.compile(r"\b(?:bill|receipt|invoice|parchi|rasid)\b|बिल|पर्ची|रसीद", re.I)
+
+
+def _wants_send(text: str) -> bool:
+    return bool(_SEND_RE.search(_fold(text)))
+
+
+def _wants_bill_sent(text: str) -> bool:
+    t = _fold(text)
+    return bool(_SEND_RE.search(t) and _BILL_RE.search(t))
+
+
 _QUICK_PATTERNS = [
     # Summaries are checked before the single-metric patterns below, or
     # "hafte ka margin" would answer with just today's margin line.
@@ -654,6 +675,13 @@ def converse(state, user_text, flow, repo):
     # the first turn. This preserves the complete order and avoids another
     # 30-second model call for simple answers such as "12 mm", "50", or "cash".
     aw = state.get("awaiting")
+    if aw == "send_summary":
+        state["awaiting"] = None
+        state["history"].append({"role": "user", "content": user_text or ""})
+        if _yes_no(user_text) is not True:
+            return _reply(_L(state, "Theek hai, nahi bheja.", "Alright, not sent."),
+                          listen=False, done=True, state=state)
+        return _send_summary_now(state, repo)
     if aw in ("customer_phone", "customer_name", "customer_choice", "deadline"):
         state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_customer_slot(state, aw, user_text, repo)
@@ -672,6 +700,14 @@ def converse(state, user_text, flow, repo):
     # stock and business questions. Route an unambiguous first-turn query before
     # the screen's `live_sale` hint can force it into an order. Analytics are
     # fully ledger-derived and do not need an LLM or API key.
+    # "bill bhej do unke" is a request to send, not a new transaction — route
+    # it before the order machinery tries to read it as one.
+    if _wants_bill_sent(user_text) or (
+            _wants_send(user_text) and state.get("last_commit")
+            and not state.get("awaiting_order")):
+        state["history"].append({"role": "user", "content": user_text or ""})
+        return _send_bill_now(state, repo)
+
     if not state.get("locked_intent"):
         quick = _quick_route(user_text)
         if quick and quick[0] == "analytics":
@@ -1649,6 +1685,16 @@ def _commit(state, flow, items, skipped, repo):
     out = _say(state, say, listen=False, done=True)
     out["summary"] = {"items": rows}
     out["committed"] = result
+    # Keep the finished sale on the state so a follow-up "bill bhej do unke"
+    # knows what to bill and to whom.
+    if flow == "sale":
+        state["last_commit"] = {
+            "items": [{"sku_id": i["sku_id"], "qty": i["qty"], "unit": i["unit"],
+                       "rate": i.get("rate"), "rate_unit": i.get("rate_unit")}
+                      for i in items],
+            "customer": dict(customer), "payment": items[0].get("payment") if items else "cash",
+            "payment_deadline": deadline,
+        }
     return out
 
 
@@ -1763,7 +1809,65 @@ def _business_summary(metric, repo, state):
         say += _L(state,
                   f" Inventory ki value {int(mp['inventory_value'])} rupaye hai.",
                   f" Inventory is worth ₹{int(mp['inventory_value'])}.")
-    return _reply(say, listen=False, done=True, summary={"items": [], "answer": say})
+    # Having just read the numbers out, offer to put them on the owner's phone
+    # — a spoken summary is gone the moment it finishes.
+    say += _L(state, " WhatsApp par bhej doon?", " Shall I send it on WhatsApp?")
+    if state is not None:
+        state["awaiting"] = "send_summary"
+        state["send_period"] = "week" if weekly else "day"
+    out = _reply(say, listen=True, done=False, state=state,
+                 summary={"items": [], "answer": say})
+    return out
+
+
+def _send_summary_now(state, repo):
+    """Owner said yes to 'WhatsApp par bhej doon?'."""
+    import main
+    import notify
+    try:
+        out = notify.send_summary(repo, main.current_user(),
+                                  period=state.get("send_period") or "day")
+        say = _L(state,
+                 f"Bhej diya — {out['sent_to']} par PDF aa gaya.",
+                 f"Sent — the PDF is on its way to {out['sent_to']}.")
+    except Exception as e:
+        # Never claim a send that failed: the owner would stop checking.
+        say = _L(state, f"Bhej nahi paya — {str(e)[:80]}",
+                 f"Couldn't send it — {str(e)[:80]}")
+    return _reply(say, listen=False, done=True, state=state,
+                  summary={"items": [], "answer": say})
+
+
+def _send_bill_now(state, repo):
+    """Owner asked for the last sale's bill to go to the customer."""
+    import main
+    import notify
+    committed = state.get("last_commit") or {}
+    customer = committed.get("customer") or state.get("customer") or {}
+    items = committed.get("items") or []
+    if not items:
+        return _reply(_L(state,
+                         "Abhi koi bill nahi bana — pehle sale bataiye.",
+                         "There's no bill yet — record the sale first."),
+                      listen=True, done=False, state=state)
+    if not customer.get("phone"):
+        return _reply(_L(state,
+                         "Customer ka number nahi hai, isliye bhej nahi sakta.",
+                         "That customer has no phone number saved."),
+                      listen=False, done=True, state=state)
+    try:
+        out = notify.send_bill(repo, main.current_user(), customer, items,
+                               payment=committed.get("payment") or "cash",
+                               due_on=committed.get("payment_deadline"))
+        say = _L(state,
+                 f"Bill {customer.get('name', '')} ko bhej diya — "
+                 f"{_num(out['total'])} rupaye ka.",
+                 f"Bill sent to {customer.get('name', '')} — Rs {_num(out['total'])}.")
+    except Exception as e:
+        say = _L(state, f"Bill bhej nahi paya — {str(e)[:80]}",
+                 f"Couldn't send the bill — {str(e)[:80]}")
+    return _reply(say, listen=False, done=True, state=state,
+                  summary={"items": [], "answer": say})
 
 
 def _analytics_answer(metric, repo, state=None):

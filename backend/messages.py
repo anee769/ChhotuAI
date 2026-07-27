@@ -160,3 +160,28 @@ def reminder(*, shop: str, owner: str, customer: str, amount: float,
         sign.append(f"— {owner}")
     sign.append(shop + (f" · {phone}" if phone else ""))
     return "\n".join(body + sign)
+
+
+# ---------------------------------------------------------------------------
+# Covering notes for the PDF sends. The document carries the detail; these
+# just say what arrived, so the message is readable in a notification preview.
+# ---------------------------------------------------------------------------
+def bill_note(*, shop: str, customer: str, total: float, payment: str,
+              due_on: str = None) -> str:
+    lead = f"Namaste {customer} ji," if customer else "Namaste,"
+    tail = (f"Udhaar — {_short_date(due_on)} tak jama kar dijiye."
+            if payment == "credit" and due_on else "Payment received. Dhanyavaad! 🙏")
+    return (f"{lead}\n\n{shop} se aapka bill *Rs {_money(total)}* ka hai.\n"
+            f"Poora bill neeche PDF mein hai.\n\n{tail}")
+
+
+def summary_note(*, shop: str, period: str, start, end, sale: float,
+                 margin: float) -> str:
+    if period == "week":
+        when = f"{_short_date(start)} – {_short_date(end)}"
+        title = "Hafte ka hisaab"
+    else:
+        when, title = _short_date(end), "Aaj ka hisaab"
+    return (f"*{shop}*\n_{title} · {when}_\n\n"
+            f"Sale *Rs {_money(sale)}*, gross profit *Rs {_money(margin)}*.\n"
+            "Poori report PDF mein hai. 📄")

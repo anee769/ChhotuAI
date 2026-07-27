@@ -17,7 +17,8 @@ import sys
 from datetime import date, datetime
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, Body, Header, HTTPException
+from fastapi import (FastAPI, UploadFile, File, Form, Body, Header,
+                     HTTPException, Request, Response)
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -33,13 +34,48 @@ import learning as LEARN
 import nlp
 import crm
 from repo import JsonRepo
+import sqlrepo
+import auth
+import documents
+from contextvars import ContextVar
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 FRONTEND_ASSETS = ROOT / "frontend" / "assets"
 
 app = FastAPI(title="Chhotu.ai — Awaaz se hisaab")
-repo = JsonRepo()
+
+# The ledger is now per-user, but 113 call sites across this file,
+# conversation.py, crm.py and learning.py say `repo.something`. Rather than
+# rewrite every one, `repo` becomes a proxy that forwards to whichever user's
+# repo the current request resolved to. Attribute access outside a request, or
+# without a session, raises 401 rather than quietly reading nobody's books.
+_CURRENT: ContextVar = ContextVar("chhotu_repo", default=None)
+_CURRENT_USER: ContextVar = ContextVar("chhotu_user", default=None)
+
+
+class _RepoProxy:
+    def __getattr__(self, name):
+        target = _CURRENT.get()
+        if target is None:
+            raise HTTPException(status_code=401, detail="Login required.")
+        return getattr(target, name)
+
+
+repo = _RepoProxy()
+
+
+def current_user() -> dict:
+    user = _CURRENT_USER.get()
+    if user is None:
+        raise HTTPException(status_code=401, detail="Login required.")
+    return user
+
+
+def bind_user(user: dict):
+    """Attach a user (and their ledger) to this request."""
+    _CURRENT_USER.set(user)
+    _CURRENT.set(sqlrepo.SqlRepo(user["user_id"]))
 
 # uvicorn loads this file as the package module "backend.main", but it also
 # inserts backend/ onto sys.path (above) so that bare imports like
@@ -59,23 +95,32 @@ sys.modules.setdefault("main", sys.modules[__name__])
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
 
 
-@app.middleware("http")
-async def _fresh_repo(request, call_next):
-    """Re-read the ledger at the top of every request.
+# Paths that must work before there is a session: the shell, its assets, the
+# login endpoints themselves, and document links (Twilio fetches those and
+# cannot authenticate — they are guarded by an unguessable token instead).
+_OPEN_PREFIXES = ("/api/auth/", "/assets/", "/d/", "/data/")
+_OPEN_EXACT = ("/", "/favicon.ico", "/api/health")
 
-    Several instances of this app serve traffic, each with its own in-memory
-    copy loaded at cold start. Without this, an instance that has been warm for
-    a while answers from a snapshot taken before another instance recorded a
-    sale — so a just-entered order looks missing. Writes are made atomic in
-    repo.py; this is the read half of the same problem.
-    """
+
+@app.middleware("http")
+async def _resolve_user(request, call_next):
+    path = request.url.path
+    if path in _OPEN_EXACT or path.startswith(_OPEN_PREFIXES):
+        return await call_next(request)
+    token = (request.headers.get("authorization") or "").removeprefix("Bearer ").strip()
+    if not token:
+        token = request.cookies.get("chhotu_session") or ""
+    user = None
     try:
-        repo.refresh()
+        user = auth.user_for_token(token) if token else None
     except Exception:
-        # Never fail a request because the refresh hiccuped — the handler can
-        # still serve from the last known good copy.
-        pass
+        user = None
+    if user:
+        bind_user(user)
+    elif path.startswith("/api/"):
+        return JSONResponse({"detail": "Login required."}, status_code=401)
     return await call_next(request)
+
 
 # The invoice tab previews a scanned bill out of data/, but mounting the whole
 # directory served the ledger with it — customers.json (names and phone
@@ -127,6 +172,156 @@ def _devanagari_for_tts(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Auth — phone OTP
+# ---------------------------------------------------------------------------
+@app.get("/api/health")
+def health():
+    return {"ok": True, "today": clock.today().isoformat()}
+
+
+@app.post("/api/auth/otp")
+def auth_otp(payload: dict = Body(...)):
+    try:
+        return auth.send_otp(payload.get("phone", ""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/auth/verify")
+def auth_verify(payload: dict = Body(...)):
+    try:
+        phone = auth.verify_otp(payload.get("phone", ""), payload.get("code", ""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    user = auth.get_or_create_user(phone)
+    token = auth.issue_session(user["user_id"])
+    out = JSONResponse({"token": token, "user": user})
+    # Cookie as well as the token, so a reload keeps the session without the
+    # frontend having to re-attach a header on every request.
+    out.set_cookie("chhotu_session", token, max_age=auth.SESSION_DAYS * 86400,
+                   httponly=True, samesite="lax",
+                   secure=bool(os.environ.get("VERCEL")))
+    return out
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request):
+    token = (request.headers.get("authorization") or "").removeprefix("Bearer ").strip()
+    auth.revoke_session(token or request.cookies.get("chhotu_session") or "")
+    out = JSONResponse({"ok": True})
+    out.delete_cookie("chhotu_session")
+    return out
+
+
+@app.get("/api/me")
+def me():
+    user = current_user()
+    cfg = repo.load_config()
+    return {**user, "shop_name": cfg.get("shop_name") or user.get("shop_name") or ""}
+
+
+@app.post("/api/onboarding")
+def onboarding(payload: dict = Body(...)):
+    """Finish registration: owner name, shop name, and the first stock line."""
+    user = current_user()
+    name = (payload.get("name") or "").strip()
+    shop = (payload.get("shop_name") or "").strip()
+    auth.complete_onboarding(user["user_id"], name=name, shop_name=shop)
+    if shop:
+        repo.save_config({"shop_name": shop})
+
+    created = []
+    for item in payload.get("items") or []:
+        canonical = (item.get("canonical") or "").strip()
+        if not canonical:
+            continue
+        unit = (item.get("unit") or "piece").strip()
+        sku_id = re.sub(r"[^A-Z0-9]+", "_", canonical.upper()).strip("_")[:48] or "ITEM"
+        repo.upsert_sku({
+            "sku_id": sku_id, "canonical": canonical,
+            "family": (item.get("family") or "other").strip(),
+            "attributes": {}, "default_unit": unit, "units": {unit: 1},
+            "gst_rate": item.get("gst_rate") or 18,
+            "opening_cost_per_kg": item.get("cost") or 0,
+            "aliases": [canonical.lower()],
+        })
+        # An opening_balance counts immediately; a bare delivery would leave
+        # the shop's very first item showing as "never counted".
+        qty = item.get("qty")
+        if qty:
+            _write_events("opening_balance",
+                          [{"sku_id": sku_id, "qty": float(qty), "unit": unit,
+                            "rate": item.get("cost"), "rate_unit": unit}],
+                          clock.today().isoformat(), "exact", "onboarding")
+        created.append(sku_id)
+    return {"ok": True, "skus": created}
+
+
+# ---------------------------------------------------------------------------
+# Sending: bill to a customer, summary to the owner, reminders to debtors
+# ---------------------------------------------------------------------------
+@app.post("/api/send/bill")
+def send_bill(payload: dict = Body(...)):
+    import notify
+    customer = payload.get("customer") or {}
+    if customer.get("customer_id") and not customer.get("phone"):
+        customer = repo.customer(customer["customer_id"]) or customer
+    try:
+        return notify.send_bill(
+            repo, current_user(), customer, payload.get("items") or [],
+            payment=payload.get("payment") or "cash",
+            due_on=payload.get("payment_deadline"))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"Could not send: {str(e)[:200]}")
+
+
+@app.post("/api/send/summary")
+def send_summary(payload: dict = Body(...)):
+    import notify
+    period = "week" if payload.get("period") == "week" else "day"
+    try:
+        return notify.send_summary(repo, current_user(), period=period)
+    except Exception as e:
+        raise HTTPException(502, f"Could not send: {str(e)[:200]}")
+
+
+@app.post("/api/send/reminders")
+def send_reminders(payload: dict = Body(default={}),
+                   x_cron_token: str = Header(default="")):
+    """Credit reminders, two days before the deadline.
+
+    Also the scheduler's entry point, so it accepts a cron token as well as a
+    session — a nightly job has no logged-in user to act as.
+    """
+    import notify
+    days = int((payload or {}).get("days_before", 2))
+    expected = (os.environ.get("CHHOTU_CRON_TOKEN") or "").strip()
+    if expected and secrets.compare_digest(x_cron_token or "", expected):
+        out = []
+        for u in auth.all_users():
+            bind_user(u)
+            out.append({"user": u["phone"],
+                        **notify.send_due_reminders(repo, u, days_before=days)})
+        return {"runs": out}
+    return notify.send_due_reminders(repo, current_user(), days_before=days)
+
+
+# ---------------------------------------------------------------------------
+# Generated documents (Twilio fetches these; token is the only guard)
+# ---------------------------------------------------------------------------
+@app.get("/d/{token}/{filename}")
+def serve_document(token: str, filename: str):
+    doc = documents.fetch(token)
+    if not doc:
+        raise HTTPException(404, "This link has expired.")
+    return Response(content=doc["content"], media_type="application/pdf",
+                    headers={"Content-Disposition":
+                             f'inline; filename="{doc["filename"]}"'})
+
+
+# ---------------------------------------------------------------------------
 # Static page
 # ---------------------------------------------------------------------------
 @app.get("/", response_class=HTMLResponse)
@@ -140,7 +335,7 @@ def index():
 @app.get("/api/state")
 def state():
     return {
-        "shop": "Sharma Building Materials",
+        "shop": repo.load_config().get("shop_name") or "My Shop",
         "today": clock.today().isoformat(),
         "catalogue": repo.load_catalogue(),
         "learning_state": repo.learning_state(),

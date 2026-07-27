@@ -137,6 +137,20 @@ CREATE TABLE IF NOT EXISTS learning (
     PRIMARY KEY (user_id, state)
 );
 
+-- Generated PDFs, held just long enough for Twilio to fetch them. Twilio
+-- pulls media from a public URL, so the token is the only thing guarding a
+-- customer's bill: 32 random bytes, and the row expires within days.
+CREATE TABLE IF NOT EXISTS documents (
+    token      TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    kind       TEXT NOT NULL,
+    filename   TEXT NOT NULL,
+    content    BYTEA NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS documents_expiry ON documents(expires_at);
+
 CREATE TABLE IF NOT EXISTS user_config (
     user_id TEXT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
     data    JSONB NOT NULL DEFAULT '{}'::jsonb
