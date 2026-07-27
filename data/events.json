@@ -1412,5 +1412,120 @@
     },
     "event_id": "evt_0074",
     "recorded_at": "2026-07-26T23:04:04"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_12_FE500D_TATA",
+    "qty": 3.0,
+    "unit": "tonne",
+    "rate": 58.47,
+    "quoted_rate": 58.47,
+    "rate_unit": "kg",
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "Tata Tiscon TMT Bar 12mm Fe500D"
+    },
+    "event_id": "evt_0075",
+    "recorded_at": "2026-07-27T19:45:06"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TMT_16_FE500D_TATA",
+    "qty": 2.0,
+    "unit": "tonne",
+    "rate": 57.45,
+    "quoted_rate": 57.45,
+    "rate_unit": "kg",
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "Tata Tiscon TMT Bar 16mm Fe500D"
+    },
+    "event_id": "evt_0076",
+    "recorded_at": "2026-07-27T19:45:06"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "CEM_ULTRATECH_OPC53",
+    "qty": 100.0,
+    "unit": "bori",
+    "rate": 421.98,
+    "quoted_rate": 421.98,
+    "rate_unit": "bori",
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "UltraTech OPC 53 Cement 50kg"
+    },
+    "event_id": "evt_0077",
+    "recorded_at": "2026-07-27T19:45:06"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 80.0,
+    "unit": "bori",
+    "rate": 396.56,
+    "quoted_rate": 396.56,
+    "rate_unit": "bori",
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "UltraTech PPC Cement 50kg"
+    },
+    "event_id": "evt_0078",
+    "recorded_at": "2026-07-27T19:45:06"
+  },
+  {
+    "type": "delivery",
+    "sku_id": "TILE_KAJARIA_CERAMIC_2X2",
+    "qty": 40.0,
+    "unit": "tonne",
+    "rate": 711.78,
+    "quoted_rate": 711.78,
+    "rate_unit": "box",
+    "payment": null,
+    "customer_id": null,
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "invoice_photo",
+    "evidence": {
+      "transcript": "Kajaria Ceramic Floor Tile 2x2ft"
+    },
+    "event_id": "evt_0079",
+    "recorded_at": "2026-07-27T19:45:06"
   }
 ]
