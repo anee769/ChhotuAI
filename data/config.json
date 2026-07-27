@@ -6,6 +6,11 @@
     "pipe": 18,
     "fitting": 18,
     "fastener": 18,
-    "paint": 18
-  }
+    "paint": 18,
+    "tiles": 28
+  },
+  "shop_name": "Sharma Building Materials",
+  "reply_language": "auto",
+  "silence_timeout_s": 10,
+  "confirm_new_items": true
 }

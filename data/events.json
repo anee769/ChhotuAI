@@ -1527,5 +1527,28 @@
     },
     "event_id": "evt_0079",
     "recorded_at": "2026-07-27T19:45:06"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 3.0,
+    "unit": "bori",
+    "rate": 100.0,
+    "quoted_rate": 100,
+    "rate_unit": "bori",
+    "payment": "cash",
+    "customer_id": "cust_0001",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.828,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "हमने आज 3 बोरी सीमेंट बेची।"
+    },
+    "event_id": "evt_0080",
+    "recorded_at": "2026-07-27T21:17:34"
   }
 ]

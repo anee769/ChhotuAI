@@ -256,6 +256,7 @@ def learning_day60() -> dict:
         ("barah mm", T12), ("solah mm", T16), ("tiscon barah", T12),
         ("tiscon solah", T16), ("tata barah mm", T12), ("tata solah mm", T16),
         ("chhota sariya", T12), ("mota sariya", T16), ("patla rod", T12),
+        ("patla sariya", T12), ("patla bar", T12), ("mota bar", T16),
         ("mota rod", T16), ("12 wala", T12), ("16 wala", T16),
         ("das mm", T12), ("sariya barah", T12), ("sariya solah", T16),
         ("ultratech 53", OPC), ("ultratech opc", OPC), ("opc cement", OPC),

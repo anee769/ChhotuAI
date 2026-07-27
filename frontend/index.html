@@ -474,6 +474,38 @@
   .voice-draft-list {
     overflow:hidden; border:1px solid #dde0e4; border-radius:10px; background:#fff;
   }
+  .setting-row {
+    display:flex; align-items:center; justify-content:space-between; gap:24px;
+  }
+  .setting-label { color:#20242a; font-size:13px; font-weight:700; }
+  .setting-hint { margin-top:2px; color:#6c7179; font-size:11px; max-width:46ch; }
+  .setting-input {
+    padding:8px 10px; border:1px solid #dde0e4; border-radius:8px;
+    background:#fff; color:#20242a; font-size:13px;
+  }
+  .setting-input:focus { outline:2px solid #006c49; outline-offset:-1px; }
+  .setting-check { width:18px; height:18px; accent-color:#006c49; flex:0 0 auto; }
+  .voice-choice-list { margin-top:12px; }
+  .voice-choice-title {
+    margin-bottom:6px; color:#30343a; font-size:11px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .voice-choice-option {
+    display:flex; align-items:center; gap:10px; width:100%; margin-bottom:6px;
+    padding:10px 12px; border:1px solid #dde0e4; border-radius:10px;
+    background:#fff; text-align:left; cursor:pointer;
+  }
+  .voice-choice-option:hover { border-color:#006c49; background:#f4fbf7; }
+  .voice-choice-index {
+    width:21px; height:21px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:50%; background:#dcf7ea; color:#006c49;
+    font-size:11px; font-weight:800;
+  }
+  .voice-choice-name {
+    display:block; overflow:hidden; color:#20242a; font-size:13px; font-weight:720;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .voice-choice-meta { display:block; margin-top:2px; color:#6c7179; font-size:11px; }
   .voice-draft-item {
     display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
     gap:16px; padding:12px 14px; border-bottom:1px solid #eceef0;
@@ -670,7 +702,7 @@
   <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span>Today</span></button>
   <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
   <div class="nav-footer">
-    <button onclick="showTab('dashboard')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
+    <button class="tab-btn" data-tab="settings" onclick="showTab('settings')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
   </div>
 </nav>
 
@@ -814,15 +846,82 @@
       </div>
       <div id="frozenBody" class="p-5"></div>
     </div>
+  </section>
+
+  <section id="tab-settings" class="tabpane hidden">
+    <div class="card overflow-hidden">
+      <div class="section-card-head">
+        <div><h2>Shop</h2><p>Basic details used on bills and greetings</p></div>
+        <span class="material-symbols-outlined text-slate-400">storefront</span>
+      </div>
+      <div class="p-5 space-y-4">
+        <label class="setting-row">
+          <div><div class="setting-label">Shop name</div>
+            <div class="setting-hint">Shown on printed bills and invoices</div></div>
+          <input id="set-shopName" type="text" placeholder="Sharma Building Materials" class="setting-input w-64">
+        </label>
+      </div>
+    </div>
+
     <div class="card overflow-hidden mt-4">
       <div class="section-card-head">
         <div><h2>GST rates</h2><p>Used for invoices and landed-cost calculations</p></div>
-        <span class="material-symbols-outlined text-slate-400">settings</span>
+        <span class="material-symbols-outlined text-slate-400">percent</span>
       </div>
       <div class="p-5">
         <div id="gstBody" class="grid md:grid-cols-3 gap-3"></div>
-        <button onclick="saveGst()" class="mt-4 btn-primary px-4 py-2.5">Save GST rates</button>
       </div>
+    </div>
+
+    <div class="card overflow-hidden mt-4">
+      <div class="section-card-head">
+        <div><h2>Voice assistant</h2><p>How Chhotu listens and replies</p></div>
+        <span class="material-symbols-outlined text-slate-400">mic</span>
+      </div>
+      <div class="p-5 space-y-4">
+        <label class="setting-row">
+          <div><div class="setting-label">Reply language</div>
+            <div class="setting-hint">Auto matches whichever language you spoke in</div></div>
+          <select id="set-lang" class="setting-input w-40">
+            <option value="auto">Auto</option>
+            <option value="hi">Hindi</option>
+            <option value="en">English</option>
+          </select>
+        </label>
+        <label class="setting-row">
+          <div><div class="setting-label">End conversation after silence</div>
+            <div class="setting-hint">Chhotu stops listening if you don't answer</div></div>
+          <span class="flex items-center gap-2">
+            <input id="set-silence" type="number" min="5" max="60" step="1" class="setting-input w-20">
+            <span class="setting-hint">seconds</span>
+          </span>
+        </label>
+        <label class="setting-row">
+          <div><div class="setting-label">Ask before adding a new item</div>
+            <div class="setting-hint">Off means unknown items are added to inventory
+              without asking — a misheard word becomes a real product</div></div>
+          <input id="set-confirmNew" type="checkbox" class="setting-check">
+        </label>
+      </div>
+    </div>
+
+    <div class="card overflow-hidden mt-4">
+      <div class="section-card-head">
+        <div><h2>Learning</h2><p>How much Chhotu has been taught so far</p></div>
+        <span class="material-symbols-outlined text-slate-400">school</span>
+      </div>
+      <div class="p-5">
+        <div class="setting-row">
+          <div><div class="setting-label">Learning state</div>
+            <div class="setting-hint" id="set-learnHint">—</div></div>
+          <button onclick="toggleDay()" class="btn-secondary px-4 py-2">Switch</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4 flex items-center gap-3">
+      <button onclick="saveSettings()" class="btn-primary px-5 py-2.5">Save settings</button>
+      <span id="set-status" class="setting-hint"></span>
     </div>
   </section>
     </div>
@@ -893,6 +992,12 @@ async function boot(){
   document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   setCounts(s.learning_counts); setDayUI(s.learning_state);
   renderVoiceUI('sale','auto'); renderVoiceUI('count','count');
+  // The mic timeout is a saved setting, so it has to be live from the first
+  // conversation — not only after someone visits the Settings tab.
+  try{ const cfg=await api('/api/config');
+    if(cfg.silence_timeout_s) SILENCE_TIMEOUT_MS=Number(cfg.silence_timeout_s)*1000;
+    if(cfg.shop_name){ document.getElementById('shopName').textContent=cfg.shop_name;
+      document.getElementById('heroShop').textContent=cfg.shop_name; } }catch(e){}
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
@@ -903,13 +1008,17 @@ function setDayUI(st){ const on=st==='day60'; document.getElementById('dayLabel'
 async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'day60';
   const r=await api('/api/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({which:next})});
   STATE.learning_state=r.learning_state; setDayUI(r.learning_state); setCounts(r.learning_counts);
+  const hint=document.getElementById('set-learnHint');
+  if(hint) hint.textContent = r.learning_state==='day60'
+    ? 'Day 60 — aliases and priors the shop has taught Chhotu are active'
+    : 'Day 1 — nothing learned yet, every product is asked about';
   toast(r.learning_state==='day60'?'Day 60 — seekha hua sab yaad hai':'Day 1 — kuch nahi seekha abhi'); }
 
 function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
-  if(t==='customers') loadCustomers(); }
+  if(t==='customers') loadCustomers(); if(t==='settings') loadSettings(); }
 
 // ---------- Unified voice UI (sale / delivery / questions) + stock count ----------
 function renderVoiceUI(tab, flow){
@@ -1041,7 +1150,11 @@ async function transcribeBlob(blob){
   return {roman:(r.romanized||r.transcript||'').trim(), disp:(r.transcript||r.romanized||'').trim()};
 }
 
-// record until ~1.1s of silence (after speech), max 8s. Resolves to a Blob.
+// Record until ~1.1s of silence after speech (max 20s of talking). If the
+// owner never speaks at all, give up after SILENCE_TIMEOUT_MS and reject with
+// 'silence' — the caller ends the conversation instead of holding the mic open
+// forever waiting for an answer that isn't coming.
+let SILENCE_TIMEOUT_MS = 10000;
 function recordUntilSilence(onLevel){
   return new Promise(async (resolve,reject)=>{
     if(!navigator.mediaDevices?.getUserMedia){ reject('no-mic'); return; }
@@ -1050,9 +1163,12 @@ function recordUntilSilence(onLevel){
     catch(e){ reject('denied'); return; }
     recorder.stream=stream;
     const rec=new MediaRecorder(stream); const chunks=[];
+    let timedOut=false;
     rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
     rec.onstop=()=>{ stream.getTracks().forEach(t=>t.stop());
-      try{ac.close();}catch(e){} resolve(new Blob(chunks,{type:rec.mimeType||'audio/webm'})); };
+      try{ac.close();}catch(e){}
+      if(timedOut){ reject('silence'); return; }
+      resolve(new Blob(chunks,{type:rec.mimeType||'audio/webm'})); };
     recorder.rec=rec;
     const ac=new (window.AudioContext||window.webkitAudioContext)();
     const src=ac.createMediaStreamSource(stream); const an=ac.createAnalyser();
@@ -1067,7 +1183,8 @@ function recordUntilSilence(onLevel){
       const now=Date.now();
       if(rms>0.045){ spoke=true; silentSince=now; }
       const quietFor=now-silentSince;
-      if((spoke && quietFor>1100) || (now-started>8000)){ try{rec.stop();}catch(e){} return; }
+      if(!spoke && now-started>SILENCE_TIMEOUT_MS){ timedOut=true; try{rec.stop();}catch(e){} return; }
+      if((spoke && quietFor>1100) || (now-started>20000)){ try{rec.stop();}catch(e){} return; }
       requestAnimationFrame(tick);
     })();
   });
@@ -1100,7 +1217,10 @@ async function convStartVoice(tab, flow){
   setMicListening(tab,true);
   let blob;
   try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
-  catch(e){ proc.innerHTML=''; toast('Mic nahi mila — likh ke ya Upload audio se karo',false); return; }
+  catch(e){ proc.innerHTML='';
+    toast(e==='silence'?'Kuch suna nahi — mic dobara dabaiye'
+                       :'Mic nahi mila — likh ke ya Upload audio se karo', false);
+    return; }
   finally{ setMicListening(tab,false); }
   proc.innerHTML='<span class="pulse">Aapki baat samajh raha hoon…</span>';
   let roman='', disp=''; try{ const o=await transcribeBlob(blob); roman=o.roman; disp=o.disp; }catch(e){}
@@ -1136,6 +1256,7 @@ async function convTurn(tab, text, displayText){
   catch(e){ toast('Error: '+(''+e).slice(0,80),false); return; }
   C.state=r.state; C.lastSay=r.say; C.summary=r.summary; C.done=r.done;
   C.confirmation=r.confirmation||null;
+  C.customerOptions=r.customer_options||null;
   if(r.learning_counts) setCounts(r.learning_counts);
   if(r.confirmation_required){
     panel.innerHTML=renderVoiceConfirmation(C, r.confirmation);
@@ -1145,6 +1266,9 @@ async function convTurn(tab, text, displayText){
   C.phase=r.listen?'question':'ready';
   panel.innerHTML=renderConv(C);
   await playSay(r.say_audio_b64);
+  // Nothing was written and there's nothing to read — hand the screen straight
+  // back to a ready mic instead of parking on a result panel.
+  if(r.reset){ setTimeout(()=>resetVoiceConversation(tab, C.flow||'auto'), 900); return; }
   if(r.done){ convFinish(tab, r); return; }
   if(r.listen){ await convListen(tab); }
 }
@@ -1156,7 +1280,16 @@ async function convListen(tab){
   panel.innerHTML=renderConv(C);
   setMicListening(tab,true);
   let blob; try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
-  catch(e){ C.voice=false; C.phase='mic-error'; panel.innerHTML=renderConv(C); return; }
+  catch(e){
+    // 10s with nothing said — end the conversation and hand the screen back to
+    // the idle mic, so the next entry is one tap away. Nothing was written;
+    // the in-progress draft is simply dropped.
+    if(e==='silence'){
+      C.phase='timed-out'; C.done=true; panel.innerHTML=renderConv(C);
+      toast('10 second koi jawaab nahi — baat band. Mic dabakar phir shuru karein');
+      setTimeout(()=>resetVoiceConversation(tab, C.flow||'auto'), 1800);
+      return; }
+    C.voice=false; C.phase='mic-error'; panel.innerHTML=renderConv(C); return; }
   finally{ setMicListening(tab,false); }
   let ans='', disp=''; try{ const o=await transcribeBlob(blob); ans=o.roman; disp=o.disp; }catch(e){}
   if(!ans){ toast('Suna nahi — phir se',false); return convListen(tab); }
@@ -1248,6 +1381,21 @@ function renderCurrentEntry(C){
   </div>`;
 }
 
+// Several customers share the spoken name — show them numbered so the owner
+// can just say "pehla"/"doosra" (or tap, if their hands are free).
+function renderCustomerOptions(C, tab){
+  const options=C.customerOptions||[];
+  if(!options.length||C.state?.awaiting!=='customer_choice') return '';
+  const rows=options.map((c,i)=>`<button class="voice-choice-option"
+      onclick="convTurn('${tab}', '${i+1}', '${escHtml(c.name||'')}')">
+    <span class="voice-choice-index">${i+1}</span>
+    <span class="min-w-0"><span class="voice-choice-name">${escHtml(c.name||'')}</span>
+      <span class="voice-choice-meta">${escHtml(c.phone||'')}</span></span>
+  </button>`).join('');
+  return `<div class="voice-choice-list">
+    <div class="voice-choice-title">Kaun sa customer?</div>${rows}</div>`;
+}
+
 function renderConv(C){
   const tab=convTabOf(C);
   const phases={
@@ -1255,6 +1403,7 @@ function renderConv(C){
     listening:['Sun raha hoon… Bolna poora ho to bas ruk jaiye.','is-listening'],
     'mic-error':['Mic nahi mila. Neeche likh kar jawaab dein.','is-error'],
     question:['Aap voice ya text se jawaab de sakte hain.',''],
+    'timed-out':['10 second koi jawaab nahi aaya — baat band. Kuch likha nahi gaya.','is-error'],
     ready:['Details updated.','']
   };
   const phase=phases[C.phase]||phases.question;
@@ -1278,6 +1427,7 @@ function renderConv(C){
       ${assistant}
       <div class="voice-turn-state ${phase[1]}">${phase[0]}</div>
     </div>
+    ${renderCustomerOptions(C, tab)}
     ${renderCurrentEntry(C)}
     ${answerBox}
   </div>`;
@@ -1671,24 +1821,51 @@ async function loadDashboard(){
       <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
       <tbody>${frozenRows||'<tr><td colspan="3" class="muted">No frozen stock.</td></tr>'}</tbody>
     </table></div>`;
-  loadGst();
 }
+
+// ---------- Settings ----------
+const GST_FAMILIES=['tmt','cement','tiles','pipe','fitting','fastener','paint'];
 let GSTCFG=null;
-async function loadGst(){
+async function loadSettings(){
   GSTCFG=await api('/api/config');
-  const fams=['tmt','cement','pipe','fitting','fastener','paint'];
-  const cells=fams.map(f=>`<label class="text-sm">${f}
-    <input id="gst-${f}" type="number" step="1" value="${GSTCFG.gst_by_family[f]??GSTCFG.gst_default}" class="rounded px-2 py-1 w-20 ml-1"> %</label>`).join('');
-  document.getElementById('gstBody').innerHTML=cells+
-    `<label class="text-sm font-semibold">default (new SKUs)
-    <input id="gst-default" type="number" step="1" value="${GSTCFG.gst_default}" class="rounded px-2 py-1 w-20 ml-1"> %</label>`;
+  const by=GSTCFG.gst_by_family||{};
+  document.getElementById('gstBody').innerHTML =
+    GST_FAMILIES.map(f=>`<label class="setting-row">
+      <span class="setting-label">${f}</span>
+      <span><input id="gst-${f}" type="number" step="1" min="0" max="100"
+        value="${by[f]??GSTCFG.gst_default}" class="setting-input w-20"> %</span></label>`).join('')
+    + `<label class="setting-row">
+      <span class="setting-label">Default (new items)</span>
+      <span><input id="gst-default" type="number" step="1" min="0" max="100"
+        value="${GSTCFG.gst_default}" class="setting-input w-20"> %</span></label>`;
+  document.getElementById('set-shopName').value = GSTCFG.shop_name||'';
+  document.getElementById('set-lang').value = GSTCFG.reply_language||'auto';
+  document.getElementById('set-silence').value = GSTCFG.silence_timeout_s ?? 10;
+  document.getElementById('set-confirmNew').checked = GSTCFG.confirm_new_items!==false;
+  SILENCE_TIMEOUT_MS = (Number(GSTCFG.silence_timeout_s)||10)*1000;
+  const on = STATE.learning_state==='day60';
+  document.getElementById('set-learnHint').textContent = on
+    ? 'Day 60 — aliases and priors the shop has taught Chhotu are active'
+    : 'Day 1 — nothing learned yet, every product is asked about';
 }
-async function saveGst(){
-  const fams=['tmt','cement','pipe','fitting','fastener','paint']; const by={};
-  fams.forEach(f=>{ by[f]=Number(document.getElementById('gst-'+f).value); });
-  const payload={gst_default:Number(document.getElementById('gst-default').value), gst_by_family:by};
-  await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
-  toast('GST rates save ho gaye');
+async function saveSettings(){
+  const by={};
+  GST_FAMILIES.forEach(f=>{ by[f]=Number(document.getElementById('gst-'+f).value); });
+  const silence=Math.min(60,Math.max(5,Number(document.getElementById('set-silence').value)||10));
+  const payload={
+    gst_default:Number(document.getElementById('gst-default').value),
+    gst_by_family:by,
+    shop_name:document.getElementById('set-shopName').value.trim(),
+    reply_language:document.getElementById('set-lang').value,
+    silence_timeout_s:silence,
+    confirm_new_items:document.getElementById('set-confirmNew').checked,
+  };
+  GSTCFG=await api('/api/config',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  SILENCE_TIMEOUT_MS=silence*1000;
+  document.getElementById('set-silence').value=silence;
+  document.getElementById('set-status').textContent='Saved.';
+  setTimeout(()=>{const e=document.getElementById('set-status'); if(e) e.textContent='';},2500);
+  toast('Settings save ho gaye');
 }
 
 // ---------- Invoice ----------

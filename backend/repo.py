@@ -161,12 +161,20 @@ class JsonRepo(Repo):
     def load_config(self) -> dict:
         return self._config
 
+    # Settings the Settings page may write. Anything not listed is ignored, so
+    # a stray key in a request body can't quietly become persisted config.
+    _SETTING_KEYS = ("shop_name", "reply_language", "silence_timeout_s",
+                     "confirm_new_items")
+
     def save_config(self, patch: dict) -> None:
         with self._lock:
             if "gst_default" in patch:
                 self._config["gst_default"] = patch["gst_default"]
             if "gst_by_family" in patch:
                 self._config.setdefault("gst_by_family", {}).update(patch["gst_by_family"])
+            for key in self._SETTING_KEYS:
+                if key in patch:
+                    self._config[key] = patch[key]
             self._write("config.json", self._config)
 
     def gst_rate_for(self, sku: dict) -> float:

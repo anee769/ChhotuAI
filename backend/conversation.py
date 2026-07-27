@@ -34,6 +34,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import unicodedata
 from datetime import date, timedelta
 
 import matcher as M
@@ -64,13 +65,39 @@ _HINDI_MARK_RE = re.compile(
     r"\b(hai|hain|kya|kitna|kitne|bacha|bika|becha|bech|khareed|kharida|"
     r"udhaar|udhar|mein|nahi|haan|aur|sariya|saria|paisa|rupaye|rupaya|"
     r"bataiye|dabaiye|maal|kaunsa|wala|theek|thik|gaya|gayi|diya|hafte|"
-    r"mahine|bori)\b",
+    r"mahine|bori|"
+    # Everyday words that carry no English collision. Without these a plain
+    # romanized question like "aaj ka hisaab batao" was answered in English.
+    r"aaj|kal|abhi|hisaab|hisab|batao|bata|bataye|karo|kiya|naam|chahiye|"
+    r"saamaan|samaan|thoda|zyada|poora|pura|kaisa|kaisi|kaise|raha|rahi|"
+    r"mera|meri|mere|apna|apne|humne|hamne|maine|saptah|paise|nagad|"
+    r"jaldi|dena|lena|gin|ginti|baaki|phir|yeh|kuch)\b",
     re.I,
 )
 
 
+# Devanagari spells the same word more than one way. The nukta (U+093C) is
+# optional in ordinary typing and STT output — "हफ़्ते" and "हफ्ते" are the
+# same word but different codepoints, so a pattern written one way silently
+# misses the other. Every deterministic matcher below folds the text first
+# (NFD to split precomposed nukta letters like क़, drop the nukta, recompose).
+# Matching only — never use this on text we display or store.
+def _fold(text: str) -> str:
+    t = unicodedata.normalize("NFD", text or "")
+    t = t.replace("़", "")
+    return unicodedata.normalize("NFC", t).lower()
+
+
+def _config(repo) -> dict:
+    """Settings, read defensively — a repo stub in a test may not have any."""
+    try:
+        return repo.load_config() or {}
+    except Exception:
+        return {}
+
+
 def _detect_lang(text: str):
-    t = (text or "").strip()
+    t = _fold(text).strip()
     if not t:
         return None
     if _HINDI_MARK_RE.search(t):
@@ -202,7 +229,7 @@ def _extract_prompt(repo) -> str:
         "lakh=100000; dhai=2.5 saade=+0.5 sava=+0.25 paune=-0.25. Digits stay as-is.\n\n"
         "Return JSON:\n"
         '{"intent":"sale|delivery|count|stock_query|analytics_query|chitchat|unknown",'
-        '"metric":"margin|cash|udhaar|frozen|inventory|null",'
+        '"metric":"margin|cash|udhaar|frozen|inventory|day_summary|week_summary|null",'
         '"reply":"<ONLY for intent=chitchat: a short, warm, natural reply in the '
         'SAME language/script the owner used — a real greeting/thanks/small-talk '
         'reply, not a canned line. null for every other intent>",'
@@ -233,7 +260,10 @@ def _extract_prompt(repo) -> str:
         "unit. payment: only if spoken (cash/nagad->cash; "
         "udhaar/credit/baaki->credit). Else null.\n"
         "- stock question ('kitna bacha/stock hai') -> intent stock_query. "
-        "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric.\n"
+        "Margin/cash/udhaar/frozen/inventory question -> analytics_query + metric. "
+        "A whole-day wrap-up ('aaj ka hisaab/summary', 'how did today go') -> "
+        "metric day_summary; a whole-week one ('hafte ka hisaab', 'weekly "
+        "report') -> metric week_summary.\n"
         "- Greetings, small talk, thanks, or anything not about the shop's sale/"
         "purchase/stock/money -> intent=chitchat, with a real warm reply (never "
         "the literal words 'chitchat' or a business rejection). Only fall back "
@@ -265,7 +295,7 @@ _CASH_RE = re.compile(r"\bcash\b|nagad|कैश|नकद")
 
 
 def _detect_payment(text: str):
-    t = (text or "").lower()
+    t = _fold(text)
     if _CREDIT_RE.search(t):
         return "credit"
     if _CASH_RE.search(t):
@@ -294,7 +324,7 @@ _COUNT_INTENT_RE = re.compile(
 
 def _detect_transaction_intent(text: str) -> str:
     """Detect explicit transaction verbs before asking the model."""
-    text = text or ""
+    text = _fold(text)
     if _DELIVERY_INTENT_RE.search(text):
         return "delivery"
     if _SALE_INTENT_RE.search(text):
@@ -311,9 +341,10 @@ def _clean_unavailable_name(text: str) -> str:
     cleaned = _SALE_INTENT_RE.sub(" ", cleaned)
     cleaned = re.sub(
         r"\b(?:hai|hain|tha|thi|cash|nagad|udhaar|credit|aur|mein|ke|liye|"
-        r"laga|aaya|liya|mila|per|kitne|rupaye|"
+        r"laga|aaya|liya|mila|per|kitne|rupaye|aaj|kal|humne|hamne|maine|"
+        r"hum|main|apne|today|yesterday|"
         r"i|we|you|the|a|an|of|for|in|and|rupees?|rs)\b"
-        r"|है|हैं|था|थी|नकद|उधार|और|में|रुपये",
+        r"|है|हैं|था|थी|नकद|उधार|और|में|रुपये|आज|कल|हमने|हमन|मैंने|मैने|हम|अपने",
         " ",
         cleaned,
         flags=re.I,
@@ -321,7 +352,10 @@ def _clean_unavailable_name(text: str) -> str:
     number_words = set(nlp.ONES)
     unit_words = set(nlp.UNIT_WORDS)
     words = []
-    for word in re.findall(r"[\w.]+", cleaned, flags=re.UNICODE):
+    # \w excludes Devanagari vowel signs and the nukta (Unicode category Mn),
+    # so a bare \w+ silently truncates "लकड़ी" to "लकड" and "हमने" to "हमन".
+    # Spell the Devanagari block out alongside it.
+    for word in re.findall(r"[\w.ऀ-ॿ]+", cleaned, flags=re.UNICODE):
         if re.fullmatch(r"\d+(?:\.\d+)?", word):
             continue
         if word in number_words or word in unit_words:
@@ -528,7 +562,33 @@ def _catalogue_evidence(phrase: str, repo) -> dict:
 # sale/delivery utterance never matches these patterns, so it can't misfire
 # on an order. The LLM is reserved for what genuinely needs it — pinning
 # down which product/qty/price was said.
+# "Which period" and "is this a summary at all" are two independent questions,
+# and pairing them into one regex is what made "saptah ka summary" fall through
+# to the DAY branch: the week alternative only fired when a summary word sat
+# right next to the week word. Match them separately instead — any summary
+# request is weekly the moment a week word appears anywhere in the sentence.
+_SUMMARY_RE = re.compile(
+    r"\b(?:summary|sumary|summry|report|recap|overview|hisaab|hisab|"
+    r"hisab\s*kitab|band\s*karo|kaisa\s*raha|kaisi\s*rahi|kaisa\s*gaya|"
+    r"how\s*(?:did|was)|business\s*kaisa|kya\s*hua)\b"
+    r"|सारांश|समरी|रिपोर्ट|हिसाब|कैसा\s*रहा|कैसी\s*रही|ब्यौरा|लेखा",
+    re.I,
+)
+_WEEK_RE = re.compile(
+    r"\b(?:haft[ae]|hafte|hafta|saptah|week(?:ly)?|saat\s*din|7\s*din|"
+    r"seven\s*days?|last\s*7)\b|हफ्त[ेाो]|सप्ताह|साप्ताहिक|सात\s*दिन",
+    re.I,
+)
+
+
+def _summary_metric(text: str) -> str:
+    return "week_summary" if _WEEK_RE.search(_fold(text)) else "day_summary"
+
+
 _QUICK_PATTERNS = [
+    # Summaries are checked before the single-metric patterns below, or
+    # "hafte ka margin" would answer with just today's margin line.
+    ("_summary", _SUMMARY_RE),
     ("frozen", re.compile(r"nahi\s*bika|bika\s*nahi|not\s+sold|unsold|frozen|"
                           r"phasa|dead\s*stock|purana\s*maal|move\w*\s*nahi|"
                           r"kaun\s*sa\s*(?:saamaan|samaan|maal)|"
@@ -547,9 +607,17 @@ _STOCK_QUERY_RE = re.compile(r"kitna\s*bacha|stock\s*hai|kitna\s*stock|kitna\s*h
 def _quick_route(text: str):
     """Deterministic fast-path for analytics/stock questions. Returns
     ("analytics", metric), ("stock", None), or None (fall through to the LLM)."""
-    t = (text or "").lower()
+    t = _fold(text)
     for metric, pat in _QUICK_PATTERNS:
         if pat.search(t):
+            if metric == "_summary":
+                return ("analytics", _summary_metric(t))
+            # margin and cash are the two day-scoped numbers, so "pichhle
+            # hafte ka margin" wants the weekly roll-up, not today's line.
+            # frozen/inventory/udhaar are point-in-time balances — a week
+            # word doesn't change what they mean.
+            if metric in ("margin", "cash") and _WEEK_RE.search(t):
+                return ("analytics", "week_summary")
             return ("analytics", metric)
     if _STOCK_QUERY_RE.search(t):
         return ("stock", None)
@@ -561,7 +629,13 @@ def converse(state, user_text, flow, repo):
         state = {"flow": flow, "said": [], "history": []}
 
     state.setdefault("history", [])
-    if not state.get("lang"):
+    # A forced reply language from Settings overrides detection outright —
+    # an owner who picked "always Hindi" means it even when they type a name
+    # or a phone number that looks like plain English.
+    forced = _config(repo).get("reply_language")
+    if forced in ("hi", "en"):
+        state["lang"] = forced
+    elif not state.get("lang"):
         detected = _detect_lang(user_text)
         if detected:
             state["lang"] = detected
@@ -574,12 +648,12 @@ def converse(state, user_text, flow, repo):
     # the first turn. This preserves the complete order and avoids another
     # 30-second model call for simple answers such as "12 mm", "50", or "cash".
     aw = state.get("awaiting")
-    if aw in ("customer_phone", "customer_name", "deadline"):
+    if aw in ("customer_phone", "customer_name", "customer_choice", "deadline"):
         state["history"].append({"role": "user", "content": user_text or ""})
         return _apply_customer_slot(state, aw, user_text, repo)
     if aw == "confirmation":
         state["history"].append({"role": "user", "content": user_text or ""})
-        if re.search(r"confirm|haan|ha|yes|theek|ठीक|हाँ", (user_text or "").lower()):
+        if re.search(r"confirm|haan|ha|yes|theek|ठीक|हाँ", _fold(user_text)):
             state["awaiting"] = None
             pc = state.pop("pending_commit")
             return _commit(state, pc["flow"], pc["items"], pc["skipped"], repo)
@@ -630,7 +704,17 @@ def converse(state, user_text, flow, repo):
         return _reply(ext.get("reply") or _L(state, "Namaste!", "Hi there!"),
                       listen=True, done=False, state=state)
     if intent == "analytics_query":
-        return _analytics_answer(ext.get("metric"), repo, state)
+        metric = ext.get("metric")
+        # The extractor has no reliable sense of period, and its fallback for a
+        # summary-shaped question is "margin" — which answers with TODAY's
+        # numbers. An explicit week word in the transcript overrules it.
+        if _WEEK_RE.search(_fold(user_text)) and metric in (
+                None, "margin", "day_summary", "week_summary"):
+            metric = "week_summary"
+        elif metric == "day_summary" or (metric in (None, "margin")
+                                         and _SUMMARY_RE.search(_fold(user_text))):
+            metric = "day_summary"
+        return _analytics_answer(metric, repo, state)
     if intent == "stock_query":
         return _stock_flow(state, ext["items"], repo)
     if intent == "unknown" and not ext["items"]:
@@ -647,7 +731,7 @@ def converse(state, user_text, flow, repo):
 # ---------------------------------------------------------------------------
 # Sale / delivery / count
 # ---------------------------------------------------------------------------
-def _provision_new_sku(item, family, repo):
+def _provision_new_sku(item, family, repo, create=True):
     """A delivery/count of a sariya size or cement type the shop doesn't
     stock yet EXTENDS the catalogue instead of being rejected or stuck asking
     a disambiguation that only ever offers the old sizes/types. We can never
@@ -666,6 +750,8 @@ def _provision_new_sku(item, family, repo):
                          and s.get("attributes", {}).get("diameter_mm") == dia), None)
         if existing:
             return existing["sku_id"]
+        if not create:
+            return None
         grade = attrs.get("grade") or "Fe500D"
         brand = attrs.get("brand") or "Tata Tiscon"
         sku_id = f"TMT_{dia}_{grade.upper()}_{brand.split()[0].upper()}"
@@ -697,6 +783,8 @@ def _provision_new_sku(item, family, repo):
                          == typ.upper()), None)
         if existing:
             return existing["sku_id"]
+        if not create:
+            return None
         brand = attrs.get("brand") or "UltraTech"
         sku_id = f"CEM_{brand.split()[0].upper()}_{typ.upper().replace(' ', '')}"
         cement_costs = [s["opening_cost_per_kg"] for s in catalogue if s.get("family") == "cement"]
@@ -794,6 +882,46 @@ def _provision_generic_sku(item, repo):
     return sku_id
 
 
+def _names_a_new_variant(item, family) -> bool:
+    """Did the owner actually name a NEW variant of a family we stock ('25mm
+    sariya', 'PSC cement'), or just say the family word ('cement')? Only the
+    former is a candidate for a new catalogue entry; the latter needs the
+    ordinary which-one question."""
+    name = item.get("name") or ""
+    attrs = M.extract_attrs(name)
+    if family == "tmt":
+        return bool(attrs.get("diameter_mm"))
+    if family == "cement":
+        return bool(attrs.get("type")
+                    or re.search(r"\b(opc\s*\d{2}|ppc|psc|src|pcc)\b", name.lower()))
+    if family == "tiles":
+        return bool(re.search(r"\b(ceramic|vitrified|marble|granite|wall|floor|"
+                              r"\d{3,4}\s*x\s*\d{3,4}|\dx\d)\b", name.lower()))
+    return True
+
+
+def _sku_from_learned_alias(name, repo):
+    """Resolve a phrase the shop has TAUGHT us — 'mota sariya', 'patla rod',
+    'PPC cement' — straight to its SKU, so a shop 60 days in stops being asked
+    "kaunsa sariya?" for a phrase it has already confirmed dozens of times and
+    moves on to rate/quantity. Only whole-phrase and multiword alias hits count:
+    the single-token scan in matcher.match() is what turns a bare 'cement' into
+    a coin flip between OPC and PPC, and that genuinely does need the question."""
+    norm = M.normalize(name or "")
+    if not norm:
+        return None
+    idx = M.build_alias_index(repo.load_catalogue(), repo.load_learning())
+    ids = idx.get(norm)
+    if ids is None:
+        padded = f" {norm} "
+        for alias in sorted((a for a in idx if " " in a), key=len, reverse=True):
+            if f" {alias} " in padded:
+                ids = idx[alias]
+                break
+    uniq = list(dict.fromkeys(ids or []))
+    return uniq[0] if len(uniq) == 1 and repo.sku(uniq[0]) else None
+
+
 def _ask_product(item, state=None):
     fam = item.get("family")
     if fam == "tmt":
@@ -822,7 +950,7 @@ def _answer_number(text):
 
 
 def _sku_from_answer(text, family, repo):
-    t = (text or "").lower()
+    t = _fold(text)
     direct = None
     if family == "tmt" or re.search(r"sari?ya|sariya|tmt|सरिया", t):
         if re.search(r"\b12\b|barah|बारह", t):
@@ -905,6 +1033,22 @@ def _apply_order_slot(state, user_text, repo):
             return _ask_order_slot(state, idx, slot,
                                    _L(state, "Ye maal becha tha ya khareeda?",
                                       "Was this sold or bought?"))
+    elif slot in ("confirm_add", "verify_new"):
+        answer = _yes_no(user_text)
+        if answer is None:
+            return _ask_order_slot(
+                state, idx, slot,
+                _L(state, "Haan ya na mein bataiye — add karoon?",
+                   "Just yes or no — should I add it?"))
+        if answer:
+            item["_confirmed_add"] = True
+        else:
+            # Declined: leave the line out of the catalogue entirely. Marking
+            # it routes the line through the existing "skipped" machinery,
+            # which tells the owner it wasn't added.
+            item["_declined"] = True
+            item["in_catalogue"] = False
+            item["sku_id"] = None
     elif slot == "brand_type":
         extra = (user_text or "").strip()
         if not extra:
@@ -930,14 +1074,17 @@ def _order_flow(state, intent, items, repo):
                                   "Was this sold or bought?"))
     flow = intent  # sale | delivery | count
     state["locked_intent"] = flow
-    # We can only ever ADD to what the shop carries on a delivery/count — a
-    # sale can't invent stock that never arrived. So a sariya size or cement
-    # type we don't have yet gets provisioned into the catalogue right here,
-    # instead of being rejected as "hum nahi rakhte".
+    # Anything the shop doesn't carry yet gets offered as a new catalogue
+    # entry right here instead of being rejected outright with "hum nahi
+    # rakhte". This runs for sales too: the owner selling something is just as
+    # good evidence that the shop stocks it as a delivery is, and refusing the
+    # line loses the sale entirely. The resulting SKU simply starts uncounted,
+    # which the ledger already reports honestly until a stock count lands.
     newly_added = []
-    if flow in ("delivery", "count"):
+    if flow in ("sale", "delivery", "count"):
+        stocked_families = {s.get("family") for s in repo.load_catalogue()}
         for idx, it in enumerate(items):
-            if it.get("sku_id"):
+            if it.get("sku_id") or it.get("_declined"):
                 continue
             fam = it.get("family")
             name_l = (it.get("name") or "").lower()
@@ -946,20 +1093,63 @@ def _order_flow(state, intent, items, repo):
                        else "tmt" if re.search(r"sari?ya|सरिया|\btmt\b|\bbars?\b", name_l)
                        else "tiles" if re.search(r"tiles?|टाइल", name_l)
                        else None)
-            if fam in ("tmt", "cement", "tiles"):
-                sid = _provision_new_sku(it, fam, repo) if fam in ("tmt", "cement") else None
-                # Family-specific provisioning needs a recognizable
-                # diameter/type; fall back to generic rather than dropping.
-                sid = sid or _provision_generic_sku(it, repo)
-            else:
-                category = _match_hardware_category(it.get("name"))
-                if category and not _has_brand_or_type(it.get("name")):
-                    state["draft_items"] = items
+            # An existing SKU is not a new item — resolve it silently and never
+            # ask "should I add this?" for stock the shop already carries.
+            existing = (_provision_new_sku(it, fam, repo, create=False)
+                        if fam in ("tmt", "cement") else None)
+            existing = existing or _sku_from_learned_alias(it.get("name"), repo)
+            if existing:
+                it["sku_id"] = existing
+                it["family"] = repo.sku(existing).get("family")
+                it["in_catalogue"] = True
+                continue
+
+            # A stocked family named without anything to tell its variants
+            # apart ("cement", "sariya") is an AMBIGUOUS reference, not a new
+            # product. Leave it for the disambiguation question below — asking
+            # "should I add cement?" when two cements are on the shelf is
+            # nonsense.
+            if fam in stocked_families and not _names_a_new_variant(it, fam):
+                continue
+
+            label = _clean_unavailable_name(it.get("name")) or (it.get("name") or "")
+            category = _match_hardware_category(it.get("name"))
+            known_kind = category or fam in ("tmt", "cement", "tiles")
+            ask_first = _config(repo).get("confirm_new_items", True)
+            if ask_first and not it.get("_confirmed_add"):
+                state["draft_items"] = items
+                if known_kind:
+                    # Recognised kind of goods, just not stocked yet — a plain
+                    # "add it?" is enough.
                     return _ask_order_slot(
-                        state, idx, "brand_type",
-                        _L(state, f"{category} ke liye kaunsa brand aur type?",
-                           f"What brand and type of {category}?"))
-                sid = _provision_generic_sku(it, repo)
+                        state, idx, "confirm_add",
+                        _L(state,
+                           f"{label} inventory mein nahi hai — naya item add kar doon?",
+                           f"{label} isn't in inventory — should I add it as a "
+                           "new item?"))
+                # Not in the catalogue AND not a hardware category we know of.
+                # That is far more often a misheard word than a real new brand,
+                # so make the owner say so before it becomes a permanent SKU.
+                return _ask_order_slot(
+                    state, idx, "verify_new",
+                    _L(state,
+                       f"{label} na inventory mein hai na kisi jaani-pehchaani "
+                       "category mein — ye sach mein naya brand ya item hai, ya "
+                       "galti se bol diya?",
+                       f"{label} is neither in inventory nor a hardware category "
+                       "I know — is that genuinely a new brand or item, or was it "
+                       "said by mistake?"))
+            if category and not _has_brand_or_type(it.get("name")):
+                state["draft_items"] = items
+                return _ask_order_slot(
+                    state, idx, "brand_type",
+                    _L(state, f"{category} ke liye kaunsa brand aur type?",
+                       f"What brand and type of {category}?"))
+            sid = (_provision_new_sku(it, fam, repo) if fam in ("tmt", "cement")
+                   else None)
+            # Family-specific provisioning needs a recognizable diameter/type;
+            # fall back to generic rather than dropping the line.
+            sid = sid or _provision_generic_sku(it, repo)
             if sid:
                 it["sku_id"] = sid
                 it["family"] = fam or repo.sku(sid).get("family")
@@ -970,12 +1160,26 @@ def _order_flow(state, intent, items, repo):
     # drop products the shop does not stock, but tell the owner once
     kept = []
     skipped = []
+    declined = []
     for it in items:
         if it.get("in_catalogue") is False and not it.get("sku_id"):
-            skipped.append(_clean_unavailable_name(it.get("name")) or "wo cheez")
+            name = _clean_unavailable_name(it.get("name")) or "wo cheez"
+            skipped.append(name)
+            if it.get("_declined"):
+                declined.append(name)
         else:
             kept.append(it)
     if not kept:
+        # The owner was ASKED whether to add it and said no. They already know
+        # it isn't stocked — repeating that back at them is just argumentative.
+        # Acknowledge, write nothing, and end the turn so the screen returns to
+        # a ready mic.
+        if declined:
+            out = _say(state, _L(state, "Theek hai, kuch nahi joda.",
+                                 "Alright, nothing was added."),
+                       listen=False, done=True)
+            out["reset"] = True
+            return out
         nm = skipped[0] if skipped else _L(state, "wo cheez", "that item")
         return _say(state, _L(state,
                               f"{nm} hum nahi rakhte — sariya, cement, ya tiles hai. Kuch aur?",
@@ -991,15 +1195,18 @@ def _order_flow(state, intent, items, repo):
     for name in skipped:
         if name not in remembered_skipped:
             remembered_skipped.append(name)
-            newly_skipped.append(name)
+            # Only announce lines the owner never got a say on. One they just
+            # declined needs no explanation back to them.
+            if name not in declined:
+                newly_skipped.append(name)
     notice = ""
     if newly_added:
         notice += _L(state, f"{_oxford(newly_added)} inventory mein naya add ho gaya. ",
-                     f"{_oxford(newly_added)} added to inventory as a new item. ")
+                     f"{_oxford(newly_added, state)} added to inventory as a new item. ")
     if newly_skipped:
         notice += _L(state,
                      f"{_oxford(newly_skipped)} inventory mein nahi hai, isliye add nahi kiya. ",
-                     f"{_oxford(newly_skipped)} isn't in inventory, so it wasn't added. ")
+                     f"{_oxford(newly_skipped, state)} isn't in inventory, so it wasn't added. ")
     if notice:
         state["pending_notice"] = notice
 
@@ -1010,6 +1217,13 @@ def _order_flow(state, intent, items, repo):
     # asking — otherwise a genuinely new size (e.g. 25mm) loops forever on a
     # disambiguation question that only ever offers the OLD sizes.
     for idx, it in enumerate(kept):
+        if not it.get("sku_id"):
+            # A phrase the shop has already taught us ("mota sariya", "PPC
+            # cement") resolves without another disambiguation question.
+            sid = _sku_from_learned_alias(it.get("name"), repo)
+            if sid:
+                it["sku_id"] = sid
+                it["family"] = repo.sku(sid).get("family")
         if not it.get("sku_id") and flow in ("delivery", "count") and it.get("family"):
             sid = _provision_new_sku(it, it["family"], repo)
             if sid:
@@ -1062,6 +1276,66 @@ def _order_flow(state, intent, items, repo):
 # ---------------------------------------------------------------------------
 # Udhaar customer capture (deterministic data entry, gates the commit)
 # ---------------------------------------------------------------------------
+def _norm_name(name: str) -> str:
+    return re.sub(r"[^a-z0-9ऀ-ॿ ]+", " ", (name or "").lower()).strip()
+
+
+def _find_customers_by_name(repo, name: str) -> list:
+    """Look a spoken customer name up in the CRM. Exact (normalized) hits win
+    outright; only if there are none do we widen to token-prefix matches, so
+    'Ramesh' finding both 'Ramesh Kumar' and 'Ramesh Traders' asks the owner
+    which one instead of guessing."""
+    target = _norm_name(name)
+    if not target:
+        return []
+    rows = list(repo.customers())
+    exact = [c for c in rows if _norm_name(c.get("name")) == target]
+    if exact:
+        return exact
+    words = target.split()
+    partial = []
+    for c in rows:
+        other = _norm_name(c.get("name"))
+        if not other:
+            continue
+        if all(any(w == o or o.startswith(w) for o in other.split()) for w in words):
+            partial.append(c)
+    return partial
+
+
+# "pehla / doosra / teesra" is a closed three-word list, so pick the option
+# deterministically rather than paying for an LLM call that could land on the
+# wrong customer's ledger.
+_ORDINALS = [
+    re.compile(r"\b(?:1|pehl[ae]|pahl[ae]|first|ek)\b|पहल[ाे]"),
+    re.compile(r"\b(?:2|doosr[ae]|dusr[ae]|second|do)\b|दूसर[ाे]"),
+    re.compile(r"\b(?:3|teesr[ae]|tisr[ae]|third|teen)\b|तीसर[ाे]"),
+    re.compile(r"\b(?:4|chauth[ae]|fourth|char)\b|चौथ[ाे]"),
+]
+_YES_RE = re.compile(r"\b(?:haan|han|ha|ji|yes|yeah|yep|ok|okay|theek|thik|sahi|"
+                     r"karo|kar\s*do|add|naya|new|bilkul|sure)\b|हाँ|हां|ठीक|सही|नया")
+_NO_RE = re.compile(r"\b(?:nahi|nahin|na|no|nope|mat|galti|galat|mistake|wrong|"
+                    r"rehne|chhodo|cancel|skip)\b|नहीं|नही|मत|गलत|गलती")
+
+
+def _yes_no(text: str):
+    """Return True/False for a clear yes/no, else None. 'no' is checked first —
+    'nahi karo' must never read as the 'karo' yes."""
+    t = _fold(text)
+    if _NO_RE.search(t):
+        return False
+    if _YES_RE.search(t):
+        return True
+    return None
+
+
+def _clean_spoken_name(text: str) -> str:
+    # STT auto-punctuates a spoken utterance ("Ramesh." as a full sentence) —
+    # strip trailing punctuation or it doubles up later ("Customer: Ramesh.."
+    # from name "Ramesh." + our own period).
+    return re.sub(r"[.!?,।]+$", "", (text or "").strip()).strip()
+
+
 def _apply_customer_slot(state, aw, user_text, repo):
     if aw == "customer_phone":
         phone = parse_phone(user_text)
@@ -1070,17 +1344,27 @@ def _apply_customer_slot(state, aw, user_text, repo):
                                   "Please give the customer's 10-digit phone number."),
                         listen=True, done=False)
         known = repo.customer_by_phone(phone)
-        state["customer"] = {"phone": repo.normalize_phone(phone),
-                             "customer_id": known.get("customer_id") if known else None,
-                             "name": known.get("name") if known else None}
+        if known:
+            state["customer"] = {"phone": known["phone"],
+                                 "customer_id": known.get("customer_id"),
+                                 "name": known.get("name")}
+        else:
+            # The name was already collected before the number was asked for,
+            # so a brand-new customer is complete the moment the phone lands.
+            pending = state.pop("pending_customer_name", None)
+            if pending:
+                customer = repo.upsert_customer(phone, pending)
+                state["customer"] = {"phone": customer["phone"],
+                                     "customer_id": customer["customer_id"],
+                                     "name": customer["name"]}
+            else:
+                state["customer"] = {"phone": repo.normalize_phone(phone),
+                                     "customer_id": None, "name": None}
         state["awaiting"] = None
         return _resume_customer_capture(state, repo)
 
     if aw == "customer_name":
-        # STT auto-punctuates a spoken utterance ("Ramesh." as a full
-        # sentence) — strip trailing punctuation or it doubles up later
-        # ("Customer: Ramesh.." from name "Ramesh." + our own period).
-        name = re.sub(r"[.!?,।]+$", "", (user_text or "").strip()).strip()
+        name = _clean_spoken_name(user_text)
         if not name:
             return _say(state, _L(state, "Naam bataiye.", "Please tell me the name."),
                         listen=True, done=False)
@@ -1088,11 +1372,64 @@ def _apply_customer_slot(state, aw, user_text, repo):
         # receipts and the CRM table read consistently regardless of which
         # language the owner spoke the name in.
         name = _transliterate_to_latin(name)
-        customer = repo.upsert_customer(state["customer"]["phone"], name)
-        state["customer"] = {"phone": customer["phone"],
-                             "customer_id": customer["customer_id"],
-                             "name": customer["name"]}
         state["awaiting"] = None
+
+        # A phone was captured first (older flow, or the owner volunteered a
+        # number) — that number already identifies the customer, so just name
+        # them rather than searching the CRM for a different match.
+        existing_phone = (state.get("customer") or {}).get("phone")
+        if existing_phone:
+            customer = repo.upsert_customer(existing_phone, name)
+            state["customer"] = {"phone": customer["phone"],
+                                 "customer_id": customer["customer_id"],
+                                 "name": customer["name"]}
+            return _resume_customer_capture(state, repo)
+
+        matches = _find_customers_by_name(repo, name)
+        if len(matches) == 1:
+            c = matches[0]
+            state["customer"] = {"phone": c.get("phone"),
+                                 "customer_id": c.get("customer_id"),
+                                 "name": c.get("name")}
+            return _resume_customer_capture(state, repo)
+        if len(matches) > 1:
+            return _ask_customer_choice(state, matches)
+        # Nobody by that name — collect a number and open a new account.
+        state["pending_customer_name"] = name
+        state["awaiting"] = "customer_phone"
+        return _say(state, _L(state,
+                              f"{name} naam se koi customer nahi mila — naya "
+                              "customer hai? Unka 10 digit number bataiye.",
+                              f"No customer named {name} — a new customer? Please "
+                              "give their 10-digit phone number."),
+                    listen=True, done=False)
+
+    if aw == "customer_choice":
+        options = state.get("customer_options") or []
+        pick = None
+        text = _fold(user_text)
+        for i, pat in enumerate(_ORDINALS[:len(options)]):
+            if pat.search(text):
+                pick = options[i]
+                break
+        if pick is None:
+            named = [c for c in options
+                     if _norm_name(c.get("name")) == _norm_name(_clean_spoken_name(user_text))]
+            if len(named) == 1:
+                pick = named[0]
+        if pick is None:
+            # A number is unambiguous where a repeated name isn't.
+            phone = parse_phone(user_text)
+            pick = next((c for c in options
+                         if repo.normalize_phone(c.get("phone") or "")
+                         == repo.normalize_phone(phone)), None) if phone else None
+        if pick is None:
+            return _ask_customer_choice(state, options, repeat=True)
+        state.pop("customer_options", None)
+        state["awaiting"] = None
+        state["customer"] = {"phone": pick.get("phone"),
+                             "customer_id": pick.get("customer_id"),
+                             "name": pick.get("name")}
         return _resume_customer_capture(state, repo)
 
     if aw == "deadline":
@@ -1109,17 +1446,42 @@ def _apply_customer_slot(state, aw, user_text, repo):
         return _resume_customer_capture(state, repo)
 
 
+def _ask_customer_choice(state, options, repeat=False):
+    """Several customers share the spoken name — put them on screen and let the
+    owner say 'pehla'/'doosra' instead of reciting a phone number."""
+    options = options[:4]
+    state["customer_options"] = options
+    state["awaiting"] = "customer_choice"
+    labels = [f"{i + 1}. {c.get('name')}" + (f" ({c.get('phone')})" if c.get("phone") else "")
+              for i, c in enumerate(options)]
+    listing = "; ".join(labels)
+    if repeat:
+        say = _L(state, f"Samajh nahi aaya — {listing}. Pehla ya doosra?",
+                 f"Didn't catch that — {listing}. The first or the second?")
+    else:
+        say = _L(state, f"Is naam ke {len(options)} customer hain — {listing}. Kaun sa?",
+                 f"There are {len(options)} customers with that name — {listing}. Which one?")
+    out = _say(state, say, listen=True, done=False)
+    out["customer_options"] = options
+    return out
+
+
 def _resume_customer_capture(state, repo):
     customer = state.get("customer") or {}
-    if not customer.get("phone"):
-        state["awaiting"] = "customer_phone"
-        return _say(state, _L(state, "Customer ka 10 digit contact number bataiye.",
-                              "Please give the customer's 10-digit phone number."),
-                    listen=True, done=False)
     if not customer.get("customer_id"):
-        state["awaiting"] = "customer_name"
-        return _say(state, _L(state, "Naya customer hai — naam kya hai?",
-                              "New customer — what's their name?"), listen=True, done=False)
+        # Name first: the owner knows who they just sold to by name, not by
+        # phone number. A number is only asked for once the name turns out to
+        # be nobody already on the books.
+        if not customer.get("name"):
+            state["awaiting"] = "customer_name"
+            return _say(state, _L(state, "Customer ka naam kya hai?",
+                                  "What's the customer's name?"),
+                        listen=True, done=False)
+        if not customer.get("phone"):
+            state["awaiting"] = "customer_phone"
+            return _say(state, _L(state, "Customer ka 10 digit contact number bataiye.",
+                                  "Please give the customer's 10-digit phone number."),
+                        listen=True, done=False)
     pending = state.get("pending_commit") or {}
     needs_deadline = any(it.get("payment") == "credit"
                          for it in pending.get("items", []))
@@ -1263,7 +1625,7 @@ def _commit(state, flow, items, skipped, repo):
     # One flowing sentence, comma-joined, exactly one trailing period — not a
     # stack of separately-punctuated fragments (which doubled up whenever a
     # captured name already carried STT's own trailing punctuation).
-    bits = [f"{_oxford(parts)} {verb}"]
+    bits = [f"{_oxford(parts, state)} {verb}"]
     if customer.get("name"):
         bits.append(_L(state, f"{customer['name']} ke naam", f"for {customer['name']}"))
     if deadline:
@@ -1271,12 +1633,12 @@ def _commit(state, flow, items, skipped, repo):
     say = _L(state, "Theek hai — ", "Done — ") + ", ".join(bits) + "."
     if skipped:
         say += _L(state, f" {_oxford(skipped)} chhod diya, wo stock mein nahi.",
-                  f" Skipped {_oxford(skipped)} — not in stock.")
+                  f" Skipped {_oxford(skipped, state)} — not in stock.")
     if needs_count:
         say += _L(state,
                   f" {_oxford(needs_count)} pehle se stock mein ho sakta hai — ek baar "
                   "gin lo, jab chaho voice se bata dena.",
-                  f" {_oxford(needs_count)} may already have stock on the shelf — do a "
+                  f" {_oxford(needs_count, state)} may already have stock on the shelf — do a "
                   "count when you can, you can tell me the number by voice anytime.")
     out = _say(state, say, listen=False, done=True)
     out["summary"] = {"items": rows}
@@ -1329,8 +1691,79 @@ def _answer_stock(sku, repo, state=None):
 # ---------------------------------------------------------------------------
 # Analytics question (exact numbers from the ledger)
 # ---------------------------------------------------------------------------
+def _business_summary(metric, repo, state):
+    """The one question a shopkeeper actually asks at closing time: how did
+    today go. Everything here is derived from the same ledger the Today and
+    Dashboard screens read, so the spoken number can never drift from the
+    screen. The weekly version additionally reports frozen capital — a
+    60-day-old problem is a weekly-review concern, not a daily one."""
+    import main
+    import ledger as L
+    from datetime import timedelta
+
+    t = main._today_summary()
+    d = main.dashboard()
+    mp = d["money_position"]
+    weekly = metric == "week_summary"
+
+    if weekly:
+        catalogue_by = main.by_id()
+        events = repo.all_events()
+        total = margin = cash = credit = 0.0
+        for i in range(7):
+            m = L.margin_for_day(catalogue_by, events, TODAY - timedelta(days=i))
+            total += m["total"]
+            margin += m["margin"]
+            cash += m["cash"]
+            credit += m["credit"]
+        head = _L(state, "Pichhle saat din mein", "Over the last seven days")
+    else:
+        total, margin = t["total"], t["margin"]
+        cash, credit = t["cash"], t["credit"]
+        head = _L(state, "Aaj", "Today")
+
+    bits = [
+        _L(state, f"sale {int(total)} rupaye", f"sales were ₹{int(total)}"),
+        _L(state, f"gross profit {int(margin)} rupaye", f"gross profit ₹{int(margin)}"),
+        _L(state, f"cash {int(cash)} rupaye", f"cash ₹{int(cash)}"),
+        _L(state, f"udhaar {int(credit)} rupaye", f"credit ₹{int(credit)}"),
+    ]
+    say = (f"{head} {', '.join(bits[:-1])} " + _L(state, "aur ", "and ") + f"{bits[-1]}.")
+    say += _L(state,
+              f" Total bakaya udhaar {int(mp['outstanding_credit'])} rupaye hai.",
+              f" Total outstanding credit is ₹{int(mp['outstanding_credit'])}.")
+
+    # Best-selling line of the period gives the number some texture.
+    top = None
+    lines = t.get("lines") or []
+    if lines and not weekly:
+        top = max(lines, key=lambda l: l.get("amount") or 0)
+    if top and top.get("canonical"):
+        say += _L(state, f" Sabse zyada {top['canonical']} gaya.",
+                  f" {top['canonical']} moved the most.")
+
+    if weekly:
+        frozen = d.get("frozen_capital") or []
+        if frozen:
+            names = _oxford([f["canonical"] for f in frozen[:3]], state)
+            say += _L(state,
+                      f" Frozen maal: {names} — 60 din se nahi bika, "
+                      f"{int(d['frozen_total'])} rupaye phasa hua hai.",
+                      f" Frozen stock: {names} — unsold for 60 days, with "
+                      f"₹{int(d['frozen_total'])} locked up.")
+        else:
+            say += _L(state, " Koi maal 60 din se phasa nahi hai.",
+                      " No stock has been sitting frozen for 60 days.")
+        say += _L(state,
+                  f" Inventory ki value {int(mp['inventory_value'])} rupaye hai.",
+                  f" Inventory is worth ₹{int(mp['inventory_value'])}.")
+    return _reply(say, listen=False, done=True, summary={"items": [], "answer": say})
+
+
 def _analytics_answer(metric, repo, state=None):
     import main
+    if metric in ("day_summary", "week_summary"):
+        return _business_summary(metric, repo, state)
     t = main._today_summary()
     d = main.dashboard()
     mp = d["money_position"]
@@ -1350,7 +1783,7 @@ def _analytics_answer(metric, repo, state=None):
             say = _L(state, "Abhi koi maal 60 din se pada nahi hai, sab move ho raha hai.",
                      "Nothing has been sitting unsold for 60 days — everything's moving.")
         else:
-            names = _oxford([f"{f['canonical']} ({f['stock']})" for f in items])
+            names = _oxford([f"{f['canonical']} ({f['stock']})" for f in items], state)
             say = _L(state,
                      f"{names} — 60 din se bika nahi, {ft} rupaye phasa hua hai.",
                      f"{names} — unsold for 60 days, ₹{ft} locked up in it.")
@@ -1397,11 +1830,11 @@ def _draft_summary(state):
     return rows
 
 
-def _oxford(names):
+def _oxford(names, state=None):
     names = [n for n in names if n]
     if len(names) <= 1:
         return names[0] if names else ""
-    return ", ".join(names[:-1]) + " aur " + names[-1]
+    return ", ".join(names[:-1]) + _L(state, " aur ", " and ") + names[-1]
 
 
 def _num(n):
