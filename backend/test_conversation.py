@@ -127,7 +127,7 @@ class ConversationStateTests(unittest.TestCase):
         self.assertEqual([m["role"] for m in messages[-3:]],
                          ["user", "assistant", "user"])
         self.assertEqual(chat.call_count, 1)
-        self.assertEqual(chat.call_args.kwargs["timeout"], 18)
+        self.assertEqual(chat.call_args.kwargs["timeout"], 75)
         self.assertEqual(result["items"][0]["sku_id"], "CEM_ULTRATECH_PPC")
 
     def test_explicit_two_item_speech_cannot_be_collapsed_by_model(self):
@@ -231,7 +231,11 @@ class ConversationStateTests(unittest.TestCase):
                 None, phrases[0], "live_sale", self.repo)
 
         self.assertEqual(out, expected)
-        analytics.assert_called_once_with("frozen", self.repo)
+        analytics.assert_called_once()
+        metric, repo, state = analytics.call_args.args
+        self.assertEqual(metric, "frozen")
+        self.assertIs(repo, self.repo)
+        self.assertEqual(state["lang"], "hi")
         extract.assert_not_called()
 
     def test_normal_sale_does_not_match_frozen_capital_route(self):
@@ -242,7 +246,7 @@ class ConversationStateTests(unittest.TestCase):
         hallucinated = {
             "intent": "sale", "metric": None,
             "items": [{"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
-                       "name": "tiles", "in_catalogue": True,
+                       "name": "wire", "in_catalogue": True,
                        "qty": 5, "unit": "piece", "rate": 100,
                        "payment": "cash"}],
         }
@@ -251,7 +255,7 @@ class ConversationStateTests(unittest.TestCase):
              patch.object(conversation.sarvam_client, "chat_json",
                           return_value=hallucinated) as chat:
             out = conversation.converse(
-                None, "5 tiles bech diya cash", "live_sale", self.repo)
+                None, "5 wire bech diya cash", "live_sale", self.repo)
 
         self.assertIn("hum nahi rakhte", out["say"])
         self.assertNotIn("Kaunsa sariya", out["say"])
@@ -266,8 +270,8 @@ class ConversationStateTests(unittest.TestCase):
                        "payment": None}],
         }
         state = {
-            "said": ["kya tiles available hai"],
-            "history": [{"role": "user", "content": "kya tiles available hai"}],
+            "said": ["kya wire available hai"],
+            "history": [{"role": "user", "content": "kya wire available hai"}],
         }
         with patch.object(conversation.sarvam_client, "chat_json",
                           return_value=hallucinated):
@@ -283,7 +287,7 @@ class ConversationStateTests(unittest.TestCase):
             "intent": "sale", "metric": None,
             "items": [
                 {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
-                 "name": "tiles", "in_catalogue": True, "qty": 5,
+                 "name": "wire", "in_catalogue": True, "qty": 5,
                  "unit": "piece", "rate": 100, "payment": "cash"},
                 {"sku_id": "CEM_ULTRATECH_PPC", "family": "cement",
                  "name": "PPC cement", "in_catalogue": True, "qty": 10,
@@ -291,9 +295,9 @@ class ConversationStateTests(unittest.TestCase):
             ],
         }
         state = {
-            "said": ["5 tiles aur 10 bori PPC cement becha cash"],
+            "said": ["5 wire aur 10 bori PPC cement becha cash"],
             "history": [{"role": "user",
-                         "content": "5 tiles aur 10 bori PPC cement becha cash"}],
+                         "content": "5 wire aur 10 bori PPC cement becha cash"}],
         }
         with patch.object(conversation.sarvam_client, "chat_json",
                           return_value=model_output):
@@ -309,14 +313,14 @@ class ConversationStateTests(unittest.TestCase):
             "intent": "sale", "metric": None,
             "items": [
                 {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
-                 "name": "tiles", "in_catalogue": True, "qty": 5,
+                 "name": "wire", "in_catalogue": True, "qty": 5,
                  "unit": "piece", "rate": 100, "payment": "cash"},
                 {"sku_id": "CEM_ULTRATECH_PPC", "family": "cement",
                  "name": "PPC cement", "in_catalogue": True, "qty": 10,
                  "unit": "bori", "rate": 400, "payment": "cash"},
             ],
         }
-        phrase = "5 tiles aur 10 bori PPC cement becha cash"
+        phrase = "5 wire aur 10 bori PPC cement becha cash"
         with patch.object(conversation.sarvam_client, "has_key",
                           return_value=True), \
              patch.object(conversation.sarvam_client, "chat_json",
@@ -324,11 +328,11 @@ class ConversationStateTests(unittest.TestCase):
             out = conversation.converse(
                 None, phrase, "live_sale", self.repo)
             self.assertIn("inventory mein nahi hai", out["say"])
-            self.assertIn("tiles", out["say"])
+            self.assertIn("wire", out["say"])
             self.assertIn("contact number", out["say"])
             self.assertEqual(
                 out["state"]["pending_commit"]["skipped"],
-                ["tiles"])
+                ["wire"])
 
             followup = conversation.converse(
                 out["state"], "9876543210", "live_sale", self.repo)
@@ -370,7 +374,7 @@ class ConversationStateTests(unittest.TestCase):
         self.assertEqual([row["unit"] for row in rows], ["kg", "tonne", None])
 
     def test_exact_multi_item_bechi_order_keeps_context_until_followups(self):
-        phrase = "50 kg cement 10 ton सरिया और 50 tiles बेची है"
+        phrase = "50 kg cement 10 ton सरिया और 50 wire बेची है"
         model_output = {
             "intent": "unknown", "metric": None,
             "items": [
@@ -381,7 +385,7 @@ class ConversationStateTests(unittest.TestCase):
                  "in_catalogue": True, "qty": 10, "unit": "tonne",
                  "rate": None, "payment": None},
                 {"sku_id": "TMT_12_FE500D_TATA", "family": "tmt",
-                 "name": "tiles", "in_catalogue": True, "qty": 50,
+                 "name": "wire", "in_catalogue": True, "qty": 50,
                  "unit": None, "rate": None, "payment": None},
             ],
         }
@@ -392,9 +396,9 @@ class ConversationStateTests(unittest.TestCase):
             out = conversation.converse(None, phrase, "auto", self.repo)
             self.assertEqual(out["state"]["locked_intent"], "sale")
             self.assertEqual(out["state"]["original_transcript"], phrase)
-            self.assertEqual(out["state"]["skipped_items"], ["tiles"])
+            self.assertEqual(out["state"]["skipped_items"], ["wire"])
             self.assertEqual(len(out["state"]["draft_items"]), 2)
-            self.assertIn("tiles inventory mein nahi hai", out["say"])
+            self.assertIn("wire inventory mein nahi hai", out["say"])
             self.assertIn("Kaunsa cement", out["say"])
 
             out = conversation.converse(

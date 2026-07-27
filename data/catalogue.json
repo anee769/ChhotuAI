@@ -201,5 +201,50 @@
       "ceramic",
       "vitrified tile 600x600mm"
     ]
+  },
+  {
+    "sku_id": "OTHER_CEMENT",
+    "canonical": "हमन ब र Cement",
+    "family": "other",
+    "attributes": {},
+    "default_unit": "bori",
+    "units": {
+      "bori": 1
+    },
+    "gst_rate": 18,
+    "opening_cost_per_kg": 0,
+    "aliases": [
+      "हमन ब र cement"
+    ]
+  },
+  {
+    "sku_id": "OTHER_CEMENT_2",
+    "canonical": "म न ब र Cement",
+    "family": "other",
+    "attributes": {},
+    "default_unit": "bori",
+    "units": {
+      "bori": 1
+    },
+    "gst_rate": 18,
+    "opening_cost_per_kg": 0,
+    "aliases": [
+      "म न ब र cement"
+    ]
+  },
+  {
+    "sku_id": "OTHER_CEMENT_3",
+    "canonical": "ब र Cement",
+    "family": "other",
+    "attributes": {},
+    "default_unit": "bori",
+    "units": {
+      "bori": 1
+    },
+    "gst_rate": 18,
+    "opening_cost_per_kg": 0,
+    "aliases": [
+      "ब र cement"
+    ]
   }
 ]

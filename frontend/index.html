@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ChhotuAI — Awaaz se hisaab</title>
+<title>Chhotu.ai — Awaaz se hisaab</title>
+<link rel="icon" type="image/svg+xml" href="/assets/chhotu-favicon.svg">
+<link rel="shortcut icon" href="/assets/chhotu-favicon.svg">
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -181,17 +183,30 @@
     border:0; border-bottom:1px solid #c9cdd2; z-index:50;
   }
   .app-header > .topbar-inner {
-    width:100%; display:grid; grid-template-columns:260px minmax(280px,500px) 1fr;
+    width:100%; display:grid; grid-template-columns:260px 1fr;
     align-items:center; gap:26px;
   }
-  .brand-lockup { display:flex; align-items:center; gap:11px; min-width:0; }
-  .brand-mark, .shop-avatar {
+  .brand-lockup { display:flex; align-items:center; gap:9px; min-width:0; }
+  .shop-avatar {
     display:grid; place-items:center; background:#050505; color:#fff;
     font-weight:800; border-radius:12px;
   }
-  .brand-mark { width:38px; height:38px; font-size:18px; }
-  .brand-name { font-size:21px; line-height:1.1; font-weight:800; letter-spacing:-.03em; }
-  .brand-tagline { margin-top:2px; font-size:11px; color:#73777f; }
+  .brand-symbol {
+    width:36px; height:36px; flex:0 0 36px;
+  }
+  .brand-copy {
+    display:flex; flex-direction:column; justify-content:center;
+    margin-top:0 !important; max-width:none !important;
+  }
+  .brand-name {
+    font-size:21px; line-height:22px; font-weight:800; letter-spacing:-.035em;
+    color:#111827;
+  }
+  .brand-name .brand-ai { color:#006c49; }
+  .brand-tagline {
+    margin-top:1px; font-size:11px; line-height:13px;
+    color:#73777f; letter-spacing:.005em;
+  }
   .app-header .header-tools {
     position:static; justify-self:end; display:flex !important; flex-wrap:nowrap;
   }
@@ -259,6 +274,17 @@
     min-height:70px; display:flex; align-items:center; justify-content:space-between;
     gap:16px; padding:14px 18px; border-bottom:1px solid #d8dbe0;
   }
+  .inventory-controls { display:flex; align-items:center; justify-content:flex-end; gap:9px; }
+  .local-search {
+    height:40px; display:flex; align-items:center; gap:8px;
+    padding:0 11px; border:1px solid #e3e6e9; border-radius:9px; background:#fff;
+  }
+  .local-search .material-symbols-outlined { color:#73777f; font-size:19px; }
+  .local-search input {
+    width:100%; min-width:0; padding:0 !important; border:0 !important;
+    outline:0 !important; background:transparent !important; font-size:13px;
+  }
+  .inventory-search { width:250px; }
   .stock-product { display:flex; align-items:center; gap:12px; min-width:250px; }
   .stock-icon {
     width:40px; height:40px; display:grid; place-items:center; flex:0 0 auto;
@@ -283,7 +309,7 @@
   }
   .customer-list { border-right:1px solid #cdd1d6; background:#f8f9fa; }
   .customer-list-search { padding:14px; border-bottom:1px solid #d7dadd; }
-  .customer-list-search input { width:100%; padding:11px 13px; font-size:13px; }
+  .customer-list-search .local-search { width:100%; }
   .customer-row {
     width:100%; display:block; padding:16px 18px; text-align:left;
     border-bottom:1px solid #dde0e3; background:#fff; transition:.15s;
@@ -331,14 +357,198 @@
     border-radius:14px; background:#f5f6f7;
   }
   .voice-mic-button {
+    --mic-ring-scale:1;
+    --mic-ring-opacity:0;
+    position:relative; isolation:isolate;
     width:82px; height:82px; display:grid; place-items:center; border-radius:50%;
     background:#050505; color:#fff; box-shadow:0 11px 24px -15px #000;
+    transition:transform .18s ease, background-color .18s ease, box-shadow .18s ease;
+  }
+  .voice-mic-button::before,
+  .voice-mic-button::after {
+    content:""; position:absolute; pointer-events:none; border-radius:50%;
+    border:1px solid rgba(0,108,73,.32); opacity:0; z-index:-1;
+  }
+  .voice-mic-button::before {
+    inset:-9px; opacity:var(--mic-ring-opacity);
+    transform:scale(var(--mic-ring-scale)); transition:transform .09s linear, opacity .12s ease;
+  }
+  .voice-mic-button::after { inset:-18px; border-color:rgba(0,108,73,.18); }
+  .voice-mic-button .mic-glyph {
+    position:relative; z-index:1; transition:transform .2s ease, opacity .2s ease;
+  }
+  .voice-level-bars {
+    position:absolute; z-index:1; bottom:18px; left:50%; height:18px;
+    display:flex; align-items:flex-end; gap:3px; opacity:0;
+    transform:translateX(-50%) translateY(5px);
+    transition:opacity .18s ease, transform .18s ease;
+  }
+  .voice-level-bars i {
+    display:block; width:3px; height:6px; border-radius:999px;
+    background:#fff; transition:height .08s linear;
+  }
+  .voice-mic-button.is-listening {
+    background:#111827; box-shadow:0 12px 28px -14px rgba(0,108,73,.75);
+  }
+  .voice-mic-button.is-listening::after {
+    opacity:1; animation:micListeningRing 1.7s ease-out infinite;
+  }
+  .voice-mic-button.is-listening .mic-glyph {
+    opacity:.58; transform:translateY(-9px) scale(.82);
+  }
+  .voice-mic-button.is-listening .voice-level-bars {
+    opacity:1; transform:translateX(-50%) translateY(0);
+  }
+  @keyframes micListeningRing {
+    0% { transform:scale(.88); opacity:0; }
+    35% { opacity:.72; }
+    100% { transform:scale(1.18); opacity:0; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .voice-mic-button,
+    .voice-mic-button::before,
+    .voice-mic-button::after,
+    .voice-mic-button .mic-glyph,
+    .voice-level-bars,
+    .voice-level-bars i { animation:none !important; transition:none !important; }
+    .voice-mic-button.is-listening::after { opacity:.45; transform:scale(1); }
+    .voice-mic-button.is-listening .voice-level-bars i { height:10px !important; }
   }
   .voice-command-input {
     display:flex; gap:8px; padding:6px; border:1px solid #cfd3d8;
     border-radius:12px; background:#fff;
   }
   .voice-command-input input { border:0 !important; background:transparent !important; }
+  .voice-entry-card.conversation-active .voice-stage,
+  .voice-entry-card.conversation-active .voice-processing { display:none !important; }
+  .voice-conversation {
+    margin-top:22px; overflow:hidden; border:1px solid #d8dbe0;
+    border-radius:14px; background:#fff;
+  }
+  .voice-conversation-turn { padding:22px 24px; }
+  .voice-speaker-label {
+    display:flex; align-items:center; gap:7px; margin-bottom:7px;
+    color:#737881; font-size:10px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .voice-speaker-label .material-symbols-outlined { font-size:16px; }
+  .voice-user-utterance {
+    color:#3f444c; font-size:14px; line-height:1.55;
+  }
+  .voice-assistant-turn {
+    margin-top:18px; padding-top:18px; border-top:1px solid #e3e6e9;
+  }
+  .voice-assistant-copy {
+    max-width:760px; color:#111827; font-size:18px; line-height:1.45;
+    font-weight:720; letter-spacing:-.015em;
+  }
+  .voice-turn-state {
+    display:flex; align-items:center; gap:9px; margin-top:10px;
+    color:#686d75; font-size:12px;
+  }
+  .voice-turn-state::before {
+    content:""; width:7px; height:7px; flex:0 0 auto;
+    border-radius:50%; background:#006c49;
+  }
+  .voice-turn-state.is-thinking::before { animation:pulse 1.2s infinite; }
+  .voice-turn-state.is-listening { color:#006c49; }
+  .voice-turn-state.is-listening::before {
+    box-shadow:0 0 0 5px rgba(0,108,73,.09);
+    animation:pulse 1.05s infinite;
+  }
+  .voice-turn-state.is-error { color:#9a5b00; }
+  .voice-turn-state.is-error::before { background:#9a5b00; }
+  .voice-current-entry {
+    padding:18px 24px 20px; border-top:1px solid #d8dbe0;
+    background:#f5f6f7;
+  }
+  .voice-current-entry-head {
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    margin-bottom:10px;
+  }
+  .voice-current-entry-title {
+    color:#30343a; font-size:11px; font-weight:800;
+    letter-spacing:.12em; text-transform:uppercase;
+  }
+  .voice-current-entry-count { color:#777c84; font-size:11px; }
+  .voice-draft-list {
+    overflow:hidden; border:1px solid #dde0e4; border-radius:10px; background:#fff;
+  }
+  .voice-draft-item {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center;
+    gap:16px; padding:12px 14px; border-bottom:1px solid #eceef0;
+  }
+  .voice-draft-item:last-child { border-bottom:0; }
+  .voice-draft-main { display:flex; align-items:flex-start; gap:10px; min-width:0; }
+  .voice-draft-icon {
+    width:21px; height:21px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:50%; background:#dcf7ea; color:#006c49;
+  }
+  .voice-draft-icon .material-symbols-outlined { font-size:14px; font-weight:700; }
+  .voice-draft-name {
+    overflow:hidden; color:#20242a; font-size:13px; font-weight:720;
+    text-overflow:ellipsis; white-space:nowrap;
+  }
+  .voice-draft-meta { margin-top:3px; color:#6c7179; font-size:11px; }
+  .voice-draft-status {
+    color:#686d75; font-size:11px; font-weight:650; white-space:nowrap;
+  }
+  .voice-draft-item.needs-detail .voice-draft-icon {
+    background:#eceef0; color:#636871;
+  }
+  .voice-draft-item.unavailable .voice-draft-icon {
+    background:#ffe7e3; color:#ae160d;
+  }
+  .voice-draft-item.unavailable .voice-draft-name {
+    color:#7f2620; text-decoration:line-through;
+  }
+  .voice-draft-item.unavailable .voice-draft-status { color:#9b251e; }
+  .voice-draft-context {
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;
+  }
+  .voice-draft-context span {
+    padding:5px 8px; border:1px solid #d9dde1; border-radius:7px;
+    background:#fff; color:#5c6169; font-size:10px; font-weight:650;
+  }
+  .voice-reply-bar {
+    display:flex; align-items:center; gap:9px; padding:14px 16px;
+    border-top:1px solid #d8dbe0; background:#fff;
+  }
+  .voice-reply-mic {
+    width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:10px; background:#050505; color:#fff;
+  }
+  .voice-reply-mic .material-symbols-outlined { font-size:21px; }
+  .voice-reply-mic.is-listening { background:#006c49; }
+  .voice-reply-bar input {
+    min-width:0; flex:1; height:42px; padding:0 12px;
+  }
+  .voice-reply-send {
+    width:42px; height:42px; display:grid; place-items:center; flex:0 0 auto;
+    border-radius:10px; background:#111827; color:#fff;
+  }
+  .voice-reply-send .material-symbols-outlined { font-size:19px; }
+  .voice-result-stock {
+    display:grid; gap:7px; padding:14px 24px;
+    border-top:1px solid #e2e5e8; background:#fff;
+  }
+  .voice-result-stock-row {
+    display:flex; align-items:center; justify-content:space-between; gap:16px;
+    color:#5d626a; font-size:11px;
+  }
+  .voice-result-stock-row strong { color:#20242a; font-size:12px; }
+  .voice-result-actions {
+    display:flex; flex-wrap:wrap; gap:9px; padding:15px 24px;
+    border-top:1px solid #d8dbe0; background:#fff;
+  }
+  .voice-result-actions button {
+    min-height:40px; padding:0 14px; border-radius:9px;
+    font-size:12px; font-weight:750;
+  }
+  .voice-result-actions .primary { background:#050505; color:#fff; }
+  .voice-result-actions .secondary {
+    border:1px solid #d8dbe0; background:#fff; color:#34383f;
+  }
   .voice-confirmation {
     margin-top:18px; overflow:hidden; border:1px solid #d4d7dc;
     border-top:5px solid #050505; border-radius:16px; background:#fff;
@@ -389,6 +599,9 @@
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
     .balance-panel { grid-template-columns:1fr; }
+    .inventory-toolbar { align-items:flex-start; flex-direction:column; }
+    .inventory-controls { width:100%; }
+    .inventory-search { width:100%; }
   }
 
   @media (max-width: 900px) {
@@ -405,6 +618,9 @@
     .page-heading { align-items:flex-start; flex-direction:column; }
     .voice-entry-head { flex-direction:column; }
     .voice-stage { padding:30px 16px 22px; }
+    .voice-conversation-turn, .voice-current-entry { padding-left:16px; padding-right:16px; }
+    .voice-draft-item { grid-template-columns:minmax(0,1fr); gap:7px; }
+    .voice-draft-status { padding-left:31px; }
   }
 </style>
 </head>
@@ -414,10 +630,13 @@
 <header class="app-header">
   <div class="topbar-inner">
     <div class="brand-lockup">
-      <div class="brand-mark">C</div>
-      <div>
-        <div class="brand-name">ChhotuAI</div>
-        <div class="brand-tagline">Voice stock ledger</div>
+      <svg class="brand-symbol" viewBox="0 0 44 44" aria-hidden="true">
+        <path d="M32 9.5a16.5 16.5 0 1 0 0 25" fill="none" stroke="#111827" stroke-width="6" stroke-linecap="square"/>
+        <circle cx="34.5" cy="22" r="3.4" fill="#006c49"/>
+      </svg>
+      <div class="brand-copy">
+        <div class="brand-name" aria-label="Chhotu dot ai">Chhotu<span class="brand-ai">.ai</span></div>
+        <div class="brand-tagline">Awaaz se hisaab</div>
       </div>
     </div>
     <div class="header-tools flex flex-wrap items-center gap-3">
@@ -445,7 +664,6 @@
   </div>
   <div class="nav-label">Workspace</div>
   <button class="tab-btn active" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
-  <button class="tab-btn" data-tab="delivery" onclick="showTab('delivery')"><span class="material-symbols-outlined">local_shipping</span><span>Delivery</span></button>
   <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span>Invoice</span></button>
   <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span>Inventory</span></button>
   <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span>Customers</span></button>
@@ -453,7 +671,6 @@
   <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
   <div class="nav-footer">
     <button onclick="showTab('dashboard')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
-    <div class="version">ChhotuAI · Local ledger</div>
   </div>
 </nav>
 
@@ -489,12 +706,9 @@
   <div class="workspace-shell grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
     <div class="main-column space-y-6">
 
-  <!-- SALE / DELIVERY (shared voice UI) -->
+  <!-- UNIFIED VOICE ENTRY -->
   <section id="tab-sale" class="tabpane">
     <div id="voiceUI-sale"></div>
-  </section>
-  <section id="tab-delivery" class="tabpane hidden">
-    <div id="voiceUI-delivery"></div>
   </section>
 
   <!-- INVOICE -->
@@ -519,18 +733,16 @@
         <h1>Inventory Ledger</h1>
         <p>Derived stock with full event history and reconciliation.</p>
       </div>
-      <button onclick="document.getElementById('countPanel').classList.toggle('hidden')" class="btn-primary px-5 py-3 font-semibold">
-        <span class="material-symbols-outlined align-middle mr-1">mic</span> Quick Adjust
-      </button>
     </div>
     <div id="countPanel" class="hidden mb-5"><div id="voiceUI-count"></div></div>
     <div class="card overflow-hidden">
       <div class="inventory-toolbar">
         <div><div class="font-semibold">Current stock</div><div class="text-xs text-slate-500">All quantities replayed from the event log</div></div>
-        <div class="flex gap-2">
-          <input id="stockSearch" type="search" placeholder="Search products or SKU…"
-                 oninput="filterStock(this.value)"
-                 class="rounded-xl border border-slate-200 px-3 py-2 text-sm">
+        <div class="inventory-controls">
+          <label class="local-search inventory-search">
+            <span class="material-symbols-outlined">search</span>
+            <input id="stockSearch" type="search" placeholder="Search products or SKU…" oninput="filterStockRows(this.value)">
+          </label>
           <select id="stockFamily" onchange="loadStock()" class="rounded-xl border border-slate-200 px-2 py-2 text-sm">
             <option value="">All families</option><option value="tmt">TMT</option>
             <option value="cement">Cement</option><option value="tiles">Tiles</option>
@@ -670,6 +882,7 @@ function toast(msg, ok=true){ const t=document.getElementById('toast'); t.textCo
 
 async function api(path, opts){ const r=await fetch(path,opts); if(!r.ok) throw new Error(await r.text()); return r.json(); }
 function fmtNum(n){ const x=Number(n); return Number.isFinite(x) ? (Number.isInteger(x)?x:parseFloat(x.toFixed(2))) : n; }
+function escHtml(value){ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 async function boot(){
   const s = await api('/api/state');
@@ -679,7 +892,7 @@ async function boot(){
   document.getElementById('heroShop').textContent=s.shop;
   document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
   setCounts(s.learning_counts); setDayUI(s.learning_state);
-  renderVoiceUI('sale','auto'); renderVoiceUI('delivery','delivery'); renderVoiceUI('count','count');
+  renderVoiceUI('sale','auto'); renderVoiceUI('count','count');
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
@@ -697,14 +910,8 @@ function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classLis
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
   if(t==='customers') loadCustomers(); }
-function filterStock(q){
-  q=(q||'').trim().toLowerCase();
-  document.querySelectorAll('#stockList tbody tr').forEach(row=>{
-    row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
-  });
-}
 
-// ---------- Voice UI (sale / delivery / count) ----------
+// ---------- Unified voice UI (sale / delivery / questions) + stock count ----------
 function renderVoiceUI(tab, flow){
   const isCount = flow==='count';
   const examples = flow==='auto'
@@ -717,7 +924,7 @@ function renderVoiceUI(tab, flow){
   const title = flow==='auto' ? 'Chhotu se baat karo — bolo, likho, ya poochho'
     : (flow==='delivery'?'Delivery':isCount?'Count':'Sale')+' — Chhotu se baat karo';
   const subtitle = flow==='auto'
-    ? 'Sale likhwao ya stock aur margin poochho.'
+    ? 'Sale likhwao, delivery add karo, ya stock aur margin poochho.'
     : 'Ek baar bolo. Zaroorat hui to Chhotu sawaal poochhega.';
   const countMode = isCount ? `<div class="mb-5 flex flex-wrap gap-3"><label class="text-sm mr-2">Count type:</label>
       <select id="countType" class="rounded px-2 py-1 text-sm"><option value="opening_balance">Opening balance</option><option value="stock_take">Stock take</option></select>
@@ -735,7 +942,10 @@ function renderVoiceUI(tab, flow){
       ${countMode}
       <div class="voice-stage">
         <div class="flex flex-col items-center text-center">
-          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="voice-mic-button transition active:scale-95"><span class="material-symbols-outlined text-[32px]">mic</span></button>
+          <button onclick="convStartVoice('${tab}','${flow}')" id="mic-${tab}" class="voice-mic-button active:scale-95" aria-label="Start voice recording" aria-pressed="false">
+            <span class="mic-glyph material-symbols-outlined text-[32px]">mic</span>
+            <span class="voice-level-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+          </button>
           <div class="mt-4 font-semibold text-slate-900">Boliye, main sun raha hoon</div>
           <div class="mt-1 text-xs text-slate-500">Tap the microphone and speak naturally</div>
         </div>
@@ -749,13 +959,36 @@ function renderVoiceUI(tab, flow){
           <label class="cursor-pointer text-xs font-semibold text-slate-600">Upload audio<input type="file" accept="audio/*" class="hidden" onchange="micUpload(event,'${tab}','${flow}')"></label>
         </div>
       </div>
-      <div id="proc-${tab}" class="text-sm text-blue-300 hidden"></div>
+      <div id="proc-${tab}" class="voice-processing text-sm text-blue-300 hidden"></div>
       <div id="conv-${tab}" class="mt-4"></div>
       <div id="res-${tab}" class="mt-4 space-y-3"></div>
     </div>`;
 }
 
 let mediaRec=null, mediaChunks=[], recTab=null;
+const reduceMicMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+function setMicListening(tab, listening){
+  const btn=document.getElementById('mic-'+tab); if(!btn) return;
+  btn.classList.toggle('is-listening', listening);
+  btn.setAttribute('aria-pressed', listening?'true':'false');
+  btn.setAttribute('aria-label', listening?'Stop voice recording':'Start voice recording');
+  if(!listening){
+    btn.style.setProperty('--mic-ring-scale','1');
+    btn.style.setProperty('--mic-ring-opacity','0');
+    btn.querySelectorAll('.voice-level-bars i').forEach(bar=>bar.style.height='6px');
+  }
+}
+function paintMicLevel(tab, rms){
+  if(reduceMicMotion) return;
+  const btn=document.getElementById('mic-'+tab); if(!btn) return;
+  const level=Math.min(1,Math.max(0,((rms||0)-.012)*18));
+  btn.style.setProperty('--mic-ring-scale',(1+level*.13).toFixed(3));
+  btn.style.setProperty('--mic-ring-opacity',(.12+level*.48).toFixed(2));
+  const factors=[.58,1,.78,.46];
+  btn.querySelectorAll('.voice-level-bars i').forEach((bar,i)=>{
+    bar.style.height=(5+level*14*factors[i]).toFixed(1)+'px';
+  });
+}
 async function micRecord(tab, flow){
   const btn=document.getElementById('mic-'+tab);
   // tap again to stop
@@ -769,7 +1002,7 @@ async function micRecord(tab, flow){
     mediaRec.ondataavailable=e=>{ if(e.data && e.data.size) mediaChunks.push(e.data); };
     mediaRec.onstop=async()=>{
       stream.getTracks().forEach(t=>t.stop());
-      btn.classList.remove('pulse'); btn.textContent='🎤';
+      setMicListening(tab,false);
       const blob=new Blob(mediaChunks,{type:(mediaRec.mimeType||'audio/webm')});
       const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
       proc.innerHTML='<span class="pulse">🎧 Aapki awaaz sun rahe hain (Saaras STT)…</span>';
@@ -781,7 +1014,7 @@ async function micRecord(tab, flow){
       }catch(e){ proc.innerHTML=''; toast('STT fail — '+(''+e).slice(0,80)+' — Upload audio use karo',false); }
     };
     mediaRec.start();
-    btn.classList.add('pulse'); btn.textContent='⏹️';
+    setMicListening(tab,true);
     toast('🎤 Bol rahe ho… phir se tap karke rok do');
   }catch(e){ toast('Mic access nahi mila — Upload audio use karo',false); }
 }
@@ -863,35 +1096,39 @@ function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Ma
 // start conversation from a spoken utterance (mic)
 async function convStartVoice(tab, flow){
   const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
-  proc.innerHTML='<span class="pulse">🎤 Bol rahe ho… (ruk jao to apne aap sun lega)</span>';
+  proc.innerHTML='<span class="pulse">Sun raha hoon… Bolna poora ho to bas ruk jaiye.</span>';
+  setMicListening(tab,true);
   let blob;
-  try{ blob=await recordUntilSilence(); }
+  try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
   catch(e){ proc.innerHTML=''; toast('Mic nahi mila — likh ke ya Upload audio se karo',false); return; }
-  proc.innerHTML='<span class="pulse">🎧 Sun rahe hain (Saaras)…</span>';
+  finally{ setMicListening(tab,false); }
+  proc.innerHTML='<span class="pulse">Aapki baat samajh raha hoon…</span>';
   let roman='', disp=''; try{ const o=await transcribeBlob(blob); roman=o.roman; disp=o.disp; }catch(e){}
   if(!roman){ proc.innerHTML=''; toast('Kuch suna nahi — dobara boliye',false); return; }
-  proc.innerHTML='Aapne kaha: <b>'+disp+'</b>';
-  convBegin(tab, flow, roman, true);
+  convBegin(tab, flow, roman, true, disp);
 }
 // start conversation from typed text (fallback — answers via text too)
 function convStartText(tab, flow){
   const text=document.getElementById('txt-'+tab).value.trim(); if(!text) return;
   document.getElementById('proc-'+tab).classList.add('hidden');
-  convBegin(tab, flow, text, false);
+  convBegin(tab, flow, text, false, text);
 }
 
-async function convBegin(tab, flow, text, voice){
-  CONV[tab]={flow, state:null, voice:voice};
+async function convBegin(tab, flow, text, voice, displayText){
+  CONV[tab]={flow, state:null, voice:voice, latestUser:displayText||text, phase:'thinking'};
+  document.getElementById('voiceUI-'+tab).querySelector('.voice-entry-card')?.classList.add('conversation-active');
   document.getElementById('res-'+tab).innerHTML='';
-  await convTurn(tab, text);
+  await convTurn(tab, text, displayText);
 }
 
 // send a turn to /api/converse, speak the reply, then listen or finish
-async function convTurn(tab, text){
+async function convTurn(tab, text, displayText){
   const C=CONV[tab];
   const panel=document.getElementById('conv-'+tab);
+  C.latestUser=displayText||(text==='confirm'?'Entry confirmed':text);
+  C.phase='thinking';
   // The first turn may use the LLM; follow-up slots reuse the structured draft.
-  panel.innerHTML=renderConv(C, '<span class="pulse">🧠 Chhotu soch raha hai<span class="dots"></span></span>');
+  panel.innerHTML=renderConv(C);
   playFiller();                         // instant spoken acknowledgment
   let r;
   try{ r=await api('/api/converse',{method:'POST',headers:{'Content-Type':'application/json'},
@@ -905,7 +1142,8 @@ async function convTurn(tab, text){
     await playSay(r.say_audio_b64);
     return;
   }
-  panel.innerHTML=renderConv(C, '');
+  C.phase=r.listen?'question':'ready';
+  panel.innerHTML=renderConv(C);
   await playSay(r.say_audio_b64);
   if(r.done){ convFinish(tab, r); return; }
   if(r.listen){ await convListen(tab); }
@@ -914,17 +1152,20 @@ async function convTurn(tab, text){
 async function convListen(tab){
   const C=CONV[tab]; const panel=document.getElementById('conv-'+tab);
   if(!C.voice){ return; } // typed mode waits for the answer box
-  panel.innerHTML=renderConv(C, '<span class="pulse text-rose-300">🎤 aapka jawaab sun raha hoon… (bolo)</span>');
-  let blob; try{ blob=await recordUntilSilence(); }
-  catch(e){ C.voice=false; panel.innerHTML=renderConv(C, '<span class="text-amber-300">Mic nahi — neeche likh ke jawaab do</span>'); return; }
-  let ans=''; try{ const o=await transcribeBlob(blob); ans=o.roman; }catch(e){}
+  C.phase='listening';
+  panel.innerHTML=renderConv(C);
+  setMicListening(tab,true);
+  let blob; try{ blob=await recordUntilSilence(level=>paintMicLevel(tab,level)); }
+  catch(e){ C.voice=false; C.phase='mic-error'; panel.innerHTML=renderConv(C); return; }
+  finally{ setMicListening(tab,false); }
+  let ans='', disp=''; try{ const o=await transcribeBlob(blob); ans=o.roman; disp=o.disp; }catch(e){}
   if(!ans){ toast('Suna nahi — phir se',false); return convListen(tab); }
-  await convTurn(tab, ans);
+  await convTurn(tab, ans, disp||ans);
 }
 
 function convAnswerText(tab){
   const inp=document.getElementById('convans-'+tab); const v=inp.value.trim(); if(!v) return;
-  inp.value=''; convTurn(tab, v);
+  inp.value=''; convTurn(tab, v, v);
 }
 function convRepeat(tab){ playSay_fromLast(tab); }
 async function playSay_fromLast(tab){ const C=CONV[tab]; if(C && C.lastSay){ toast('🔊 '+C.lastSay); } }
@@ -959,29 +1200,87 @@ async function convConfirm(tab){
   await convTurn(tab,'confirm');
 }
 
-function renderConv(C, statusHtml){
+function renderCurrentEntry(C){
   const s=C.summary||{items:[]};
-  const rows=(s.items||[]).map(it=>{
+  const items=s.items||[];
+  const rows=items.map(it=>{
     const sku=it.sku_id?STATE.byId[it.sku_id]:null;
-    const name=sku?sku.canonical:('“'+(it.phrase||'')+'”');
+    const name=sku?sku.canonical:(it.phrase||'Product');
     const bits=[];
-    if(it.qty!=null) bits.push((it.self_corrected?'2→':'')+fmtNum(it.qty)+(it.unit?(' '+it.unit):''));
+    if(it.qty!=null) bits.push(fmtNum(it.qty)+(it.unit?(' '+it.unit):''));
     if(it.rate!=null) bits.push('₹'+fmtNum(it.rate)+(it.unit?('/'+it.unit):''));
     if(it.payment) bits.push(it.payment);
-    const tick=it.confirmed?'✅':(it.sku_id?'…':'❓');
-    return `<div class="flex justify-between text-sm py-1 ${it.active?'text-white':'text-slate-400'}">
-      <span>${tick} ${name}</span><span>${bits.join(' · ')}</span></div>`;
+    const complete=Boolean(it.sku_id&&it.qty!=null);
+    return `<div class="voice-draft-item ${complete?'':'needs-detail'}">
+      <div class="voice-draft-main">
+        <span class="voice-draft-icon"><span class="material-symbols-outlined">${complete?'check':'more_horiz'}</span></span>
+        <div class="min-w-0"><div class="voice-draft-name">${escHtml(name)}</div>
+          <div class="voice-draft-meta">${escHtml(bits.join(' · ')||(complete?'Product matched':'More information needed'))}</div></div>
+      </div>
+      <div class="voice-draft-status">${complete?'Added to draft':'Needs detail'}</div>
+    </div>`;
   }).join('');
-  const say=C.lastSay?`<div class="text-lg font-semibold text-sky-200 mb-1">🗣️ ${C.lastSay}</div>`:'';
-  const answerBox = (!C.done)? `<div class="flex gap-2 mt-3">
-      <button onclick="convListen('${convTabOf(C)}')" class="chip px-3 py-2 rounded-lg text-sm">🎤 Bol ke jawaab</button>
-      <input id="convans-${convTabOf(C)}" class="flex-1 rounded-lg px-3 py-2 text-sm" placeholder="ya jawaab likho…" onkeydown="if(event.key==='Enter')convAnswerText('${convTabOf(C)}')">
-      <button onclick="convAnswerText('${convTabOf(C)}')" class="bg-blue-600 px-3 py-2 rounded-lg text-sm font-semibold">→</button>
+  const skipped=[...new Set(C.state?.skipped_items||[])];
+  const unavailable=skipped.map(name=>`<div class="voice-draft-item unavailable">
+    <div class="voice-draft-main">
+      <span class="voice-draft-icon"><span class="material-symbols-outlined">close</span></span>
+      <div class="min-w-0"><div class="voice-draft-name">${escHtml(name)}</div>
+        <div class="voice-draft-meta">Not available in inventory</div></div>
+    </div>
+    <div class="voice-draft-status">Not added</div>
+  </div>`).join('');
+  if(!rows&&!unavailable) return '';
+  const customer=C.state?.customer;
+  const context=[];
+  if(customer?.name||customer?.phone) context.push(`Customer: ${customer?.name||customer?.phone}`);
+  if(C.state?.payment_deadline) context.push(`Due: ${dayLabel(C.state.payment_deadline)}`);
+  const payment=[...new Set(items.map(it=>it.payment).filter(Boolean))].join(' + ');
+  if(payment) context.push(`Payment: ${payment}`);
+  const contextHtml=context.length?`<div class="voice-draft-context">${context.map(x=>`<span>${escHtml(x)}</span>`).join('')}</div>`:'';
+  const count=items.length;
+  return `<div class="voice-current-entry">
+    <div class="voice-current-entry-head">
+      <div class="voice-current-entry-title">Current entry</div>
+      <div class="voice-current-entry-count">${count} item${count===1?'':'s'}</div>
+    </div>
+    <div class="voice-draft-list">${rows}${unavailable}</div>
+    ${contextHtml}
+  </div>`;
+}
+
+function renderConv(C){
+  const tab=convTabOf(C);
+  const phases={
+    thinking:['Understanding your entry…','is-thinking'],
+    listening:['Sun raha hoon… Bolna poora ho to bas ruk jaiye.','is-listening'],
+    'mic-error':['Mic nahi mila. Neeche likh kar jawaab dein.','is-error'],
+    question:['Aap voice ya text se jawaab de sakte hain.',''],
+    ready:['Details updated.','']
+  };
+  const phase=phases[C.phase]||phases.question;
+  const showAssistant=C.phase!=='thinking'&&C.lastSay;
+  const assistant=showAssistant?`<div class="voice-assistant-turn">
+    <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
+    <div class="voice-assistant-copy">${escHtml(C.lastSay)}</div>
+  </div>`:'';
+  const micAction=C.phase==='listening'?'stopRecordingNow()':`convListen('${tab}')`;
+  const answerBox = (!C.done&&C.phase!=='thinking')? `<div class="voice-reply-bar">
+      <button onclick="${micAction}" class="voice-reply-mic ${C.phase==='listening'?'is-listening':''}" aria-label="${C.phase==='listening'?'Stop listening':'Answer by voice'}">
+        <span class="material-symbols-outlined">${C.phase==='listening'?'graphic_eq':'mic'}</span>
+      </button>
+      <input id="convans-${tab}" placeholder="Jawaab likhein…" onkeydown="if(event.key==='Enter')convAnswerText('${tab}')">
+      <button onclick="convAnswerText('${tab}')" class="voice-reply-send" aria-label="Send answer"><span class="material-symbols-outlined">arrow_forward</span></button>
     </div>`:'';
-  return `<div class="card p-4 border-sky-800">${say}
-    <div class="text-xs text-blue-300 mb-2">${statusHtml||''}</div>
-    <div class="border-t border-[#24304f] pt-2">${rows||'<span class="text-slate-500 text-sm">…</span>'}</div>
-    ${answerBox}</div>`;
+  return `<div class="voice-conversation">
+    <div class="voice-conversation-turn">
+      <div class="voice-speaker-label"><span class="material-symbols-outlined">person</span>Aapne kaha</div>
+      <div class="voice-user-utterance">${escHtml(C.latestUser||'')}</div>
+      ${assistant}
+      <div class="voice-turn-state ${phase[1]}">${phase[0]}</div>
+    </div>
+    ${renderCurrentEntry(C)}
+    ${answerBox}
+  </div>`;
 }
 function convTabOf(C){ for(const t in CONV){ if(CONV[t]===C) return t; } return 'sale'; }
 
@@ -991,14 +1290,21 @@ async function convFinish(tab, r){
   const committed=(r.committed&&r.committed.committed)||[];
   // query answer (stock / analytics) — nothing written to the ledger
   if(!committed.length){
-    panel.innerHTML=`<div class="card p-4 border-sky-800">
-      <div class="text-sky-200 font-bold text-lg">🗣️ ${C.lastSay||''}</div>
-      <button onclick="renderVoiceUI('${tab}','${C.flow}')" class="text-blue-300 underline text-sm mt-2">phir se poochho</button></div>`;
+    panel.innerHTML=`<div class="voice-conversation">
+      <div class="voice-conversation-turn">
+        <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
+        <div class="voice-assistant-copy">${escHtml(C.lastSay||'')}</div>
+        <div class="voice-turn-state">Answer ready</div>
+      </div>
+      <div class="voice-result-actions">
+        <button onclick="resetVoiceConversation('${tab}','${C.flow}')" class="secondary">Ask something else</button>
+      </div>
+    </div>`;
     CONV[tab]=null; return;
   }
   const affected=(r.committed&&r.committed.affected_stock)||{};
-  let stockRows=Object.entries(affected).map(([sid,st])=>`<div class="flex justify-between text-sm">
-    <span>${STATE.byId[sid].canonical}</span><b class="${(st.uncounted||st.oversold)?'text-amber-300':'text-emerald-400'}">${st.display}</b></div>`).join('');
+  let stockRows=Object.entries(affected).map(([sid,st])=>`<div class="voice-result-stock-row">
+    <span>${escHtml(STATE.byId[sid].canonical)}</span><strong>${escHtml(st.display)}</strong></div>`).join('');
   const billItems=committed.map((c,i)=>{
     const candidates=C.summary.items||[];
     const it=candidates[i]||candidates.find(x=>x.sku_id===c.sku_id)||{};
@@ -1010,14 +1316,25 @@ async function convFinish(tab, r){
   // it, or we're just counting stock) the bill comes from the supplier, not us.
   const committedFlow=(r.committed&&r.committed.flow)||'sale';
   const bills=(billItems.length&&committedFlow==='sale')
-    ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="chip px-3 py-1 rounded-lg text-sm">🧾 One bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
+    ? `<button onclick='makeBill(${JSON.stringify(billItems).replace(/'/g,"&#39;")},${JSON.stringify(billCustomer).replace(/'/g,"&#39;")})' class="primary">View bill · ${billItems.length} item${billItems.length===1?'':'s'}</button>`
     : '';
-  panel.innerHTML=`<div class="card p-4 border-emerald-700">
-    <div class="text-emerald-400 font-bold text-lg mb-1">✅ ${C.lastSay||'Likh diya'}</div>
-    <div class="mt-2 space-y-1">${stockRows}</div>
-    <div class="flex gap-2 mt-3 flex-wrap">${bills}
-      <button onclick="renderVoiceUI('${tab}','${C.flow}')" class="text-blue-300 underline text-sm">nayi entry</button></div></div>`;
+  panel.innerHTML=`<div class="voice-conversation">
+    <div class="voice-conversation-turn">
+      <div class="voice-speaker-label"><span class="material-symbols-outlined">check_circle</span>Recorded</div>
+      <div class="voice-assistant-copy">${escHtml(C.lastSay||'Entry recorded')}</div>
+      <div class="voice-turn-state">Ledger updated</div>
+    </div>
+    ${renderCurrentEntry(C)}
+    ${stockRows?`<div class="voice-result-stock">${stockRows}</div>`:''}
+    <div class="voice-result-actions">${bills}
+      <button onclick="resetVoiceConversation('${tab}','${C.flow}')" class="secondary">New entry</button>
+    </div>
+  </div>`;
   CONV[tab]=null;
+}
+function resetVoiceConversation(tab,flow='auto'){
+  CONV[tab]=null;
+  renderVoiceUI(tab,flow);
 }
 
 // central floating button — start the assistant with any intent
@@ -1188,6 +1505,13 @@ async function loadStock(){
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
     <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
+  filterStockRows(document.getElementById('stockSearch')?.value);
+}
+function filterStockRows(q){
+  q=(q||'').trim().toLowerCase();
+  document.querySelectorAll('#stockList tbody tr').forEach(row=>{
+    row.style.display=!q||row.textContent.toLowerCase().includes(q)?'':'none';
+  });
 }
 // ---------- Customers / credit ----------
 let CRM_CUSTOMERS=[], CRM_SELECTED=null;
@@ -1214,7 +1538,12 @@ function renderCustomerCRM(rows){
   }).join('');
   document.getElementById('customerBody').innerHTML=`<div class="crm-layout">
     <div class="customer-list">
-      <div class="customer-list-search"><input id="customerSearch" placeholder="Search name or phone…" oninput="filterCustomers(this.value)"></div>
+      <div class="customer-list-search">
+        <label class="local-search">
+          <span class="material-symbols-outlined">search</span>
+          <input id="customerSearch" type="search" placeholder="Search name or phone…" oninput="filterCustomers(this.value)">
+        </label>
+      </div>
       <div id="customerListRows">${list||'<div class="p-6 text-sm text-slate-500">No customers yet.</div>'}</div>
     </div>
     <div id="customerDetail" class="customer-detail">${renderCustomerDetail()}</div>

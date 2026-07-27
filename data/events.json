@@ -1389,5 +1389,28 @@
       "transcript": "aaj gina to 38 bori nikla"
     },
     "event_id": "evt_0073"
+  },
+  {
+    "type": "sale",
+    "sku_id": "CEM_ULTRATECH_PPC",
+    "qty": 3.0,
+    "unit": "bori",
+    "rate": 100.0,
+    "quoted_rate": 100,
+    "rate_unit": "bori",
+    "payment": "cash",
+    "customer_id": "cust_0007",
+    "payment_deadline": null,
+    "occurred_on": "2026-07-26",
+    "precision": "exact",
+    "count_precision": null,
+    "occurred_at": null,
+    "confidence": 0.9,
+    "source": "voice_live",
+    "evidence": {
+      "transcript": "आज मैंने 3 बोरी cement बेची"
+    },
+    "event_id": "evt_0074",
+    "recorded_at": "2026-07-26T23:04:04"
   }
 ]
