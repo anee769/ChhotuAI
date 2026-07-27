@@ -653,13 +653,29 @@ class ClockTests(unittest.TestCase):
         os.environ["CHHOTU_TODAY"] = "2026-07-27"
         self.assertEqual(clock.today(), date(2026, 7, 27))
 
-    def test_unpinned_clock_is_the_real_date(self):
+    @staticmethod
+    def _ist_today():
+        from datetime import datetime
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("Asia/Kolkata")).date()
+
+    def test_unpinned_clock_is_the_shops_date_not_the_servers(self):
+        # Vercel runs in UTC; between midnight and 5:30am IST a bare
+        # date.today() there reports yesterday.
         os.environ.pop("CHHOTU_TODAY", None)
-        self.assertEqual(clock.today(), date.today())
+        self.assertEqual(clock.today(), self._ist_today())
 
     def test_a_malformed_pin_falls_back_instead_of_freezing(self):
         os.environ["CHHOTU_TODAY"] = "not-a-date"
-        self.assertEqual(clock.today(), date.today())
+        self.assertEqual(clock.today(), self._ist_today())
+
+    def test_an_unknown_timezone_falls_back_to_the_shops(self):
+        os.environ.pop("CHHOTU_TODAY", None)
+        os.environ["CHHOTU_TZ"] = "Not/AZone"
+        try:
+            self.assertEqual(clock.today(), self._ist_today())
+        finally:
+            os.environ.pop("CHHOTU_TZ", None)
 
     def test_deadlines_follow_the_moving_clock(self):
         os.environ["CHHOTU_TODAY"] = "2026-07-26"

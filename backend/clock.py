@@ -18,9 +18,24 @@ without restarting the process.
 from __future__ import annotations
 
 import os
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 ENV_VAR = "CHHOTU_TODAY"
+# The shop's day, not the server's. Hosts run in UTC, and IST is UTC+5:30, so
+# a bare date.today() there reports YESTERDAY from midnight until 5:30am local
+# — early-morning sales would be filed to the wrong day and the daily summary
+# would cover the wrong window.
+TZ_VAR = "CHHOTU_TZ"
+DEFAULT_TZ = "Asia/Kolkata"
+
+
+def timezone() -> ZoneInfo:
+    name = (os.environ.get(TZ_VAR) or "").strip() or DEFAULT_TZ
+    try:
+        return ZoneInfo(name)
+    except Exception:
+        return ZoneInfo(DEFAULT_TZ)
 
 
 def today() -> date:
@@ -32,7 +47,7 @@ def today() -> date:
             # A malformed pin must not silently freeze the clock at import
             # time — fall through to the real date.
             pass
-    return date.today()
+    return datetime.now(timezone()).date()
 
 
 def today_iso() -> str:
