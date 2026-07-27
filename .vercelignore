@@ -1,0 +1,16 @@
+# Secrets must reach the server as Vercel environment variables, never as a
+# file in the deployment bundle. sarvam_client._load_dotenv() reads .env at
+# import, so an uploaded .env would silently become the key source — working,
+# but unrotatable and outside Vercel's encrypted store.
+.env
+.env.*
+
+# Local-only
+.venv/
+debug/
+__pycache__/
+*.pyc
+.git/
+.claude/
+.agents/
+skills-lock.json
