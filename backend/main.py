@@ -12,11 +12,12 @@ import io
 import json
 import os
 import re
+import secrets
 import sys
 from datetime import date, datetime
 from pathlib import Path
 
-from fastapi import FastAPI, UploadFile, File, Form, Body, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form, Body, Header, HTTPException
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse, FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -953,8 +954,34 @@ def bill(payload: dict = Body(...)):
 # ---------------------------------------------------------------------------
 # Demo reset
 # ---------------------------------------------------------------------------
+def _reset_allowed(token: str):
+    """Reset destroys the entire ledger — every sale, customer and udhaar
+    balance — and replaces it with demo seed data. Unauthenticated on a public
+    URL that is one request from anyone who finds it, and it now targets the
+    Neon database rather than local files, so there is no second copy.
+
+    Rules, most specific first:
+      - CHHOTU_ADMIN_TOKEN set  -> the caller must present it.
+      - deployed (DATABASE_URL/VERCEL) with no token -> refuse outright; a
+        deployment with real data must never be resettable by default.
+      - otherwise (local files, no token) -> allowed, for the seeded demo.
+    """
+    expected = (os.environ.get("CHHOTU_ADMIN_TOKEN") or "").strip()
+    if expected:
+        if not token or not secrets.compare_digest(token, expected):
+            return False, "Invalid or missing admin token."
+        return True, ""
+    if os.environ.get("DATABASE_URL") or os.environ.get("VERCEL"):
+        return False, ("Reset is disabled on a deployment. Set CHHOTU_ADMIN_TOKEN "
+                       "and send it as X-Admin-Token to enable it.")
+    return True, ""
+
+
 @app.post("/api/reset")
-def reset():
+def reset(x_admin_token: str = Header(default="")):
+    allowed, why = _reset_allowed(x_admin_token)
+    if not allowed:
+        raise HTTPException(status_code=403, detail=why)
     import seed
     seed.main()
     global repo
