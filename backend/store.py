@@ -51,6 +51,18 @@ class FileStore:
             os.fsync(f.fileno())
         os.replace(tmp, p)
 
+    def mutate(self, name: str, default, fn):
+        """Read the CURRENT document, apply fn, write it back.
+
+        One process owns the files here, so re-reading plus the caller's lock
+        is enough. The value of routing through this method is that callers
+        never mutate a cached copy — which is the bug this exists to prevent.
+        """
+        current = self.read(name, default)
+        result = fn(current)
+        self.write(name, current)
+        return current, result
+
 
 class PostgresStore:
     """One row per document, keyed by the old filename.
@@ -99,6 +111,44 @@ class PostgresStore:
                 (name, json.dumps(obj, ensure_ascii=False)),
             )
             conn.commit()
+
+    def mutate(self, name: str, default, fn):
+        """Read-modify-write as ONE atomic step, under a row lock.
+
+        This is the whole point of the class. Several instances of the app run
+        at once and each caches documents in memory; without this, two of them
+        append to their own stale copy of events.json and whichever writes
+        second erases the other's order — silently, and with a duplicate
+        event_id, since the id counter is derived from the same stale list.
+
+        SELECT ... FOR UPDATE holds the row until commit, so a concurrent
+        mutate blocks and then re-reads the winner's result. fn therefore
+        always sees current data, and any id it derives is current too.
+        """
+        with self._connect() as conn:
+            with conn.transaction():
+                row = conn.execute(
+                    f"SELECT data FROM {TABLE} WHERE name = %s FOR UPDATE", (name,)
+                ).fetchone()
+                if row is None:
+                    # Take the lock on a freshly inserted row so a racing
+                    # writer blocks here rather than inserting a rival copy.
+                    conn.execute(
+                        f"INSERT INTO {TABLE} (name, data) VALUES (%s, %s::jsonb)"
+                        " ON CONFLICT (name) DO NOTHING",
+                        (name, json.dumps(default, ensure_ascii=False)),
+                    )
+                    row = conn.execute(
+                        f"SELECT data FROM {TABLE} WHERE name = %s FOR UPDATE", (name,)
+                    ).fetchone()
+                current = row[0] if row else default
+                result = fn(current)
+                conn.execute(
+                    f"UPDATE {TABLE} SET data = %s::jsonb, updated_at = now()"
+                    " WHERE name = %s",
+                    (json.dumps(current, ensure_ascii=False), name),
+                )
+        return current, result
 
     def is_empty(self) -> bool:
         with self._connect() as conn:

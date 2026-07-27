@@ -57,6 +57,25 @@ repo = JsonRepo()
 sys.modules.setdefault("main", sys.modules[__name__])
 app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
 
+
+@app.middleware("http")
+async def _fresh_repo(request, call_next):
+    """Re-read the ledger at the top of every request.
+
+    Several instances of this app serve traffic, each with its own in-memory
+    copy loaded at cold start. Without this, an instance that has been warm for
+    a while answers from a snapshot taken before another instance recorded a
+    sale — so a just-entered order looks missing. Writes are made atomic in
+    repo.py; this is the read half of the same problem.
+    """
+    try:
+        repo.refresh()
+    except Exception:
+        # Never fail a request because the refresh hiccuped — the handler can
+        # still serve from the last known good copy.
+        pass
+    return await call_next(request)
+
 # The invoice tab previews a scanned bill out of data/, but mounting the whole
 # directory served the ledger with it — customers.json (names and phone
 # numbers), events.json, receivables.json were all a plain GET away with no
