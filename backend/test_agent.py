@@ -299,6 +299,9 @@ class AgentToolTests(unittest.TestCase):
             self.repo, USER, agent._scrub({"item": "{{item}}"}))
         self.assertNotIn("{{", json.dumps(out))
         self.assertFalse(out.get("found"))
+        # and it must ask for a name, not describe the absence of one
+        self.assertEqual(out["needs"]["field"], "item")
+        self.assertNotIn("None", out["speak"])
 
     def test_a_single_line_may_arrive_flattened(self):
         """Nested arrays are painful to template in the console Body tab."""

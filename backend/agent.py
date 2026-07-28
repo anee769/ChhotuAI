@@ -207,6 +207,11 @@ def _shop_kind(repo, user) -> str:
     return _DEFAULT_SHOP_KIND
 
 
+def _no_item_named() -> dict:
+    return {"found": False, "needs": {"field": "item"},
+            "speak": "Kaunsa saamaan? Naam bataiye."}
+
+
 def _not_stocked(repo, user, phrase: str) -> dict:
     """A miss, with enough context for the agent to answer like a shopkeeper.
 
@@ -380,6 +385,8 @@ def list_inventory(repo, user, args):
 
 
 def check_stock(repo, user, args):
+    if not (args.get("item") or "").strip():
+        return _no_item_named()
     sku, question = _find_sku(repo, args.get("item"))
     if question:
         return _ask_which(question)
@@ -392,6 +399,8 @@ def check_stock(repo, user, args):
 
 
 def item_details(repo, user, args):
+    if not (args.get("item") or "").strip():
+        return _no_item_named()
     sku, question = _find_sku(repo, args.get("item"))
     if question:
         return _ask_which(question)
@@ -414,6 +423,8 @@ def item_details(repo, user, args):
 
 def search_items(repo, user, args):
     q = (args.get("query") or args.get("item") or "").strip().lower()
+    if not q:
+        return _no_item_named()
     catalogue = repo.load_catalogue()
     hits = [s for s in catalogue
             if q and (q in (s["canonical"] or "").lower()
