@@ -199,6 +199,40 @@ def _stock_of(repo, sku: dict, events=None) -> dict:
             "text": f"{'~' if det.get('estimated') else ''}{_g(qty)} {unit}"}
 
 
+def _sounds_like(phrase: str, catalogue: list) -> list:
+    """Product names whose WORDS sound close to what was said.
+
+    The matcher scores a phrase against a product's whole text, so a
+    one-letter slip on a single word ("siment" for cement, from सीमेंट)
+    scores near zero against "UltraTech PPC Cement 50kg". Comparing word to
+    word instead catches it. Only ever used to raise a question, never to
+    pick, so a loose threshold here cannot ship the wrong bag.
+    """
+    import difflib
+    import translit
+    text = (phrase or "").lower()
+    if translit.has_devanagari(text):
+        text = translit.to_latin(text) or text
+    said = [w for w in re.split(r"[\s-]+", text) if len(w) > 3]
+    if not said:
+        return []
+    hits = []
+    for sku in catalogue:
+        words = set(re.split(r"[\s-]+", (sku.get("canonical") or "").lower()))
+        for alias in sku.get("aliases") or []:
+            words.update(re.split(r"[\s-]+", str(alias).lower()))
+        best = 0.0
+        for w in words:
+            if len(w) <= 3:
+                continue
+            for q in said:
+                best = max(best, difflib.SequenceMatcher(None, q, w).ratio())
+        if best >= 0.66:
+            hits.append((best, sku["canonical"]))
+    hits.sort(reverse=True)
+    return [name for _, name in hits]
+
+
 def _find_sku(repo, phrase: str):
     """Returns (sku, question) — exactly one is set, both None if no match.
 
@@ -221,6 +255,24 @@ def _find_sku(repo, phrase: str):
                 m = M.match(latin, catalogue, repo.load_learning(), "live_sale")
     if m.get("status") == "matched":
         return repo.sku(m.get("sku_id")), None
+    if m.get("status") not in ("matched", "disambiguate"):
+        near = _sounds_like(phrase, catalogue)
+        if near:
+            return None, {"said": phrase, "options": near[:3]}
+    if m.get("status") == "uncertain":
+        # A near miss, not an absent product: "siment" (from सीमेंट) scores
+        # close to Cement without clearing the confidence bar. Telling the
+        # owner we do not stock it would be a confident wrong answer, so offer
+        # the closest names and let them pick.
+        ids = [c.get("sku_id") if isinstance(c, dict) else c
+               for c in (m.get("candidates") or [])]
+        near = [repo.sku(i) for i in ids if i]
+        if not near:
+            near = [repo.sku(c.get("sku_id") if isinstance(c, dict) else c)
+                    for c in M.fuzzy_candidates(phrase, catalogue, limit=3)]
+        names = [n["canonical"] for n in near if n]
+        if names:
+            return None, {"said": phrase, "options": names[:3]}
     if m.get("status") == "disambiguate":
         # The matcher returns options as attribute VALUES ("OPC 53", "PPC") for
         # a variant question and as sku_ids elsewhere. Normalise both.

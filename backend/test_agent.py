@@ -444,6 +444,21 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("check_stock", item="एशियन पेंट्स एपकोलाइट")
         self.assertTrue(out.get("found") or out.get("needs"), out)
 
+    def test_a_near_miss_asks_instead_of_denying(self):
+        """"siment" (from सीमेंट) scores close to Cement without clearing the
+        matcher's bar. Saying we don't stock it is a confident wrong answer."""
+        out = self.call("check_stock", item="siment")
+        self.assertIn("needs", out)
+        self.assertTrue(any("Cement" in o for o in out["needs"]["options"]), out)
+
+    def test_a_genuine_miss_is_still_a_miss(self):
+        """The phonetic fallback must not turn every unknown word into a
+        question about cement."""
+        for word in ("laptop", "biryani", "hydraulic press"):
+            out = self.call("check_stock", item=word)
+            self.assertNotIn("needs", out, word)
+            self.assertFalse(out["found"], word)
+
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
                                              "rate": 390}])
