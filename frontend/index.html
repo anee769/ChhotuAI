@@ -820,6 +820,482 @@
     .voice-draft-item { grid-template-columns:minmax(0,1fr); gap:7px; }
     .voice-draft-status { padding-left:31px; }
   }
+
+  /* Chhotu.ai public landing + authentication */
+  .auth-screen {
+    --auth-ink:#090b0b;
+    --auth-panel:#111514;
+    --auth-line:rgba(255,255,255,.12);
+    --auth-green:#6cf8bb;
+    --auth-green-deep:#006c49;
+    --auth-safety:#ffb34d;
+    position:fixed; inset:0; z-index:200; display:block; padding:0;
+    place-items:normal; align-items:normal; justify-items:normal;
+    overflow-x:hidden; overflow-y:auto; background:var(--auth-ink); color:#f7faf8;
+    scroll-behavior:smooth;
+  }
+  .auth-screen::before {
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.32;
+    background:
+      radial-gradient(circle at 78% 12%,rgba(108,248,187,.12),transparent 25%),
+      radial-gradient(circle at 10% 70%,rgba(255,179,77,.08),transparent 26%),
+      linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:auto,auto,52px 52px,52px 52px;
+    animation:authGridDrift 24s linear infinite;
+  }
+  .auth-screen::after {
+    content:""; position:fixed; inset:0; pointer-events:none; opacity:.22;
+    background:
+      radial-gradient(circle at 18% 23%,rgba(255,255,255,.18) 0 1px,transparent 1.5px),
+      radial-gradient(circle at 76% 61%,rgba(255,255,255,.12) 0 1px,transparent 1.5px);
+    background-size:17px 19px,23px 29px; mix-blend-mode:soft-light;
+  }
+  @keyframes authGridDrift {
+    to { background-position:0 0,0 0,52px 52px,52px 52px; }
+  }
+  .auth-site-nav {
+    position:sticky; top:0; z-index:10; width:100%; height:78px; padding:0 4vw;
+    display:flex; align-items:center; justify-content:space-between; gap:24px;
+    border-bottom:1px solid var(--auth-line);
+    background:rgba(9,11,11,.76); backdrop-filter:blur(18px);
+  }
+  .auth-site-brand {
+    display:flex; align-items:center; gap:11px; color:#fff;
+    font-size:21px; font-weight:850; letter-spacing:-.045em;
+  }
+  .auth-site-brand .auth-ai { color:var(--auth-green); }
+  .auth-brand-mark {
+    position:relative; width:35px; height:35px; border:6px solid #f6f8f7;
+    border-right-color:transparent; border-radius:50%; transform:rotate(-9deg);
+  }
+  .auth-brand-mark::after {
+    content:""; position:absolute; right:-8px; top:8px; width:7px; height:7px;
+    border-radius:50%; background:var(--auth-green);
+    box-shadow:0 0 18px rgba(108,248,187,.75);
+  }
+  .auth-nav-links { display:flex; align-items:center; gap:28px; }
+  .auth-nav-links a {
+    color:#aab1ad; font-size:12px; font-weight:650; text-decoration:none;
+    transition:color .2s ease;
+  }
+  .auth-nav-links a:hover { color:#fff; }
+  .auth-nav-cta {
+    padding:10px 16px; border:1px solid rgba(108,248,187,.35);
+    border-radius:999px; background:rgba(108,248,187,.08); color:var(--auth-green);
+    font-size:12px; font-weight:800; cursor:pointer;
+  }
+  .auth-landing { position:relative; z-index:1; width:100%; }
+  .auth-hero {
+    position:relative; min-height:calc(100vh - 78px); padding:7.5vh 4vw 5vh;
+    display:grid; grid-template-columns:minmax(0,1.15fr) minmax(350px,.7fr);
+    gap:clamp(36px,6vw,100px); align-items:center; overflow:hidden;
+  }
+  .auth-hero-copy { position:relative; z-index:2; max-width:830px; }
+  .auth-eyebrow {
+    display:flex; align-items:center; gap:11px; margin-bottom:26px;
+    color:var(--auth-green); font-size:10px; font-weight:850;
+    letter-spacing:.2em; text-transform:uppercase;
+  }
+  .auth-eyebrow::before {
+    content:""; width:36px; height:2px; background:var(--auth-green);
+    box-shadow:0 0 12px rgba(108,248,187,.65);
+  }
+  .auth-display {
+    max-width:820px; color:#f6f8f7; font-size:clamp(50px,6.5vw,104px);
+    line-height:.9; font-weight:880; letter-spacing:-.073em;
+  }
+  .auth-display .auth-outline {
+    display:block; color:transparent; -webkit-text-stroke:1px rgba(255,255,255,.46);
+  }
+  .auth-display .auth-accent { color:var(--auth-green); }
+  .auth-lede {
+    max-width:650px; margin-top:28px; color:#aeb5b1;
+    font-size:clamp(15px,1.25vw,19px); line-height:1.65;
+  }
+  .auth-proof-row {
+    display:flex; flex-wrap:wrap; gap:10px; margin-top:31px;
+  }
+  .auth-proof-chip {
+    display:flex; align-items:center; gap:8px; padding:9px 13px;
+    border:1px solid var(--auth-line); border-radius:999px;
+    background:rgba(255,255,255,.035); color:#d5d9d7; font-size:11px;
+  }
+  .auth-proof-chip .material-symbols-outlined {
+    color:var(--auth-green); font-size:16px;
+  }
+  .auth-live-strip {
+    display:grid; grid-template-columns:repeat(3,minmax(110px,1fr));
+    max-width:600px; margin-top:34px; border-top:1px solid var(--auth-line);
+  }
+  .auth-live-stat { padding:19px 20px 0 0; }
+  .auth-live-stat strong {
+    display:block; color:#fff; font-size:18px; font-weight:820;
+  }
+  .auth-live-stat span {
+    display:block; margin-top:4px; color:#737c77; font-size:9px;
+    font-weight:750; letter-spacing:.11em; text-transform:uppercase;
+  }
+  .auth-form-shell {
+    position:relative; z-index:5; justify-self:end; width:100%; max-width:430px;
+  }
+  .auth-form-shell::before {
+    content:""; position:absolute; inset:-1px; border-radius:25px;
+    background:linear-gradient(135deg,rgba(108,248,187,.55),rgba(255,255,255,.04) 38%,rgba(255,179,77,.3));
+    filter:blur(20px); opacity:.48;
+  }
+  .auth-card {
+    position:relative; width:100%; max-width:none; padding:32px 32px 28px;
+    border:1px solid rgba(108,248,187,.18); border-radius:24px;
+    background:
+      radial-gradient(circle at 100% 0,rgba(108,248,187,.09),transparent 34%),
+      linear-gradient(145deg,rgba(24,31,27,.97),rgba(11,15,13,.98));
+    color:#edf3ef; box-shadow:0 30px 100px rgba(0,0,0,.62);
+    backdrop-filter:blur(18px);
+  }
+  .auth-card::before {
+    content:""; position:absolute; left:28px; right:28px; top:0; height:3px;
+    background:linear-gradient(90deg,transparent,var(--auth-green-deep),transparent);
+  }
+  .auth-card-topline {
+    display:flex; align-items:center; justify-content:space-between;
+    margin-bottom:26px; color:#9da8a2; font-size:10px; font-weight:750;
+    letter-spacing:.11em; text-transform:uppercase;
+  }
+  .auth-card-status { display:flex; align-items:center; gap:7px; }
+  .auth-card-status::before {
+    content:""; width:7px; height:7px; border-radius:50%; background:#0cb67d;
+    box-shadow:0 0 0 5px rgba(12,182,125,.1); animation:authStatus 1.8s ease infinite;
+  }
+  @keyframes authStatus { 50% { box-shadow:0 0 0 9px rgba(12,182,125,0); } }
+  .auth-card-step { color:var(--auth-safety); }
+  .auth-brand { display:none; }
+  .auth-title {
+    color:#f7faf8; font-size:30px; line-height:1.1; font-weight:850;
+    letter-spacing:-.045em;
+  }
+  .auth-sub { margin-top:9px; color:#9da8a2; font-size:13px; line-height:1.6; }
+  .auth-label { margin:18px 0 7px; color:#b7c1bb; font-size:9px; letter-spacing:.15em; }
+  .auth-input, .auth-phone {
+    min-height:49px; border-color:rgba(255,255,255,.13) !important; border-radius:11px;
+    background:rgba(255,255,255,.055) !important; color:#f5f8f6 !important;
+    transition:border-color .2s ease,box-shadow .2s ease,transform .2s ease;
+  }
+  .auth-input::placeholder,.auth-phone input::placeholder { color:#6f7b74; }
+  .auth-phone span { color:var(--auth-green); }
+  .auth-phone input {
+    color:#f5f8f6 !important; caret-color:var(--auth-green);
+  }
+  .auth-phone:focus-within, .auth-input:focus {
+    border-color:rgba(108,248,187,.65) !important;
+    box-shadow:0 0 0 4px rgba(108,248,187,.09),0 12px 25px -20px rgba(108,248,187,.5);
+    transform:translateY(-1px);
+  }
+  .auth-primary {
+    position:relative; min-height:50px; margin-top:22px; overflow:hidden;
+    border-radius:11px; background:var(--auth-green); color:#07100c;
+    font-size:13px; box-shadow:0 13px 30px -18px rgba(108,248,187,.72);
+    transition:transform .2s ease,box-shadow .2s ease;
+  }
+  .auth-primary::after {
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(105deg,transparent 20%,rgba(108,248,187,.28) 48%,transparent 72%);
+    transform:translateX(-120%); transition:transform .55s ease;
+  }
+  .auth-primary:hover {
+    transform:translateY(-2px);
+    box-shadow:0 18px 34px -18px rgba(108,248,187,.9);
+  }
+  .auth-primary:hover::after { transform:translateX(120%); }
+  .auth-switch { margin-top:18px; color:#87928c; }
+  .auth-link { color:var(--auth-green); }
+  .auth-error {
+    border:1px solid rgba(255,120,111,.22); background:rgba(126,30,26,.28);
+    color:#ffb4ae;
+  }
+  .auth-security-note {
+    display:flex; align-items:center; justify-content:center; gap:7px;
+    margin-top:19px; color:#6f7a74; font-size:10px;
+  }
+  .auth-security-note .material-symbols-outlined { font-size:14px; color:var(--auth-green); }
+
+  .auth-industrial-stage {
+    position:absolute; z-index:0; left:39%; right:26%; bottom:3vh;
+    height:min(58vh,570px); pointer-events:none; opacity:.85;
+    perspective:900px;
+  }
+  .auth-stage-grid {
+    position:absolute; left:-25%; right:-20%; bottom:-14%; height:55%;
+    background:
+      linear-gradient(rgba(108,248,187,.16) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(108,248,187,.16) 1px,transparent 1px);
+    background-size:42px 42px; transform:rotateX(67deg);
+    transform-origin:bottom; mask-image:linear-gradient(to top,#000,transparent 92%);
+    animation:authFloorMove 3.2s linear infinite;
+  }
+  @keyframes authFloorMove { to { background-position:0 42px,42px 0; } }
+  .auth-crane {
+    position:absolute; left:3%; top:0; width:80%; height:72%;
+    filter:drop-shadow(0 20px 24px rgba(0,0,0,.45));
+  }
+  .auth-crane-mast {
+    position:absolute; left:13%; top:6%; bottom:0; width:18px;
+    border:3px solid rgba(255,179,77,.85);
+    background:repeating-linear-gradient(135deg,transparent 0 10px,rgba(255,179,77,.65) 11px 14px,transparent 15px 22px);
+  }
+  .auth-crane-mast::after {
+    content:""; position:absolute; left:-40px; right:-40px; bottom:-9px; height:11px;
+    background:#ffb34d; clip-path:polygon(10% 0,90% 0,100% 100%,0 100%);
+  }
+  .auth-crane-arm {
+    position:absolute; left:13%; right:0; top:6%; height:15px;
+    border:3px solid rgba(255,179,77,.9);
+    background:repeating-linear-gradient(45deg,transparent 0 16px,rgba(255,179,77,.7) 17px 20px,transparent 21px 32px);
+  }
+  .auth-crane-arm::before {
+    content:""; position:absolute; left:-13%; top:-3px; width:13%; height:15px;
+    background:#ffb34d;
+  }
+  .auth-crane-trolley {
+    position:absolute; top:20px; left:28%; width:12px; height:13px;
+    border-radius:2px; background:#f3f7f5; animation:authTrolley 7s ease-in-out infinite;
+  }
+  .auth-crane-cable {
+    position:absolute; left:50%; top:10px; width:1px; height:150px;
+    background:rgba(255,255,255,.68); transform-origin:top;
+    animation:authCableSwing 3.4s ease-in-out infinite;
+  }
+  .auth-crane-hook {
+    position:absolute; left:-8px; bottom:-14px; width:17px; height:21px;
+    border:3px solid #f5f7f6; border-top:0; border-radius:0 0 11px 11px;
+  }
+  .auth-crane-load {
+    position:absolute; left:-33px; bottom:-56px; width:68px; height:40px;
+    border:1px solid rgba(108,248,187,.8);
+    background:linear-gradient(135deg,rgba(108,248,187,.36),rgba(0,108,73,.72));
+    box-shadow:inset -9px -9px 0 rgba(0,0,0,.18),0 0 24px rgba(108,248,187,.12);
+  }
+  .auth-crane-load::before,.auth-crane-load::after {
+    content:""; position:absolute; top:-22px; width:1px; height:25px;
+    background:rgba(255,255,255,.6);
+  }
+  .auth-crane-load::before { left:12px; transform:rotate(-30deg); }
+  .auth-crane-load::after { right:12px; transform:rotate(30deg); }
+  @keyframes authTrolley { 0%,100% { left:27%; } 50% { left:76%; } }
+  @keyframes authCableSwing {
+    0%,100% { transform:rotate(2deg); height:145px; }
+    50% { transform:rotate(-2deg); height:190px; }
+  }
+  .auth-conveyor {
+    position:absolute; left:3%; right:0; bottom:12%; height:68px;
+    border-top:8px solid #565f5a; border-bottom:8px solid #242a27;
+    background:repeating-linear-gradient(90deg,#2f3632 0 26px,#151a17 27px 33px);
+    transform:skewX(-10deg);
+    box-shadow:0 24px 45px rgba(0,0,0,.35);
+  }
+  .auth-conveyor::after {
+    content:""; position:absolute; inset:13px 0;
+    background:repeating-linear-gradient(90deg,transparent 0 31px,rgba(108,248,187,.24) 32px 34px);
+    animation:authConveyor 1.2s linear infinite;
+  }
+  @keyframes authConveyor { to { background-position:34px 0; } }
+  .auth-cargo {
+    position:absolute; z-index:2; bottom:80px; left:-90px;
+    width:74px; height:55px; border:1px solid rgba(255,255,255,.16);
+    background:#202622; box-shadow:inset -10px -10px 0 rgba(0,0,0,.26);
+    animation:authCargoRun 9s linear infinite;
+  }
+  .auth-cargo::before {
+    content:attr(data-label); position:absolute; left:8px; top:8px;
+    color:var(--auth-green); font-size:7px; font-weight:850; letter-spacing:.08em;
+  }
+  .auth-cargo::after {
+    content:""; position:absolute; inset:0;
+    background:linear-gradient(90deg,transparent 47%,rgba(255,179,77,.6) 48% 52%,transparent 53%);
+  }
+  .auth-cargo.c2 { animation-delay:-3s; width:58px; height:68px; }
+  .auth-cargo.c3 { animation-delay:-6s; width:92px; height:42px; }
+  @keyframes authCargoRun { to { left:calc(100% + 100px); } }
+  .auth-scan {
+    position:absolute; z-index:3; right:17%; bottom:73px; width:2px; height:150px;
+    background:linear-gradient(to bottom,transparent,var(--auth-green),transparent);
+    box-shadow:0 0 13px var(--auth-green); animation:authScan 2.4s ease-in-out infinite;
+  }
+  .auth-scan::after {
+    content:"STOCK SYNC"; position:absolute; left:12px; top:24px; width:max-content;
+    color:rgba(108,248,187,.62); font-size:7px; font-weight:850; letter-spacing:.16em;
+  }
+  @keyframes authScan { 50% { transform:translateX(-150px); opacity:.35; } }
+  .auth-floating-readout {
+    position:absolute; right:1%; top:9%; width:150px; padding:12px;
+    border:1px solid rgba(108,248,187,.24); border-radius:10px;
+    background:rgba(6,10,8,.72); backdrop-filter:blur(8px);
+    animation:authFloat 3.8s ease-in-out infinite;
+  }
+  .auth-floating-readout span {
+    display:block; color:#6f7a74; font-size:7px; font-weight:850;
+    letter-spacing:.15em; text-transform:uppercase;
+  }
+  .auth-floating-readout strong {
+    display:block; margin-top:5px; color:var(--auth-green); font-size:18px;
+  }
+  .auth-readout-bar {
+    margin-top:9px; height:3px; overflow:hidden; background:rgba(255,255,255,.1);
+  }
+  .auth-readout-bar::after {
+    content:""; display:block; width:72%; height:100%; background:var(--auth-green);
+    animation:authReadout 2.2s ease-in-out infinite;
+  }
+  @keyframes authFloat { 50% { transform:translateY(-9px); } }
+  @keyframes authReadout { 50% { width:92%; } }
+
+  .auth-ticker {
+    display:flex; overflow:hidden; border-top:1px solid var(--auth-line);
+    border-bottom:1px solid var(--auth-line); background:#0d100f;
+  }
+  .auth-ticker-track {
+    display:flex; flex:0 0 auto; min-width:max-content; animation:authTicker 24s linear infinite;
+  }
+  .auth-ticker-item {
+    display:flex; align-items:center; gap:18px; padding:17px 28px;
+    color:#8f9993; font-size:10px; font-weight:800; letter-spacing:.14em;
+    text-transform:uppercase;
+  }
+  .auth-ticker-item::after {
+    content:""; width:6px; height:6px; border:1px solid var(--auth-green);
+    transform:rotate(45deg);
+  }
+  @keyframes authTicker { to { transform:translateX(-50%); } }
+  .auth-story {
+    padding:110px 4vw; background:linear-gradient(180deg,#0b0e0c,#101411);
+  }
+  .auth-section-head {
+    display:grid; grid-template-columns:.7fr 1.3fr; gap:50px;
+    align-items:end; max-width:1220px; margin:0 auto 54px;
+  }
+  .auth-kicker {
+    color:var(--auth-green); font-size:9px; font-weight:850;
+    letter-spacing:.2em; text-transform:uppercase;
+  }
+  .auth-section-title {
+    margin-top:13px; color:#f4f6f5; font-size:clamp(34px,4.4vw,68px);
+    line-height:.98; font-weight:850; letter-spacing:-.055em;
+  }
+  .auth-section-copy {
+    color:#9ca59f; font-size:16px; line-height:1.75; max-width:650px;
+  }
+  .auth-workflow-grid {
+    display:grid; grid-template-columns:repeat(3,1fr); max-width:1220px;
+    margin:0 auto; border:1px solid var(--auth-line); border-radius:20px;
+    overflow:hidden;
+  }
+  .auth-workflow-card {
+    position:relative; min-height:310px; padding:30px;
+    border-right:1px solid var(--auth-line); background:rgba(255,255,255,.025);
+    transition:background .3s ease,transform .3s ease;
+  }
+  .auth-workflow-card:last-child { border-right:0; }
+  .auth-workflow-card:hover { background:rgba(108,248,187,.05); }
+  .auth-workflow-number {
+    color:#5b645f; font-size:10px; font-weight:850; letter-spacing:.16em;
+  }
+  .auth-workflow-icon {
+    width:58px; height:58px; margin:38px 0 28px; display:grid; place-items:center;
+    border:1px solid rgba(108,248,187,.2); border-radius:16px;
+    color:var(--auth-green); background:rgba(108,248,187,.06);
+  }
+  .auth-workflow-icon .material-symbols-outlined { font-size:28px; }
+  .auth-workflow-card h3 { color:#f5f7f6; font-size:20px; font-weight:780; letter-spacing:-.025em; }
+  .auth-workflow-card p { margin-top:11px; color:#858e89; font-size:13px; line-height:1.65; }
+  .auth-capabilities {
+    padding:110px 4vw; background:#e9efeb; color:#111613;
+  }
+  .auth-capabilities .auth-section-head { align-items:start; }
+  .auth-capabilities .auth-kicker { color:#006c49; }
+  .auth-capabilities .auth-section-title { color:#111613; }
+  .auth-capabilities .auth-section-copy { color:#66706a; }
+  .auth-capability-grid {
+    display:grid; grid-template-columns:repeat(12,1fr); gap:14px;
+    max-width:1220px; margin:0 auto;
+  }
+  .auth-capability {
+    position:relative; min-height:210px; padding:25px; overflow:hidden;
+    border:1px solid #ccd6d0; border-radius:16px; background:#f6f8f7;
+  }
+  .auth-capability:nth-child(1),.auth-capability:nth-child(4) { grid-column:span 5; }
+  .auth-capability:nth-child(2),.auth-capability:nth-child(3) { grid-column:span 7; }
+  .auth-capability .material-symbols-outlined {
+    color:#006c49; font-size:27px;
+  }
+  .auth-capability h3 { margin-top:42px; font-size:19px; font-weight:820; letter-spacing:-.03em; }
+  .auth-capability p { margin-top:8px; max-width:48ch; color:#69736d; font-size:12px; line-height:1.65; }
+  .auth-capability-code {
+    position:absolute; right:18px; top:18px; color:#a4ada8;
+    font:700 8px/1.5 ui-monospace,SFMono-Regular,monospace; letter-spacing:.1em;
+  }
+  .auth-capability-signal {
+    position:absolute; right:-30px; bottom:-54px; width:150px; height:150px;
+    border:1px solid rgba(0,108,73,.12); border-radius:50%;
+  }
+  .auth-capability-signal::before,.auth-capability-signal::after {
+    content:""; position:absolute; border:1px solid rgba(0,108,73,.12); border-radius:50%;
+  }
+  .auth-capability-signal::before { inset:22px; }
+  .auth-capability-signal::after { inset:46px; background:#6cf8bb; }
+  .auth-landing-footer {
+    padding:38px 4vw; display:flex; align-items:center; justify-content:space-between;
+    gap:30px; border-top:1px solid var(--auth-line); background:#080a09;
+    color:#717a75; font-size:11px;
+  }
+  .auth-footer-brand { color:#fff; font-size:16px; font-weight:820; }
+  .auth-footer-brand span { color:var(--auth-green); }
+
+  @media (max-width: 1100px) {
+    .auth-hero { grid-template-columns:minmax(0,1fr) minmax(330px,.8fr); }
+    .auth-industrial-stage { left:28%; right:28%; opacity:.45; }
+    .auth-display { font-size:clamp(50px,7.2vw,80px); }
+  }
+  @media (max-width: 820px) {
+    .auth-site-nav { height:68px; }
+    .auth-nav-links a { display:none; }
+    .auth-hero {
+      min-height:auto; padding:72px 20px 56px; grid-template-columns:1fr;
+      gap:54px;
+    }
+    .auth-hero-copy { max-width:680px; }
+    .auth-industrial-stage {
+      left:22%; right:-12%; top:2%; bottom:auto; height:420px; opacity:.28;
+    }
+    .auth-form-shell { justify-self:start; max-width:520px; }
+    .auth-section-head { grid-template-columns:1fr; gap:20px; }
+    .auth-workflow-grid { grid-template-columns:1fr; }
+    .auth-workflow-card { min-height:245px; border-right:0; border-bottom:1px solid var(--auth-line); }
+    .auth-workflow-card:last-child { border-bottom:0; }
+    .auth-capability:nth-child(n) { grid-column:span 12; }
+  }
+  @media (max-width: 520px) {
+    .auth-site-nav { padding:0 16px; }
+    .auth-nav-cta { padding:9px 12px; }
+    .auth-display { font-size:48px; }
+    .auth-lede { font-size:14px; }
+    .auth-live-strip { grid-template-columns:1fr; }
+    .auth-live-stat { padding-top:14px; }
+    .auth-form-shell { width:calc(100% + 4px); margin-left:-2px; }
+    .auth-card { padding:27px 21px 24px; border-radius:19px; }
+    .auth-title { font-size:27px; }
+    .auth-story,.auth-capabilities { padding:78px 20px; }
+    .auth-section-title { font-size:40px; }
+    .auth-workflow-card { padding:24px; }
+    .auth-landing-footer { align-items:flex-start; flex-direction:column; padding:30px 20px; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .auth-screen::before,.auth-crane-trolley,.auth-crane-cable,
+    .auth-conveyor::after,.auth-cargo,.auth-scan,.auth-floating-readout,
+    .auth-readout-bar::after,.auth-ticker-track,.auth-card-status::before {
+      animation:none !important;
+    }
+    .auth-screen { scroll-behavior:auto; }
+  }
 </style>
 </head>
 <body class="min-h-screen bg-[var(--surface)] text-slate-900">
@@ -827,70 +1303,240 @@
 <!-- Auth gate. Covers the app until a session exists; onboarding reuses it so
      a brand-new shop never sees an empty dashboard first. -->
 <div id="authScreen" class="auth-screen">
-  <div class="auth-card">
-    <div class="auth-brand"><span class="auth-dot"></span>Chhotu<span class="auth-ai">.ai</span></div>
+  <nav class="auth-site-nav" aria-label="Landing page">
+    <a class="auth-site-brand" href="#authHome" aria-label="Chhotu.ai home">
+      <span class="auth-brand-mark" aria-hidden="true"></span>
+      <span>Chhotu<span class="auth-ai">.ai</span></span>
+    </a>
+    <div class="auth-nav-links">
+      <a href="#authHow">How it works</a>
+      <a href="#authCapabilities">Capabilities</a>
+      <button class="auth-nav-cta" onclick="document.getElementById('authPhone').focus()">Enter workspace</button>
+    </div>
+  </nav>
 
-    <div id="authStepLogin">
-      <h1 class="auth-title">Welcome back</h1>
-      <p class="auth-sub">Mobile number aur password se sign in karein.</p>
-      <label class="auth-label" for="authPhone">Mobile number</label>
-      <div class="auth-phone">
-        <span>+91</span>
-        <input id="authPhone" type="tel" inputmode="numeric" maxlength="10"
-               placeholder="98765 43210" autocomplete="tel"
-               onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
+  <main class="auth-landing" id="authHome">
+    <section class="auth-hero" aria-labelledby="authHeroTitle">
+      <div class="auth-hero-copy">
+        <div class="auth-eyebrow">The operating system for Bharat's trade</div>
+        <h1 class="auth-display" id="authHeroTitle">
+          Your warehouse
+          <span class="auth-outline">just learned</span>
+          <span class="auth-accent">to listen.</span>
+        </h1>
+        <p class="auth-lede">
+          Speak a sale. Count a rack. Chase an udhaar. Chhotu turns real shop-floor
+          conversations into clean stock, customer, billing, and margin records.
+        </p>
+        <div class="auth-proof-row" aria-label="Key capabilities">
+          <span class="auth-proof-chip"><span class="material-symbols-outlined">graphic_eq</span>All Sarvam languages</span>
+          <span class="auth-proof-chip"><span class="material-symbols-outlined">inventory_2</span>Event-derived stock</span>
+          <span class="auth-proof-chip"><span class="material-symbols-outlined">receipt_long</span>Voice to bill</span>
+        </div>
+        <div class="auth-live-strip" aria-label="Product highlights">
+          <div class="auth-live-stat"><strong>27</strong><span>Grounded tools</span></div>
+          <div class="auth-live-stat"><strong>One voice</strong><span>Complete operations</span></div>
+          <div class="auth-live-stat"><strong>Zero guesswork</strong><span>Verified calculations</span></div>
+        </div>
       </div>
-      <label class="auth-label" for="authPassword">Password</label>
-      <input id="authPassword" class="auth-input" type="password"
-             placeholder="Your password" autocomplete="current-password"
-             onkeydown="if(event.key==='Enter')submitLogin()">
-      <button class="auth-primary" onclick="submitLogin()" id="authLoginBtn">Sign in</button>
-      <div class="auth-switch">Naya account?
-        <button class="auth-link" onclick="showSignup()">Sign up</button>
+
+      <div class="auth-industrial-stage" aria-hidden="true">
+        <div class="auth-stage-grid"></div>
+        <div class="auth-crane">
+          <div class="auth-crane-mast"></div>
+          <div class="auth-crane-arm"></div>
+          <div class="auth-crane-trolley">
+            <div class="auth-crane-cable">
+              <div class="auth-crane-hook"></div>
+              <div class="auth-crane-load"></div>
+            </div>
+          </div>
+        </div>
+        <div class="auth-conveyor"></div>
+        <div class="auth-cargo c1" data-label="CEMENT"></div>
+        <div class="auth-cargo c2" data-label="TMT"></div>
+        <div class="auth-cargo c3" data-label="TILES"></div>
+        <div class="auth-scan"></div>
+        <div class="auth-floating-readout">
+          <span>Inventory signal</span>
+          <strong>LIVE</strong>
+          <div class="auth-readout-bar"></div>
+        </div>
+      </div>
+
+      <aside class="auth-form-shell" aria-label="Account access">
+        <div class="auth-card">
+          <div class="auth-card-topline">
+            <span class="auth-card-status">System ready</span>
+            <span class="auth-card-step">Secure access</span>
+          </div>
+          <div class="auth-brand"><span class="auth-dot"></span>Chhotu<span class="auth-ai">.ai</span></div>
+
+          <div id="authStepLogin">
+            <h2 class="auth-title">Open your shop floor.</h2>
+            <p class="auth-sub">Mobile number aur password se apna workspace kholiye.</p>
+            <label class="auth-label" for="authPhone">Mobile number</label>
+            <div class="auth-phone">
+              <span>+91</span>
+              <input id="authPhone" type="tel" inputmode="numeric" maxlength="10"
+                     placeholder="98765 43210" autocomplete="tel"
+                     onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
+            </div>
+            <label class="auth-label" for="authPassword">Password</label>
+            <input id="authPassword" class="auth-input" type="password"
+                   placeholder="Your password" autocomplete="current-password"
+                   onkeydown="if(event.key==='Enter')submitLogin()">
+            <button class="auth-primary" onclick="submitLogin()" id="authLoginBtn">Enter Chhotu.ai →</button>
+            <div class="auth-switch">Naya business?
+              <button class="auth-link" onclick="showSignup()">Create workspace</button>
+            </div>
+          </div>
+
+          <div id="authStepSignup" class="hidden">
+            <h2 class="auth-title" id="signupTitle">Build your workspace.</h2>
+            <p class="auth-sub" id="signupSub">Owner details abhi; company details agle step mein.</p>
+            <label class="auth-label" for="signupPhone">Mobile number</label>
+            <div class="auth-phone">
+              <span>+91</span>
+              <input id="signupPhone" type="tel" inputmode="numeric" maxlength="10"
+                     placeholder="98765 43210" autocomplete="tel">
+            </div>
+            <label class="auth-label" for="signupName">Owner's name</label>
+            <input id="signupName" class="auth-input" placeholder="Aneesh Gupta"
+                   autocomplete="name">
+            <label class="auth-label" for="signupPassword">Password</label>
+            <input id="signupPassword" class="auth-input" type="password"
+                   placeholder="At least 8 characters" autocomplete="new-password">
+            <label class="auth-label" for="signupConfirm">Confirm password</label>
+            <input id="signupConfirm" class="auth-input" type="password"
+                   placeholder="Repeat password" autocomplete="new-password"
+                   onkeydown="if(event.key==='Enter')submitSignup()">
+            <button class="auth-primary" onclick="submitSignup()" id="authSignupBtn">Create my workspace →</button>
+            <div class="auth-switch">Account hai?
+              <button class="auth-link" onclick="authBack()">Sign in</button>
+            </div>
+          </div>
+
+          <div id="authStepOnboard" class="hidden">
+            <h2 class="auth-title">Name your operation.</h2>
+            <p class="auth-sub">Ye details bills aur reports par dikhengi.</p>
+            <label class="auth-label" for="obShop">Company / shop name</label>
+            <input id="obShop" class="auth-input" placeholder="Sharma Building Materials">
+            <label class="auth-label" for="obGstin">GSTIN <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
+            <input id="obGstin" class="auth-input" maxlength="15"
+                   placeholder="27ABCDE1234F1Z5" autocomplete="off">
+            <label class="auth-label" for="obAddress">Business address <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
+            <textarea id="obAddress" class="auth-input"
+                      placeholder="Shop address for bills"></textarea>
+            <button class="auth-primary" onclick="submitOnboarding()" id="obBtn">Start operating →</button>
+          </div>
+
+          <div id="authError" class="auth-error hidden"></div>
+          <div class="auth-security-note">
+            <span class="material-symbols-outlined">lock</span>
+            Tenant-isolated, encrypted session access
+          </div>
+        </div>
+      </aside>
+    </section>
+
+    <div class="auth-ticker" aria-hidden="true">
+      <div class="auth-ticker-track">
+        <span class="auth-ticker-item">Stock ledger</span>
+        <span class="auth-ticker-item">Voice billing</span>
+        <span class="auth-ticker-item">Customer credit</span>
+        <span class="auth-ticker-item">Frozen capital</span>
+        <span class="auth-ticker-item">Smart catalogue</span>
+        <span class="auth-ticker-item">Stock ledger</span>
+        <span class="auth-ticker-item">Voice billing</span>
+        <span class="auth-ticker-item">Customer credit</span>
+        <span class="auth-ticker-item">Frozen capital</span>
+        <span class="auth-ticker-item">Smart catalogue</span>
       </div>
     </div>
 
-    <div id="authStepSignup" class="hidden">
-      <h1 class="auth-title" id="signupTitle">Create your account</h1>
-      <p class="auth-sub" id="signupSub">Owner details abhi; company details agle step mein.</p>
-      <label class="auth-label" for="signupPhone">Mobile number</label>
-      <div class="auth-phone">
-        <span>+91</span>
-        <input id="signupPhone" type="tel" inputmode="numeric" maxlength="10"
-               placeholder="98765 43210" autocomplete="tel">
+    <section class="auth-story" id="authHow">
+      <div class="auth-section-head">
+        <div>
+          <div class="auth-kicker">From awaaz to action</div>
+          <h2 class="auth-section-title">Say it once.<br>Run it right.</h2>
+        </div>
+        <p class="auth-section-copy">
+          Chhotu listens like a dependable counter assistant, but writes like a
+          disciplined operating system. AI understands intent; grounded tools verify
+          products, quantities, money, customers, and stock before anything changes.
+        </p>
       </div>
-      <label class="auth-label" for="signupName">Owner's name</label>
-      <input id="signupName" class="auth-input" placeholder="Aneesh Gupta"
-             autocomplete="name">
-      <label class="auth-label" for="signupPassword">Password</label>
-      <input id="signupPassword" class="auth-input" type="password"
-             placeholder="At least 8 characters" autocomplete="new-password">
-      <label class="auth-label" for="signupConfirm">Confirm password</label>
-      <input id="signupConfirm" class="auth-input" type="password"
-             placeholder="Repeat password" autocomplete="new-password"
-             onkeydown="if(event.key==='Enter')submitSignup()">
-      <button class="auth-primary" onclick="submitSignup()" id="authSignupBtn">Create account</button>
-      <div class="auth-switch">Account hai?
-        <button class="auth-link" onclick="authBack()">Sign in</button>
+      <div class="auth-workflow-grid">
+        <article class="auth-workflow-card">
+          <div class="auth-workflow-number">01 / SPEAK</div>
+          <div class="auth-workflow-icon"><span class="material-symbols-outlined">mic</span></div>
+          <h3>Talk shop, naturally.</h3>
+          <p>Use any language supported by Sarvam. Mix languages, correct yourself, and speak the way work actually happens.</p>
+        </article>
+        <article class="auth-workflow-card">
+          <div class="auth-workflow-number">02 / VERIFY</div>
+          <div class="auth-workflow-icon"><span class="material-symbols-outlined">rule</span></div>
+          <h3>Every detail gets grounded.</h3>
+          <p>Chhotu checks the catalogue, customer account, units, rates, and available stock before proposing the action.</p>
+        </article>
+        <article class="auth-workflow-card">
+          <div class="auth-workflow-number">03 / OPERATE</div>
+          <div class="auth-workflow-icon"><span class="material-symbols-outlined">precision_manufacturing</span></div>
+          <h3>Your ledger moves.</h3>
+          <p>Confirm once to record the sale, purchase, stock count, payment, bill, reminder, or business summary.</p>
+        </article>
       </div>
-    </div>
+    </section>
 
-    <div id="authStepOnboard" class="hidden">
-      <h1 class="auth-title">Company details</h1>
-      <p class="auth-sub">Ye details bills aur reports par dikhengi.</p>
-      <label class="auth-label" for="obShop">Company / shop name</label>
-      <input id="obShop" class="auth-input" placeholder="Sharma Building Materials">
-      <label class="auth-label" for="obGstin">GSTIN <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
-      <input id="obGstin" class="auth-input" maxlength="15"
-             placeholder="27ABCDE1234F1Z5" autocomplete="off">
-      <label class="auth-label" for="obAddress">Business address <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
-      <textarea id="obAddress" class="auth-input"
-                placeholder="Shop address for bills"></textarea>
-      <button class="auth-primary" onclick="submitOnboarding()" id="obBtn">Shuru karein</button>
-    </div>
+    <section class="auth-capabilities" id="authCapabilities">
+      <div class="auth-section-head">
+        <div>
+          <div class="auth-kicker">One operating layer</div>
+          <h2 class="auth-section-title">Built for the<br>messy middle.</h2>
+        </div>
+        <p class="auth-section-copy">
+          Between goods arriving and money getting collected, Chhotu keeps every
+          operational thread connected—without turning your counter into an ERP desk.
+        </p>
+      </div>
+      <div class="auth-capability-grid">
+        <article class="auth-capability">
+          <span class="material-symbols-outlined">inventory</span>
+          <span class="auth-capability-code">LIVE / LEDGER</span>
+          <h3>Inventory that explains itself</h3>
+          <p>Event-derived stock, physical counts, low-stock warnings, product aliases, and frozen-capital visibility.</p>
+          <span class="auth-capability-signal"></span>
+        </article>
+        <article class="auth-capability">
+          <span class="material-symbols-outlined">point_of_sale</span>
+          <span class="auth-capability-code">SALE / BILL / GST</span>
+          <h3>From spoken order to finished bill</h3>
+          <p>Capture multiple items in one conversation, calculate totals deterministically, preview the bill, and send it only after approval.</p>
+          <span class="auth-capability-signal"></span>
+        </article>
+        <article class="auth-capability">
+          <span class="material-symbols-outlined">account_balance_wallet</span>
+          <span class="auth-capability-code">CREDIT / COLLECTION</span>
+          <h3>Udhaar without loose ends</h3>
+          <p>Customer-wise credit, due dates, separate payment receipts, outstanding balances, and WhatsApp reminders.</p>
+          <span class="auth-capability-signal"></span>
+        </article>
+        <article class="auth-capability">
+          <span class="material-symbols-outlined">monitoring</span>
+          <span class="auth-capability-code">TODAY / MARGIN</span>
+          <h3>The day, on command</h3>
+          <p>Ask for sales, cash, credit, margin, fast movers, slow stock, or a complete multilingual summary.</p>
+          <span class="auth-capability-signal"></span>
+        </article>
+      </div>
+    </section>
 
-    <div id="authError" class="auth-error hidden"></div>
-  </div>
+    <footer class="auth-landing-footer">
+      <div class="auth-footer-brand">Chhotu<span>.ai</span> · Awaaz se hisaab</div>
+      <div>Voice-first warehouse and shop operating system for Indian trade.</div>
+    </footer>
+  </main>
 </div>
 
 <!-- HEADER -->
@@ -2581,7 +3227,7 @@ function showSignup(phone, legacySetup){
   AUTH.legacySetup=!!legacySetup;
   document.getElementById('signupPhone').value=raw;
   document.getElementById('signupPhone').readOnly=!!legacySetup;
-  document.getElementById('signupTitle').textContent=legacySetup?'Set your password':'Create your account';
+  document.getElementById('signupTitle').textContent=legacySetup?'Set your password':'Build your workspace.';
   document.getElementById('signupSub').textContent=legacySetup
     ? 'Purane account ke owner ka naam confirm karke password set karein.'
     : 'Owner details abhi; company details agle step mein.';
