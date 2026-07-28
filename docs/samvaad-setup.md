@@ -326,6 +326,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text |  |
 | `name` | Text | Item ya customer ka naam. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `cost_price` | Text | Kharid ka daam per unit. |
@@ -1020,7 +1021,7 @@ Mojooda item theek karo: naam, unit, cost_price ya selling_rate. args: item (ya 
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/update_item?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "name": "{{name}}", "unit": "{{unit}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "name": "{{name}}", "unit": "{{unit}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
