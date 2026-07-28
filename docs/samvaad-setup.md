@@ -326,7 +326,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
-| `sku_id` | Text |  |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `name` | Text | Item ya customer ka naam. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `cost_price` | Text | Kharid ka daam per unit. |

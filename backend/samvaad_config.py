@@ -158,7 +158,9 @@ PARAMS = {
 # with no description is a field the model fills badly.
 PARAM_DOCS = {
     "item": ("Text", "Jo caller ne bola, jaisa bola. Hindi, English ya mix. "
-                     "Sudhaarne ki koshish mat karo."),
+             "Sudhaarne ki koshish mat karo."),
+    "sku_id": ("Text", "Exact SKU id, sirf tab bharo jab kisi pehle tool ne "
+               "ye id di ho. Andaaza mat lagao."),
     "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),
     "name": ("Text", "Item ya customer ka naam."),
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
