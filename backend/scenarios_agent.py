@@ -5,21 +5,44 @@ deployed thing: real HTTP, real Postgres, real matcher, real multi-tenancy. The
 two catch different faults, and most of today's bugs were the second kind, so
 both are worth having.
 
-Point it at a THROWAWAY shop. It records sales and payments, which cannot be
-undone.
+It signs up its OWN throwaway shop on each run and works only in there. That
+is not fastidiousness: the assertions are absolute ("stock is 150", "sale is
+12600"), so a second run against a shop the first run already wrote to fails
+on its own leftovers. A fresh tenant per run is what makes it repeatable, and
+it means the suite can never touch a real shop's ledger.
 
-    python3 backend/scenarios_agent.py +919000000001
+    python3 backend/scenarios_agent.py
 """
 from __future__ import annotations
 
 import json
 import os
+import random
+import secrets
 import sys
 import urllib.request
 
 BASE = os.environ.get("CHHOTU_URL", "https://chhotuai.vercel.app")
 SECRET = os.environ.get("SAMVAAD_WEBHOOK_SECRET", "")
-CALLER = sys.argv[1] if len(sys.argv) > 1 else "+919000000001"
+def _fresh_shop() -> str:
+    """Sign up a throwaway tenant and return its phone number."""
+    phone = "9" + "".join(random.choice("0123456789") for _ in range(9))
+    body = json.dumps({"phone": phone, "name": "Scenario Runner",
+                       "password": secrets.token_hex(12)}).encode()
+    req = urllib.request.Request(f"{BASE}/api/auth/signup", data=body,
+                                 headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(req, timeout=60) as r:
+        token = json.loads(r.read())["token"]
+    ob = json.dumps({"shop_name": "Scenario Hardware",
+                     "gstin": "27AAAPB1234C1ZW", "address": "Test Lane"}).encode()
+    req = urllib.request.Request(f"{BASE}/api/onboarding", data=ob,
+                                 headers={"Content-Type": "application/json",
+                                          "Authorization": f"Bearer {token}"})
+    urllib.request.urlopen(req, timeout=60).read()
+    return "+91" + phone
+
+
+CALLER = sys.argv[1] if len(sys.argv) > 1 else ""
 
 PASS = FAIL = 0
 failures: list[str] = []
@@ -50,6 +73,11 @@ def section(name: str) -> None:
 
 
 def main() -> None:
+    global CALLER
+    if not CALLER:
+        CALLER = _fresh_shop()
+    print(f"shop under test: {CALLER}")
+
     section("empty shop: reads must not invent anything")
     p = call("shop_profile")
     check("shop_profile returns the shop", p.get("ok") and p.get("shop"), p)
