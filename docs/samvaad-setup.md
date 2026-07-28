@@ -105,7 +105,7 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 
 ## Auth
 
-The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 23 tools — and rotating it later becomes one edit rather than 23.
+The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 24 tools — and rotating it later becomes one edit rather than 24.
 
 The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 23 times. Check the Value dropdown points at your stored secret and move on.
 
@@ -118,7 +118,7 @@ The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header
 
 Either is accepted; pick whichever the console lets you configure cleanly. The cURLs below keep the header in place so the console prefills the header *name* — the placeholder is not a real secret, so set the value in Auth and delete the header afterwards.
 
-## Tools (23)
+## Tools (24)
 
 All of them POST to the same endpoint and differ only in `tool` and `args`. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
 
@@ -581,6 +581,29 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
     "amount": 4200.0,
     "deadline": "2026-08-27"
   }
+}
+```
+
+### `remove_item`
+
+Galti se added item ko list se hatao. args: item. Jispe koi sale ya stock chal raha ho, wo nahi hatega.
+
+**Request**
+
+```bash
+curl -X POST https://chhotuai.vercel.app/api/agent/tool \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"tool": "remove_item", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "removed": true,
+  "sku_id": "sku_84552642",
+  "name": "Test Probe Item"
 }
 ```
 

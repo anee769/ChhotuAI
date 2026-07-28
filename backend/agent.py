@@ -915,6 +915,28 @@ def add_item(repo, user, args):
                      f"{unit} mein bata dijiye?"}
 
 
+def remove_item(repo, user, args):
+    """Delete a product that should never have been added.
+
+    Refused once anything has been bought, sold or counted against it: stock
+    is replayed from the event log, so removing a referenced SKU would rewrite
+    history rather than tidy it.
+    """
+    sku, question = _find_sku(repo, args.get("item") or args.get("name"))
+    if question:
+        return {"removed": False, **_ask_which(question)}
+    if not sku:
+        return {"removed": False,
+                "speak": f"{args.get('item')} list mein mila hi nahi."}
+    if repo.events_for_sku(sku["sku_id"]):
+        return {"removed": False, "sku_id": sku["sku_id"],
+                "speak": f"{sku['canonical']} ka hisaab pehle se chal raha hai, "
+                         "isliye hata nahi sakta."}
+    repo.delete_sku(sku["sku_id"])
+    return {"removed": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
+            "speak": f"{sku['canonical']} list se hata diya."}
+
+
 # ---------------------------------------------------------------------------
 # Sending
 # ---------------------------------------------------------------------------
@@ -1058,6 +1080,9 @@ TOOLS = {
                  "selling_rate, unit, brand. Add hone ke baad stock_take se "
                  "opening ginti likhwana zaroori hai."),
 
+    "remove_item": (remove_item,
+                    "Galti se added item ko list se hatao. args: item. Jispe "
+                    "koi sale ya stock chal raha ho, wo nahi hatega."),
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
                   "(naam), items[{item, qty, rate}], payment."),

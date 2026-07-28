@@ -191,6 +191,24 @@ class SqlRepo:
                  json.dumps(sku.get("aliases") or [], ensure_ascii=False)))
         self._invalidate("catalogue")
 
+    def delete_sku(self, sku_id: str) -> bool:
+        """Remove a product. Only ever safe when nothing references it.
+
+        Stock is derived by replaying events, so deleting a SKU that has any
+        would silently rewrite history. The caller checks that; this just
+        refuses to be the place the rule is forgotten.
+        """
+        with db.connect() as conn:
+            used = conn.execute(
+                "SELECT 1 FROM events WHERE user_id = %s AND sku_id = %s LIMIT 1",
+                (self.user_id, sku_id)).fetchone()
+            if used:
+                return False
+            conn.execute("DELETE FROM skus WHERE user_id = %s AND sku_id = %s",
+                         (self.user_id, sku_id))
+        self._invalidate("catalogue")
+        return True
+
     # ---- learning ------------------------------------------------------
     def _load_learning_row(self, state: str) -> dict:
         with db.connect() as conn:

@@ -144,6 +144,7 @@ PARAMS = {
     "add_item": ("name", "cost_price", "selling_rate", "unit", "brand"),
     "update_shop_profile": ("shop_name", "owner", "shop_type", "gstin",
                             "address"),
+    "remove_item": ("item",),
     "send_bill": ("customer", "item", "qty", "rate", "payment"),
     "send_summary": ("period",),
     "send_reminders": ("days_before",),
@@ -240,6 +241,8 @@ EXAMPLES = {
     "update_shop_profile": ({"gstin": "27AACCD8812K1ZG",
                              "address": "LBS Marg, Mumbai 400070"}, {
         "updated": True, "changed": ["address", "gstin"]}),
+    "remove_item": ({"item": "Test Probe Item"}, {
+        "removed": True, "sku_id": "sku_84552642", "name": "Test Probe Item"}),
     "send_bill": ({"customer": "Ramesh",
                    "items": [{"item": "ppc cement", "qty": 10, "rate": 420}],
                    "payment": "cash"}, {
