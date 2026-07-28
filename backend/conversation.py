@@ -876,6 +876,17 @@ _HARDWARE_TAXONOMY = {
     "tool": re.compile(r"\bhammer\b|\bdrill\b|\bwrench\b|\bscrewdriver\b"),
     "roofing sheet": re.compile(r"\broofing\b|\btin sheet\b|\basbestos\b"),
     "fitting": re.compile(r"\bfittings?\b|फिटिंग"),
+    # Added after a live call put "Birla White Putty" in the same bucket as
+    # biryani. These are all obviously the trade; missing them makes the agent
+    # interrogate the owner about words it simply had not been taught.
+    "putty": re.compile(r"\bputty\b|पुट्टी"),
+    "primer": re.compile(r"\bprimer\b|\bdistemper\b|\bemulsion\b"),
+    "aggregate": re.compile(r"\bgitti\b|\baggregate\b|\bkapchi\b|गिट्टी"),
+    "steel": re.compile(r"\bangles?\b|\bchannels?\b|\bgirder\b|\bflat bar\b"),
+    "binding wire": re.compile(r"\bbinding wire\b|\bbandhan\b"),
+    "waterproofing": re.compile(r"\bwaterproof\w*\b|\bdr\.? fixit\b"),
+    "tank": re.compile(r"\bwater tanks?\b|\bsintex\b|टंकी"),
+    "plumbing": re.compile(r"\btaps?\b|\bvalves?\b|\belbows?\b|\bnipple\b"),
 }
 
 

@@ -342,6 +342,12 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(out["needs"]["stocks_this_kind"])
         self.assertEqual(self.repo.events, self.repo.events[:2])
 
+    def test_obvious_trade_goods_are_not_interrogated(self):
+        """A live call put "Birla White Putty" in the same bucket as biryani."""
+        for word in ("Birla White Putty", "wall primer", "gitti", "water tank"):
+            out = self.call("record_sale", item=word, qty=1, payment="cash")
+            self.assertTrue(out["needs"]["stocks_this_kind"], word)
+
     def test_something_outside_the_trade_is_questioned_harder(self):
         out = self.call("record_sale", item="biryani", qty=2, payment="cash")
         self.assertFalse(out["needs"]["stocks_this_kind"])
