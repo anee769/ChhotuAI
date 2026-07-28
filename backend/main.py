@@ -101,7 +101,7 @@ app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
 # /api/cron/ is exempt from the SESSION check only — a scheduled run has no
 # logged-in user. It is not unguarded: the handler verifies CRON_SECRET itself
 # and picks its own user per shop.
-_OPEN_PREFIXES = ("/api/auth/", "/api/cron/", "/assets/", "/d/", "/data/")
+_OPEN_PREFIXES = ("/api/auth/", "/api/cron/", "/api/agent/", "/assets/", "/d/", "/data/")
 _OPEN_EXACT = ("/", "/favicon.ico", "/api/health")
 
 
@@ -358,6 +358,29 @@ def cron_reminders(request: Request):
             # One shop's failure must not stop the rest of the run.
             runs.append({"shop": u["phone"], "error": str(e)[:160]})
     return {"ran_at": clock.today().isoformat(), "shops": len(runs), "runs": runs}
+
+
+# ---------------------------------------------------------------------------
+# Voice agent (Samvaad) tool webhook
+# ---------------------------------------------------------------------------
+@app.post("/api/agent/tool")
+def agent_tool(payload: dict = Body(...),
+               x_agent_secret: str = Header(default="")):
+    """Called by the Samvaad agent mid-conversation to touch the ledger.
+
+    A phone call carries no session, so this authenticates twice over: a shared
+    secret proves the request came from our agent, and the CALLER's number
+    decides whose books are opened. Both must hold.
+    """
+    import agent
+    try:
+        if not agent.verify_secret(x_agent_secret):
+            raise HTTPException(403, "Bad agent secret.")
+    except agent.AgentError as e:
+        raise HTTPException(503, str(e))
+    return agent.handle(payload.get("tool") or "",
+                        payload.get("caller") or payload.get("From") or "",
+                        payload.get("args") or {})
 
 
 # ---------------------------------------------------------------------------
