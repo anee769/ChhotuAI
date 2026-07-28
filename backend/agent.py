@@ -1341,6 +1341,76 @@ def send_bill(repo, user, args):
                      f"{_say_number(out['total'])} rupaye."}
 
 
+def show_bill(repo, user, args):
+    """Put a non-sending bill preview in the owner's active browser."""
+    import presentations
+    acc, options = _customer_by_name(repo, _customer_ref(args))
+    if not acc:
+        if options:
+            return {"shown": False, **_ask_which_customer(options)}
+        return {"shown": False, "speak": "Ye customer nahi mila."}
+    customer = repo.customer(acc["customer_id"]) or acc
+    rows = _lines(args)
+    if not rows:
+        return {"shown": False, "needs": {"field": "items"},
+                "speak": "Bill mein kya-kya daalna hai?"}
+    lines, subtotal, gst_total = [], 0.0, 0.0
+    for row in rows:
+        ref = _item_ref(row)
+        sku, question = _find_sku(repo, ref)
+        if question:
+            return {"shown": False, **_ask_which(question)}
+        if not sku:
+            return {"shown": False,
+                    "speak": f"{ref} nahi mila, bill nahi dikha saka."}
+        qty = _number(row.get("qty"))
+        rate = _number(row.get("rate"))
+        unit = row.get("unit") or sku.get("default_unit")
+        if qty is None:
+            return {"shown": False, "needs": {"field": "qty", "item": ref},
+                    "speak": f"{sku['canonical']} kitna hai?"}
+        if rate is None:
+            rate = _selling_rate(sku) or 0
+        amount = L.line_amount(qty, unit, rate,
+                               row.get("rate_unit") or unit, sku)
+        gst = amount * float(repo.gst_rate_for(sku)) / 100.0
+        subtotal += amount
+        gst_total += gst
+        lines.append({"sku_id": sku["sku_id"], "name": sku["canonical"],
+                      "qty": qty, "unit": unit, "rate": rate,
+                      "amount": round(amount, 2)})
+    total = subtotal + gst_total
+    cfg = repo.load_config()
+    payload = {
+        "shop": cfg.get("shop_name") or user.get("shop_name") or "My Shop",
+        "customer": {"customer_id": customer.get("customer_id"),
+                     "name": customer.get("name") or "",
+                     "phone": customer.get("phone") or ""},
+        "items": lines,
+        "subtotal": round(subtotal, 2),
+        "gst": round(gst_total, 2),
+        "total": round(total, 2),
+        "payment": args.get("payment") or "cash",
+        "payment_deadline": args.get("payment_deadline") or "",
+        "date": clock.today().isoformat(),
+    }
+    shown = presentations.store(user["user_id"], "bill", payload)
+    return {"shown": True, "presentation_id": shown["presentation_id"],
+            "customer": customer.get("name"), "total": round(total, 2),
+            "line_count": len(lines),
+            "speak": "Bill screen par dikha diya hai. WhatsApp par bheju?"}
+
+
+def show_summary(repo, user, args):
+    """Put a non-sending business summary in the owner's active browser."""
+    import presentations
+    summary = business_summary(repo, user, args)
+    shown = presentations.store(user["user_id"], "summary", summary)
+    return {**summary, "shown": True,
+            "presentation_id": shown["presentation_id"],
+            "speak": "Summary screen par dikha di hai."}
+
+
 def send_summary(repo, user, args):
     import notify
     period = "week" if (args.get("period") or "day") == "week" else "day"
@@ -1457,10 +1527,20 @@ TOOLS = {
     "remove_item": (remove_item,
                     "Galti se added item ko list se hatao. args: item ya sku_id. Jispe "
                     "koi sale ya stock chal raha ho, wo nahi hatega."),
+    "show_bill": (show_bill,
+                  "Bill app ki screen par preview karo, WhatsApp par mat bhejo. "
+                  "Send karne se hamesha pehle ye tool chalao. args: customer "
+                  "(naam English Latin script mein) ya customer_id/"
+                  "customer_phone, item ya sku_id, qty, unit, rate, payment, "
+                  "payment_deadline, items."),
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
                   "(naam English Latin script mein) ya customer_id/"
-                  "customer_phone, item ya sku_id, qty, rate, payment."),
+                  "customer_phone, item ya sku_id, qty, unit, rate, payment, "
+                  "payment_deadline, items."),
+    "show_summary": (show_summary,
+                     "Business summary app ki screen par dikhao, WhatsApp par "
+                     "mat bhejo. args: period, days, start, end."),
     "send_summary": (send_summary,
                      "Owner ko day ya week ki summary PDF WhatsApp par bhejo. "
                      "args: period (day ya week). Bhejne se pehle poochho."),

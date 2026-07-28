@@ -150,6 +150,23 @@ CREATE TABLE IF NOT EXISTS user_config (
     user_id TEXT PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
     data    JSONB NOT NULL DEFAULT '{}'::jsonb
 );
+
+-- Short-lived cards created by the voice agent for the logged-in browser.
+-- Samvaad calls tools from its own servers, so an HTTP response alone cannot
+-- update the open Chhotu.ai tab. These rows bridge that process boundary and
+-- expire automatically; they are not conversation history.
+CREATE TABLE IF NOT EXISTS voice_presentations (
+    presentation_id TEXT PRIMARY KEY,
+    user_id          TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    kind             TEXT NOT NULL,
+    payload          JSONB NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at       TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS voice_presentations_user_created
+    ON voice_presentations(user_id, created_at);
+CREATE INDEX IF NOT EXISTS voice_presentations_expiry
+    ON voice_presentations(expires_at);
 """
 
 

@@ -148,11 +148,14 @@ class AgentToolTests(unittest.TestCase):
         Samvaad.
         """
         import notify
+        import presentations
         with patch.object(notify, "send_summary",
                           return_value={"sent_to": "+910000000000"}), \
                 patch.object(notify, "send_due_reminders",
                              return_value={"sent": [], "skipped": [],
-                                           "as_of": "2026-07-26"}):
+                                           "as_of": "2026-07-26"}), \
+                patch.object(presentations, "store",
+                             return_value={"presentation_id": "vp_test"}):
             for name, (fn, _description) in agent.TOOLS.items():
                 with self.subTest(tool=name):
                     out = fn(self.repo, USER, {})
@@ -240,6 +243,7 @@ class AgentToolTests(unittest.TestCase):
             "remove_item": lambda out: out.get("removed") is False
             and out.get("sku_id") == CEMENT_PPC,
             "send_bill": lambda out: out.get("sent"),
+            "show_bill": lambda out: out.get("shown"),
         }
 
         for reference_field, reference in (
@@ -259,14 +263,17 @@ class AgentToolTests(unittest.TestCase):
                         "payment": "cash",
                         "request_id": f"audit-{reference_field}-{tool}",
                     }
-                    if tool == "send_bill":
+                    if tool in ("send_bill", "show_bill"):
                         repo.upsert_customer("9876543210", "Audit Customer")
                         args["customer"] = "Audit Customer"
                     fn = agent.TOOLS[tool][0]
-                    with patch.object(
-                            notify, "send_bill",
-                            return_value={"total": 420,
-                                          "sent_to": "+919876543210"}):
+                    import presentations
+                    with patch.object(notify, "send_bill",
+                                      return_value={"total": 420,
+                                                    "sent_to": "+919876543210"}), \
+                            patch.object(
+                                presentations, "store",
+                                return_value={"presentation_id": "vp_test"}):
                         out = fn(repo, USER, args)
                     self.assertTrue(assertion(out), (tool, reference, out))
 
@@ -613,6 +620,37 @@ class AgentToolTests(unittest.TestCase):
         self.assertFalse(out["recorded"])
         self.assertEqual(len(out["needs"]["options"]), 2)
 
+    def test_show_bill_previews_without_sending_whatsapp(self):
+        import notify
+        import presentations
+        self.repo.upsert_customer("9876543210", "Ramesh Kumar")
+        with patch.object(presentations, "store",
+                          return_value={"presentation_id": "vp_bill"}) as store, \
+                patch.object(notify, "send_bill") as send:
+            out = self.call("show_bill", customer="Ramesh",
+                            items=json.dumps([
+                                {"item": "ppc cement", "qty": 2,
+                                 "unit": "bori", "rate": 420},
+                                {"sku_id": TMT_12, "qty": 1,
+                                 "unit": "tonne", "rate": 55000},
+                            ]), payment="cash")
+        self.assertTrue(out["shown"])
+        self.assertEqual(out["line_count"], 2)
+        self.assertEqual(store.call_args.args[1], "bill")
+        self.assertEqual(len(store.call_args.args[2]["items"]), 2)
+        send.assert_not_called()
+
+    def test_show_summary_previews_without_sending_whatsapp(self):
+        import notify
+        import presentations
+        with patch.object(presentations, "store",
+                          return_value={"presentation_id": "vp_summary"}) as store, \
+                patch.object(notify, "send_summary") as send:
+            out = self.call("show_summary", period="day")
+        self.assertTrue(out["shown"])
+        self.assertIn("sale", store.call_args.args[2])
+        send.assert_not_called()
+
     def test_new_item_requires_a_cost_price(self):
         out = self.call("add_item", name="Asian Paints Apcolite 20L")
         self.assertFalse(out["added"])
@@ -793,7 +831,7 @@ class DispatchTests(unittest.TestCase):
         self.assertIn("Never send Devanagari", SC.PARAM_DOCS["name"][1])
         self.assertIn("Never send Devanagari", SC.PARAM_DOCS["customer"][1])
         for tool in ("customer_account", "record_sale", "record_payment",
-                     "send_bill"):
+                     "show_bill", "send_bill"):
             self.assertIn("Latin script", agent.TOOLS[tool][1])
 
     def test_a_description_only_names_arguments_the_body_carries(self):

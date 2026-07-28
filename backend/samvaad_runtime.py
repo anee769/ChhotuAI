@@ -17,7 +17,7 @@ import httpx
 DEFAULT_ORG_ID = "019f9945-ebf7-77f9-b60b-dc1963284e44"
 DEFAULT_WORKSPACE_ID = "019f9945-ebfb-76ac-9855-2f2c5985abbb"
 DEFAULT_APP_ID = "Voice-Assis-9018c9fb-e7c8"
-DEFAULT_AGENT_VERSION = 5
+DEFAULT_AGENT_VERSION = 6
 SAMVAAD_BASE_URL = "https://apps.sarvam.ai/api/app-runtime/"
 
 

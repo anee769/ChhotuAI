@@ -56,9 +56,9 @@ class SamvaadRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("api_key", config)
         self.assertNotIn("server-only-key", repr(config))
 
-    def test_app_defaults_to_committed_version_five(self):
+    def test_app_defaults_to_committed_version_six(self):
         with patch.dict(os.environ, {}, clear=True):
-            self.assertEqual(samvaad_runtime.settings().version, 5)
+            self.assertEqual(samvaad_runtime.settings().version, 6)
 
     async def test_signed_url_is_limited_to_configured_agent(self):
         with self.assertRaises(PermissionError):

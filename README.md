@@ -60,7 +60,7 @@ SAMVAAD_WEBHOOK_SECRET=replace-with-another-long-random-value
 SAMVAAD_ORG_ID=019f9945-ebf7-77f9-b60b-dc1963284e44
 SAMVAAD_WORKSPACE_ID=019f9945-ebfb-76ac-9855-2f2c5985abbb
 SAMVAAD_APP_ID=Voice-Assis-9018c9fb-e7c8
-SAMVAAD_AGENT_VERSION=5
+SAMVAAD_AGENT_VERSION=6
 ```
 
 Generate `CHHOTU_SECRET` with `openssl rand -hex 32`. Passwords are stored as
@@ -69,7 +69,7 @@ salted PBKDF2 hashes and are never written to `.env`.
 `SAMVAAD_AGENT_VERSION` should be the exact committed dashboard version that
 contains the tested Chhotu instructions and tools. Update it deliberately after
 committing a newer agent version. The application currently defaults to
-committed version 5 when the variable is absent.
+committed version 6 when the variable is absent.
 
 Accounts created before password authentication receive the temporary demo
 password `admin123` during migration. New signups keep the password they chose.

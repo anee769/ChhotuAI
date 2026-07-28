@@ -520,6 +520,35 @@
   }
   .voice-turn-state.is-error { color:#9a5b00; }
   .voice-turn-state.is-error::before { background:#9a5b00; }
+  .voice-presentation {
+    margin:18px 0 0; overflow:hidden; border:1px solid #d7dadd;
+    border-radius:12px; background:#f7f8f9;
+  }
+  .voice-presentation-head {
+    display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
+    padding:16px 18px; border-bottom:1px solid #dfe2e5; background:#fff;
+  }
+  .voice-presentation-kicker {
+    color:#727780; font-size:9px; font-weight:850; letter-spacing:.13em;
+    text-transform:uppercase;
+  }
+  .voice-presentation-title { margin-top:4px; color:#111827; font-size:17px; font-weight:800; }
+  .voice-presentation-total { color:#111827; font-size:24px; font-weight:850; white-space:nowrap; }
+  .voice-presentation-meta { margin-top:3px; color:#6b7078; font-size:11px; }
+  .voice-presentation-lines { width:100%; border-collapse:collapse; }
+  .voice-presentation-lines td {
+    padding:12px 18px; border-bottom:1px solid #e1e4e7; color:#353a42; font-size:12px;
+  }
+  .voice-presentation-lines tr:last-child td { border-bottom:0; }
+  .voice-presentation-lines td:last-child { text-align:right; color:#111827; font-weight:750; }
+  .voice-presentation-foot {
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    border-top:1px solid #dfe2e5; background:#dfe2e5;
+  }
+  .voice-presentation-stat { padding:13px 16px; background:#fff; }
+  .voice-presentation-stat span { display:block; color:#727780; font-size:10px; }
+  .voice-presentation-stat b { display:block; margin-top:3px; color:#111827; font-size:15px; }
+  .voice-presentation-alerts { padding:12px 18px; border-top:1px solid #dfe2e5; color:#565b63; font-size:11px; }
   .voice-current-entry {
     padding:18px 24px 20px; border-top:1px solid #d8dbe0;
     background:#f5f6f7;
@@ -1467,7 +1496,8 @@ function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Ma
 // The browser SDK owns microphone capture, VAD, interruptions and streaming
 // playback. The backend only brokers a short-lived signed URL, so the Sarvam
 // API key never reaches this page.
-let SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',ending:false};
+let SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',
+  ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null};
 
 function samvaadStatusCopy(state){
   return {
@@ -1488,9 +1518,10 @@ function renderSamvaadConversation(){
     <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
     <div class="voice-assistant-copy">${escHtml(SAMVAAD.assistant)}</div>
   </div>`:'';
+  const presentations=(SAMVAAD.presentations||[]).map(renderVoicePresentation).join('');
   panel.innerHTML=`<div class="voice-conversation">
     <div class="voice-conversation-turn">
-      ${user}${assistant}
+      ${user}${assistant}${presentations}
       <div class="voice-turn-state ${SAMVAAD.state==='listening'?'is-listening':SAMVAAD.state==='error'?'is-error':''}">
         ${escHtml(SAMVAAD.activity||samvaadStatusCopy(SAMVAAD.state))}
       </div>
@@ -1504,6 +1535,72 @@ function renderSamvaadConversation(){
   </div>`;
   const badge=document.getElementById('voiceUI-'+tab)?.querySelector('.voice-live-badge');
   if(badge) badge.textContent=SAMVAAD.state==='speaking'?'Speaking':SAMVAAD.state==='listening'?'Listening':SAMVAAD.state==='connecting'?'Connecting':'Live';
+}
+function inr(value){ return '₹'+Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2}); }
+function renderVoicePresentation(row){
+  const p=row?.payload||{};
+  if(row?.kind==='bill'){
+    const lines=(p.items||[]).map(x=>`<tr>
+      <td><b>${escHtml(x.name||x.sku_id||'Item')}</b><div class="voice-presentation-meta">${escHtml(fmtNum(x.qty))} ${escHtml(x.unit||'')} · ${inr(x.rate)} rate</div></td>
+      <td>${inr(x.amount)}</td></tr>`).join('');
+    const due=p.payment_deadline?` · Due ${escHtml(p.payment_deadline)}`:'';
+    return `<section class="voice-presentation">
+      <div class="voice-presentation-head"><div>
+        <div class="voice-presentation-kicker">Bill preview · Not sent</div>
+        <div class="voice-presentation-title">${escHtml(p.customer?.name||'Customer')}</div>
+        <div class="voice-presentation-meta">${escHtml(p.customer?.phone||'')}${p.payment?` · ${escHtml(p.payment)}`:''}${due}</div>
+      </div><div class="voice-presentation-total">${inr(p.total)}</div></div>
+      <table class="voice-presentation-lines"><tbody>${lines}</tbody></table>
+      <div class="voice-presentation-foot">
+        <div class="voice-presentation-stat"><span>Subtotal</span><b>${inr(p.subtotal)}</b></div>
+        <div class="voice-presentation-stat"><span>GST</span><b>${inr(p.gst)}</b></div>
+        <div class="voice-presentation-stat"><span>Total</span><b>${inr(p.total)}</b></div>
+      </div></section>`;
+  }
+  if(row?.kind==='summary'){
+    const low=(p.low_stock||[]).slice(0,3).map(x=>x.canonical||x.name).filter(Boolean);
+    const frozen=(p.frozen_capital||[]).slice(0,3).map(x=>x.name||x.canonical).filter(Boolean);
+    const alerts=[
+      low.length?`Low stock: ${low.map(escHtml).join(', ')}`:'',
+      frozen.length?`Frozen stock: ${frozen.map(escHtml).join(', ')}`:''
+    ].filter(Boolean).join('<br>');
+    return `<section class="voice-presentation">
+      <div class="voice-presentation-head"><div>
+        <div class="voice-presentation-kicker">Business summary</div>
+        <div class="voice-presentation-title">${escHtml(p.start||'')} ${p.end&&p.end!==p.start?`to ${escHtml(p.end)}`:''}</div>
+      </div><div class="voice-presentation-total">${inr(p.sale)}</div></div>
+      <div class="voice-presentation-foot">
+        <div class="voice-presentation-stat"><span>Margin</span><b>${inr(p.margin)}</b></div>
+        <div class="voice-presentation-stat"><span>Cash</span><b>${inr(p.cash)}</b></div>
+        <div class="voice-presentation-stat"><span>Credit</span><b>${inr(p.credit)}</b></div>
+      </div>${alerts?`<div class="voice-presentation-alerts">${alerts}</div>`:''}
+    </section>`;
+  }
+  return '';
+}
+async function pollVoicePresentations(){
+  if(!SAMVAAD.startedAt||!SAMVAAD.tab) return;
+  try{
+    const out=await api('/api/voice/presentations?since='+encodeURIComponent(SAMVAAD.startedAt));
+    let changed=false;
+    for(const row of (out.presentations||[])){
+      if(SAMVAAD.seen[row.presentation_id]) continue;
+      SAMVAAD.seen[row.presentation_id]=true;
+      SAMVAAD.presentations.push(row); changed=true;
+    }
+    if(changed) renderSamvaadConversation();
+  }catch(e){}
+}
+function stopSamvaadPresentationPoll(){
+  if(SAMVAAD.pollTimer) clearInterval(SAMVAAD.pollTimer);
+  SAMVAAD.pollTimer=null;
+}
+function resetAfterSamvaad(tab){
+  stopSamvaadPresentationPoll();
+  setMicListening(tab,false);
+  SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',
+    ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null};
+  resetVoiceConversation(tab,'auto');
 }
 function samvaadMessageText(msg){
   return String(msg?.content??msg?.text??'').trim();
@@ -1525,12 +1622,7 @@ async function endSamvaadConversation(tab='sale', showEnded=true){
   SAMVAAD.agent=null; SAMVAAD.ending=false; SAMVAAD.state='idle';
   setMicListening(tab,false);
   await refreshAfterSamvaad();
-  if(showEnded){
-    SAMVAAD.activity='Baat khatam. Ledger aur reports refresh ho gaye.';
-    renderSamvaadConversation();
-  }else{
-    SAMVAAD.tab=null;
-  }
+  resetAfterSamvaad(tab);
 }
 async function startSamvaadConversation(tab){
   if(SAMVAAD.agent){
@@ -1544,8 +1636,11 @@ async function startSamvaadConversation(tab){
   const tok=getToken();
   const card=document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card');
   card?.classList.add('conversation-active');
-  SAMVAAD={agent:null,tab,state:'connecting',user:'',assistant:'',activity:'',ending:false};
+  SAMVAAD={agent:null,tab,state:'connecting',user:'',assistant:'',activity:'',
+    ending:false,presentations:[],seen:{},startedAt:new Date().toISOString(),pollTimer:null};
   renderSamvaadConversation();
+  await pollVoicePresentations();
+  SAMVAAD.pollTimer=setInterval(pollVoicePresentations,1000);
 
   const audioInterface=new sdk.BrowserAudioInterface(16000,{outputGain:1.25});
   const config={
@@ -1607,10 +1702,9 @@ async function startSamvaadConversation(tab){
     endCallback:async()=>{
       if(SAMVAAD.ending) return;
       SAMVAAD.agent=null; SAMVAAD.state='idle';
-      SAMVAAD.activity='Chhotu ne conversation poori kar di.';
       setMicListening(tab,false);
       await refreshAfterSamvaad();
-      renderSamvaadConversation();
+      resetAfterSamvaad(tab);
     }
   });
   SAMVAAD.agent=agent;
@@ -1625,6 +1719,7 @@ async function convStartVoice(tab, flow){
     try{ await startSamvaadConversation(tab); return; }
     catch(e){
       try{ if(SAMVAAD.agent) await SAMVAAD.agent.stop(); }catch(_){}
+      stopSamvaadPresentationPoll();
       SAMVAAD.agent=null; SAMVAAD.tab=null;
       document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card')?.classList.remove('conversation-active');
       toast('Live Chhotu available nahi — regular voice mode use ho raha hai.',false);

@@ -1,0 +1,63 @@
+"""Short-lived bill and summary cards for an active browser voice session."""
+from __future__ import annotations
+
+import json
+import secrets
+from datetime import datetime, timedelta, timezone
+
+import db
+
+_TABLE = """
+CREATE TABLE IF NOT EXISTS voice_presentations (
+    presentation_id TEXT PRIMARY KEY,
+    user_id          TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    kind             TEXT NOT NULL,
+    payload          JSONB NOT NULL,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now(),
+    expires_at       TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS voice_presentations_user_created
+    ON voice_presentations(user_id, created_at);
+CREATE INDEX IF NOT EXISTS voice_presentations_expiry
+    ON voice_presentations(expires_at);
+"""
+
+
+def _ensure(conn) -> None:
+    # Safe on old production databases as well as fresh installs.
+    conn.execute(_TABLE)
+
+
+def store(user_id: str, kind: str, payload: dict, *, minutes: int = 30) -> dict:
+    if kind not in ("bill", "summary"):
+        raise ValueError("Unsupported presentation kind.")
+    presentation_id = "vp_" + secrets.token_hex(12)
+    expires = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+    with db.connect() as conn:
+        _ensure(conn)
+        conn.execute(
+            """INSERT INTO voice_presentations
+               (presentation_id, user_id, kind, payload, expires_at)
+               VALUES (%s, %s, %s, %s::jsonb, %s)""",
+            (presentation_id, user_id, kind,
+             json.dumps(payload, ensure_ascii=False), expires),
+        )
+        conn.execute("DELETE FROM voice_presentations WHERE expires_at <= now()")
+    return {"presentation_id": presentation_id, "kind": kind,
+            "payload": payload}
+
+
+def list_since(user_id: str, since: datetime) -> list[dict]:
+    with db.connect() as conn:
+        _ensure(conn)
+        cur = conn.execute(
+            """SELECT presentation_id, kind, payload, created_at
+               FROM voice_presentations
+               WHERE user_id = %s AND created_at >= %s AND expires_at > now()
+               ORDER BY created_at ASC LIMIT 20""",
+            (user_id, since),
+        )
+        rows = db.rows_to_dicts(cur)
+    for row in rows:
+        row["created_at"] = row["created_at"].isoformat()
+    return rows

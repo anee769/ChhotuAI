@@ -38,6 +38,7 @@ import sqlrepo
 import auth
 import documents
 import samvaad_runtime
+import presentations
 from contextvars import ContextVar
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -541,6 +542,19 @@ def voice_session():
                 "samvaad": samvaad_runtime.browser_config()}
     except (agent.AgentError, samvaad_runtime.SamvaadConfigurationError) as e:
         raise HTTPException(503, str(e))
+
+
+@app.get("/api/voice/presentations")
+def voice_presentations(since: str):
+    """Cards emitted by Samvaad tools during this browser's current session."""
+    try:
+        start = datetime.fromisoformat(since.replace("Z", "+00:00"))
+        if start.tzinfo is None:
+            start = start.astimezone()
+    except (TypeError, ValueError):
+        raise HTTPException(400, "Invalid since timestamp.")
+    return {"presentations":
+            presentations.list_since(current_user()["user_id"], start)}
 
 
 @app.get(
