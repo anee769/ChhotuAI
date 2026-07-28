@@ -528,9 +528,16 @@
   .auth-error { margin-top:14px; padding:9px 12px; border-radius:9px;
     background:#fdecec; color:#a3231f; font-size:12.5px; }
   .auth-error.hidden { display:none; }
-  .ob-row { display:grid; grid-template-columns:1fr 68px 74px; gap:6px; margin-top:8px; }
-  .ob-row input { padding:9px 10px; border:1px solid #dde0e4; border-radius:9px; font-size:13px; }
-  .ob-row input:focus { outline:2px solid #006c49; outline-offset:-1px; }
+  .ob-row {
+    display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px;
+    padding:10px; border:1px solid #eceef0; border-radius:10px; background:#fafbfc;
+  }
+  .ob-row .ob-name { grid-column:1 / -1; }
+  .ob-row input, .ob-row select {
+    padding:9px 10px; border:1px solid #dde0e4; border-radius:9px;
+    background:#fff; font-size:13px; min-width:0;
+  }
+  .ob-row input:focus, .ob-row select:focus { outline:2px solid #006c49; outline-offset:-1px; }
   .setting-row {
     display:flex; align-items:center; justify-content:space-between; gap:24px;
   }
@@ -756,7 +763,8 @@
       <label class="auth-label" for="obOwner">Aapka naam</label>
       <input id="obOwner" class="auth-input" placeholder="Aneesh Gupta">
       <div class="auth-divide">Pehla saamaan</div>
-      <p class="auth-sub">Ek item abhi daal dijiye — baaki aap bol kar jodte rahiye.</p>
+      <p class="auth-sub">Cost price zaroori hai — usi se munafa nikalta hai.
+        Baaki saamaan aap baad mein bol kar jodte rahiye.</p>
       <div id="obItems"></div>
       <button class="auth-link" onclick="addOnboardRow()">+ Aur item</button>
       <button class="auth-primary" onclick="submitOnboarding()" id="obBtn">Shuru karein</button>
@@ -2150,9 +2158,28 @@ function addOnboardRow(){
   const wrap=document.getElementById('obItems');
   const row=document.createElement('div');
   row.className='ob-row';
-  row.innerHTML=`<input placeholder="Item ka naam" class="ob-name">
-    <input placeholder="Qty" class="ob-qty" inputmode="decimal">
-    <input placeholder="Unit" class="ob-unit" value="piece">`;
+  // Every column the Inventory table shows, plus cost price. Collected now
+  // because a blank brand/type can't be filled in later without re-adding the
+  // product, and without a cost price every sale reports margin as unknown.
+  row.innerHTML=`
+    <input placeholder="Item ka naam *" class="ob-name">
+    <input placeholder="Brand" class="ob-brand">
+    <input placeholder="Type / size" class="ob-type">
+    <select class="ob-family">
+      <option value="">Category…</option>
+      <option value="tmt">Sariya / TMT</option>
+      <option value="cement">Cement</option>
+      <option value="tiles">Tiles</option>
+      <option value="pipe">Pipe</option>
+      <option value="paint">Paint</option>
+      <option value="fitting">Fitting</option>
+      <option value="fastener">Fastener</option>
+      <option value="other">Other</option>
+    </select>
+    <input placeholder="Stock qty" class="ob-qty" inputmode="decimal">
+    <input placeholder="Unit" class="ob-unit" value="piece">
+    <input placeholder="Cost / unit *" class="ob-cost" inputmode="decimal">
+    <input placeholder="GST %" class="ob-gst" inputmode="decimal" value="18">`;
   wrap.appendChild(row);
 }
 async function submitOnboarding(){
@@ -2161,9 +2188,16 @@ async function submitOnboarding(){
   if(!shop){ authError('Dukaan ka naam daaliye.'); return; }
   const items=[...document.querySelectorAll('#obItems .ob-row')].map(r=>({
     canonical:r.querySelector('.ob-name').value.trim(),
+    brand:r.querySelector('.ob-brand').value.trim(),
+    type:r.querySelector('.ob-type').value.trim(),
+    family:r.querySelector('.ob-family').value,
     qty:parseFloat(r.querySelector('.ob-qty').value)||0,
     unit:r.querySelector('.ob-unit').value.trim()||'piece',
+    cost:parseFloat(r.querySelector('.ob-cost').value)||0,
+    gst_rate:parseFloat(r.querySelector('.ob-gst').value)||18,
   })).filter(x=>x.canonical);
+  const missingCost=items.find(x=>!x.cost);
+  if(missingCost){ authError(`"${missingCost.canonical}" ka cost price daaliye — usi se munafa nikalta hai.`); return; }
   const btn=document.getElementById('obBtn'); btn.disabled=true;
   try{
     await api('/api/onboarding',{method:'POST',

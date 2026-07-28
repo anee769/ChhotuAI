@@ -239,22 +239,40 @@ def onboarding(payload: dict = Body(...)):
         if not canonical:
             continue
         unit = (item.get("unit") or "piece").strip()
-        sku_id = re.sub(r"[^A-Z0-9]+", "_", canonical.upper()).strip("_")[:48] or "ITEM"
+        brand = (item.get("brand") or "").strip()
+        variant = (item.get("type") or "").strip()
+        # Inventory shows Product, Family, Brand, Type/Size — collect all four
+        # at signup so a new shop's table isn't full of blanks it cannot fill
+        # in later without re-adding the product.
+        attributes = {}
+        if brand:
+            attributes["brand"] = brand
+        if variant:
+            attributes["type"] = variant
+        label = " ".join(x for x in (brand, canonical, variant) if x)
+        sku_id = re.sub(r"[^A-Z0-9]+", "_", label.upper()).strip("_")[:48] or "ITEM"
+        cost = float(item.get("cost") or 0)
+        aliases = {label.lower(), canonical.lower()}
+        if brand:
+            aliases.add(brand.lower())
         repo.upsert_sku({
-            "sku_id": sku_id, "canonical": canonical,
-            "family": (item.get("family") or "other").strip(),
-            "attributes": {}, "default_unit": unit, "units": {unit: 1},
-            "gst_rate": item.get("gst_rate") or 18,
-            "opening_cost_per_kg": item.get("cost") or 0,
-            "aliases": [canonical.lower()],
+            "sku_id": sku_id, "canonical": label,
+            "family": (item.get("family") or "other").strip().lower(),
+            "attributes": attributes, "default_unit": unit, "units": {unit: 1},
+            "gst_rate": float(item.get("gst_rate") or 18),
+            # Cost price is the whole basis of margin: without it every sale of
+            # this item reports profit as unknown.
+            "opening_cost_per_kg": cost,
+            "landed_cost_per_kg": cost or None,
+            "aliases": sorted(a for a in aliases if a),
         })
-        # An opening_balance counts immediately; a bare delivery would leave
-        # the shop's very first item showing as "never counted".
+        # An opening_balance counts immediately; a bare delivery would leave the
+        # shop's very first item showing as "never counted".
         qty = item.get("qty")
         if qty:
             _write_events("opening_balance",
                           [{"sku_id": sku_id, "qty": float(qty), "unit": unit,
-                            "rate": item.get("cost"), "rate_unit": unit}],
+                            "rate": cost or None, "rate_unit": unit}],
                           clock.today().isoformat(), "exact", "onboarding")
         created.append(sku_id)
     return {"ok": True, "skus": created}
@@ -1108,102 +1126,44 @@ def invoice_commit(payload: dict = Body(...)):
 # ---------------------------------------------------------------------------
 @app.post("/api/bill")
 def bill(payload: dict = Body(...)):
-    from reportlab.lib.pagesizes import A5
-    from reportlab.pdfgen import canvas
-    from reportlab.lib.units import mm
+    """The bill the UI downloads — the SAME document that goes out on WhatsApp.
 
-    items = payload.get("items", [])  # [{sku_id, qty, unit, rate, payment}]
+    It used to be a second, thinner rendering with the shop name hardcoded, so
+    a printed bill and a sent bill disagreed and neither carried the owner's
+    identity. One generator now, one format, per-user letterhead.
+    """
+    import notify
+    import pdfs
+    user = current_user()
     customer = payload.get("customer") or {}
     if customer.get("customer_id") and not customer.get("name"):
         customer = repo.customer(customer["customer_id"]) or customer
-    catalogue_by = by_id()
-    buf = io.BytesIO()
-    c = canvas.Canvas(buf, pagesize=A5)
-    w, h = A5
-    y = h - 20 * mm
-    c.setFont("Helvetica-Bold", 14)
-    c.drawString(15 * mm, y, "Sharma Building Materials")
-    c.setFont("Helvetica", 8)
-    y -= 6 * mm
-    c.drawString(15 * mm, y, "Tax Invoice (GST)")
-    c.drawRightString(w - 15 * mm, y, f"Date: {clock.today().isoformat()}")
-    if customer.get("name") or customer.get("phone"):
-        y -= 5 * mm
-        c.setFont("Helvetica-Bold", 8)
-        c.drawString(15 * mm, y, f"Customer: {customer.get('name') or 'Unnamed'}")
-        c.setFont("Helvetica", 8)
-        c.drawRightString(w - 15 * mm, y,
-                          f"Contact: {customer.get('phone') or '-'}")
-    y -= 4 * mm
-    c.line(15 * mm, y, w - 15 * mm, y)
-    y -= 6 * mm
-    c.setFont("Helvetica-Bold", 8)
-    c.drawString(15 * mm, y, "Item")
-    c.drawString(90 * mm, y, "Qty")
-    c.drawString(105 * mm, y, "Rate")
-    c.drawRightString(w - 15 * mm, y, "Amount")
-    y -= 2 * mm
-    c.line(15 * mm, y, w - 15 * mm, y)
-    y -= 6 * mm
-    c.setFont("Helvetica", 8)
-    subtotal = gst_total = 0.0
-    for it in items:
-        sku = catalogue_by.get(it["sku_id"], {})
-        amount = (L.line_amount(
-            float(it["qty"]), it.get("unit", "unit"), float(it["rate"]),
-            it.get("rate_unit"), sku)
-            if sku else float(it["rate"]) * float(it["qty"]))
-        gst = amount * repo.gst_rate_for(sku) / 100
+    who = notify._identity(repo, user)
+    on = clock.today()
+
+    rows, subtotal, gst_total = [], 0.0, 0.0
+    for it in payload.get("items", []):
+        sku = repo.sku(it["sku_id"]) or {}
+        qty = float(it["qty"])
+        unit = it.get("unit") or sku.get("default_unit")
+        rate = float(it.get("rate") or 0)
+        amount = L.line_amount(qty, unit, rate, it.get("rate_unit") or unit, sku)
+        gst_total += amount * float(repo.gst_rate_for(sku)) / 100.0
         subtotal += amount
-        gst_total += gst
-        c.drawString(15 * mm, y, (sku.get("canonical", it["sku_id"]))[:42])
-        c.drawString(90 * mm, y, f'{it["qty"]}{it.get("unit","")}')
-        rate_label = f'{it["rate"]}'
-        if it.get("rate_unit"):
-            rate_label += f'/{it["rate_unit"]}'
-        c.drawString(105 * mm, y, rate_label)
-        c.drawRightString(w - 15 * mm, y, f"{amount:,.0f}")
-        y -= 5 * mm
-    y -= 2 * mm
-    c.line(15 * mm, y, w - 15 * mm, y)
-    y -= 6 * mm
-    c.drawRightString(w - 15 * mm, y, f"Subtotal: {subtotal:,.0f}")
-    y -= 5 * mm
-    c.drawRightString(w - 15 * mm, y, f"GST: {gst_total:,.0f}")
-    y -= 5 * mm
-    c.setFont("Helvetica-Bold", 10)
-    c.drawRightString(w - 15 * mm, y, f"Total: {subtotal + gst_total:,.0f}")
-    c.showPage()
-    c.save()
-    buf.seek(0)
-    return StreamingResponse(buf, media_type="application/pdf",
-                             headers={"Content-Disposition": "inline; filename=invoice.pdf"})
+        rows.append({"name": sku.get("canonical", it["sku_id"]), "qty": qty,
+                     "unit": unit, "rate": rate, "amount": amount})
+    total = subtotal + gst_total
+    bill_no = payload.get("bill_no") or f"{on:%Y%m%d}-{int(total) % 10000:04d}"
+    payment = payload.get("payment") or (payload.get("items") or [{}])[0].get("payment") or "cash"
 
-
-# ---------------------------------------------------------------------------
-# Demo reset
-# ---------------------------------------------------------------------------
-def _reset_allowed(token: str):
-    """Reset destroys the entire ledger — every sale, customer and udhaar
-    balance — and replaces it with demo seed data. Unauthenticated on a public
-    URL that is one request from anyone who finds it, and it now targets the
-    Neon database rather than local files, so there is no second copy.
-
-    Rules, most specific first:
-      - CHHOTU_ADMIN_TOKEN set  -> the caller must present it.
-      - deployed (DATABASE_URL/VERCEL) with no token -> refuse outright; a
-        deployment with real data must never be resettable by default.
-      - otherwise (local files, no token) -> allowed, for the seeded demo.
-    """
-    expected = (os.environ.get("CHHOTU_ADMIN_TOKEN") or "").strip()
-    if expected:
-        if not token or not secrets.compare_digest(token, expected):
-            return False, "Invalid or missing admin token."
-        return True, ""
-    if os.environ.get("DATABASE_URL") or os.environ.get("VERCEL"):
-        return False, ("Reset is disabled on a deployment. Set CHHOTU_ADMIN_TOKEN "
-                       "and send it as X-Admin-Token to enable it.")
-    return True, ""
+    pdf = pdfs.bill_pdf(
+        shop=who["shop"], owner=who["owner"], customer=customer, lines=rows,
+        subtotal=subtotal, gst=gst_total, total=total, bill_no=bill_no, on=on,
+        payment=payment, due_on=payload.get("payment_deadline"),
+        gstin=who["gstin"], phone=who["phone"], address=who["address"])
+    return Response(
+        content=pdf, media_type="application/pdf",
+        headers={"Content-Disposition": f'inline; filename="bill-{bill_no}.pdf"'})
 
 
 @app.post("/api/reset")
