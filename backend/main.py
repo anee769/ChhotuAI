@@ -353,8 +353,14 @@ def agent_tool(payload: dict = Body(...),
     """Called by the Samvaad agent mid-conversation to touch the ledger.
 
     A phone call carries no session, so this authenticates twice over: a shared
-    secret proves the request came from our agent, and the CALLER's number
+    secret proves the request came from our agent, and the caller's identity —
+    their number on a phone call, or the shop_key variable for in-app voice —
     decides whose books are opened. Both must hold.
+
+    Args may arrive nested under "args" or flattened alongside the tool name;
+    the console's cURL editor makes the flat shape easy to produce by accident,
+    and a tool call that silently loses its arguments is worse than one that
+    accepts both.
     """
     import agent
     try:
@@ -362,9 +368,38 @@ def agent_tool(payload: dict = Body(...),
             raise HTTPException(403, "Bad agent secret.")
     except agent.AgentError as e:
         raise HTTPException(503, str(e))
+    args = payload.get("args")
+    if not isinstance(args, dict):
+        args = {k: v for k, v in payload.items()
+                if k not in ("tool", "caller", "From", "shop_key", "args")}
     return agent.handle(payload.get("tool") or "",
                         payload.get("caller") or payload.get("From") or "",
-                        payload.get("args") or {})
+                        args, key=payload.get("shop_key") or "")
+
+
+@app.get("/api/agent/tools")
+def agent_tools():
+    """The tool catalogue, for wiring up the Samvaad console."""
+    import agent
+    return {"tools": agent.manifest()}
+
+
+@app.get("/api/voice/session")
+def voice_session():
+    """Hand the logged-in browser its shop_key for the in-app voice session.
+
+    Deliberately NOT under /api/agent/ (which is open so Samvaad can reach the
+    webhook) — this one must sit behind the session check, since the key it
+    returns is what proves shop identity to every tool.
+    """
+    import agent
+    user = current_user()
+    try:
+        return {"shop_key": agent.shop_key(user["user_id"]),
+                "shop": user.get("shop_name") or "",
+                "owner": user.get("name") or ""}
+    except agent.AgentError as e:
+        raise HTTPException(503, str(e))
 
 
 # ---------------------------------------------------------------------------
