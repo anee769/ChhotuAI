@@ -1594,7 +1594,10 @@ async function pollVoicePresentations(){
     for(const row of (out.presentations||[])){
       if(SAMVAAD.seen[row.presentation_id]) continue;
       SAMVAAD.seen[row.presentation_id]=true;
-      SAMVAAD.presentations.push(row); changed=true;
+      // A preview is the current visual answer, not conversation history.
+      // Replacing here keeps a new bill from being hidden below an older
+      // summary (and matches the app's deliberate no-old-chats behaviour).
+      SAMVAAD.presentations=[row]; changed=true;
     }
     if(changed) renderSamvaadConversation();
   }catch(e){}
