@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import store
+import migrate
 
 
 class FakePostgresStore:
@@ -58,6 +59,25 @@ class FileStoreTests(unittest.TestCase):
     def test_write_leaves_no_temp_file_behind(self):
         self.store.write("x.json", {"a": 1})
         self.assertEqual([p.name for p in Path(self.tmp.name).iterdir()], ["x.json"])
+
+
+class MigrationDocumentSourceTests(unittest.TestCase):
+    def test_explicit_seed_directory_wins_over_database_url(self):
+        """--data-dir must import those files into the relational database.
+
+        DATABASE_URL describes the destination.  It must not silently switch
+        the migration's source to the legacy Postgres document table.
+        """
+        with tempfile.TemporaryDirectory() as tmp:
+            data_dir = Path(tmp)
+            expected = [{"sku_id": "seeded_item", "canonical": "Seeded Item"}]
+            (data_dir / "catalogue.json").write_text(
+                json.dumps(expected), encoding="utf-8")
+            with patch.dict(os.environ, {"DATABASE_URL": "postgres://destination"}), \
+                    patch.object(store, "make_store",
+                                 side_effect=AssertionError("wrong source")):
+                docs = migrate._load_documents(data_dir, force_files=True)
+        self.assertEqual(docs["catalogue.json"], expected)
 
 
 class StoreSelectionTests(unittest.TestCase):

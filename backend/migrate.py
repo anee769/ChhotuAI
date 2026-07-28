@@ -25,8 +25,12 @@ import store
 import sqlrepo
 
 
-def _load_documents(data_dir: Path) -> dict:
-    src = store.make_store(data_dir)
+def _load_documents(data_dir: Path, force_files: bool = False) -> dict:
+    # An explicit --data-dir is a request to import those files even when the
+    # destination database is configured through DATABASE_URL.  Using
+    # make_store() here silently switched the source to the legacy Postgres
+    # document table, so a clean seed directory imported zero rows.
+    src = store.FileStore(data_dir) if force_files else store.make_store(data_dir)
     names = ("catalogue.json", "events.json", "customers.json",
              "receivables.json", "payments.json", "learning.json",
              "learning_day60.json", "config.json")
@@ -38,13 +42,19 @@ def _load_documents(data_dir: Path) -> dict:
 
 
 def migrate(phone: str, shop_name: str = "", data_dir: Path = None) -> dict:
+    force_files = data_dir is not None
     data_dir = data_dir or Path(__file__).resolve().parent.parent / "data"
     db.init_schema()
-    docs = _load_documents(data_dir)
+    docs = _load_documents(data_dir, force_files=force_files)
 
     user = auth.get_or_create_user(phone)
     uid = user["user_id"]
     counts = {}
+    effective_shop = (
+        (shop_name or "").strip()
+        or (user.get("shop_name") or "").strip()
+        or ((docs["config.json"] or {}).get("shop_name") or "").strip()
+    )
 
     with db.connect() as conn:
         # --- catalogue ---
@@ -125,8 +135,8 @@ def migrate(phone: str, shop_name: str = "", data_dir: Path = None) -> dict:
                     (uid, state, json.dumps(doc, ensure_ascii=False)))
 
         cfg = dict(docs["config.json"] or {})
-        if shop_name:
-            cfg["shop_name"] = shop_name
+        if effective_shop:
+            cfg["shop_name"] = effective_shop
         conn.execute(
             "INSERT INTO user_config (user_id, data) VALUES (%s,%s::jsonb)"
             " ON CONFLICT (user_id) DO NOTHING",
@@ -134,7 +144,7 @@ def migrate(phone: str, shop_name: str = "", data_dir: Path = None) -> dict:
 
     auth.complete_onboarding(
         uid, name=user.get("name") or "",
-        shop_name=shop_name or (docs["config.json"] or {}).get("shop_name", ""))
+        shop_name=effective_shop)
     return {"user_id": uid, "phone": user["phone"], **counts}
 
 
