@@ -370,6 +370,13 @@ def agent_tool(payload: dict = Body(...),
     # is where the console warns against putting it.
     supplied = (x_agent_secret
                 or (authorization or "").removeprefix("Bearer ").strip())
+    # Logged before the secret check, not after. A rejected call is the failure
+    # that most needs a trace, and it was the one leaving no trace at all: the
+    # caller heard "entry nahi ho payi" and the server recorded a bare 200.
+    print(f"[agent] tool={payload.get('tool')!r} "
+          f"secret={'present' if supplied else 'MISSING'} "
+          f"caller={'set' if str(payload.get('caller') or '').strip() else 'EMPTY'}",
+          flush=True)
     try:
         if not agent.verify_secret(supplied):
             raise HTTPException(403, "Bad agent secret.")
@@ -390,9 +397,8 @@ def agent_tool(payload: dict = Body(...),
     # Log the SHAPE of every agent call, never the values: debugging a voice
     # agent from the outside is guesswork without knowing what actually
     # arrived, and "it errored" is all the caller ever hears.
-    print(f"[agent] tool={payload.get('tool')!r} "
-          f"caller={'set' if (payload.get('caller') or '').strip() else 'EMPTY'} "
-          f"shop_key={'set' if (payload.get('shop_key') or '').strip() else 'EMPTY'} "
+    print(f"[agent] accepted tool={payload.get('tool')!r} "
+          f"shop_key={'set' if str(payload.get('shop_key') or '').strip() else 'EMPTY'} "
           f"arg_keys={sorted(args)}", flush=True)
     return agent.handle(payload.get("tool") or "",
                         payload.get("caller") or payload.get("From") or "",

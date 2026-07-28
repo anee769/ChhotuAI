@@ -131,8 +131,17 @@ class ScriptedLine(AsyncAudioInterface):
                 self.turns.append(self.current)
                 self.current = bytearray()
                 print(f"CALLER> {line}", flush=True)
+                # Lead-in silence. Without it the server's VAD opens late and
+                # eats the first word or two: "Fevicol SH add kar do" arrived
+                # as "cost price 300", so the agent kept insisting it had not
+                # been given an item name.
+                await self._silence(1.0)
                 await self._send(pcm)
-                await self._silence(0.5)       # a real pause means "your turn"
+                # Long enough for the server's VAD to close the utterance.
+                # At 0.5s it did not, so the next line arrived glued onto this
+                # one and the agent kept re-asking a question it had already
+                # asked instead of acting on the answer.
+                await self._silence(2.0)
                 await self._wait_for_quiet()
             self.turns.append(self.current)
         except asyncio.CancelledError:
@@ -166,11 +175,21 @@ async def main():
         agent_variables={"caller_number": "917006322772"},
     )
     async def on_transcript(m):
-        print(f"[{getattr(m,'role','?')}] {getattr(m,'text','')}", flush=True)
+        try:
+            d = m.model_dump()
+        except Exception:
+            d = {"raw": str(m)}
+        who = d.get("role") or d.get("speaker") or "?"
+        said = d.get("text") or d.get("transcript") or d.get("content") or d
+        print(f"[{who}] {said}", flush=True)
     async def on_text(m):
-        t = getattr(m, "text", None)
+        try:
+            d = m.model_dump()
+        except Exception:
+            d = {"raw": str(m)}
+        t = d.get("text") or d.get("content")
         if t:
-            print(f"AGENT> {t}", flush=True)
+            print(f"TEXT> {d.get('type','')} {t}", flush=True)
     async def on_event(e):
         try:
             detail = e.model_dump()
