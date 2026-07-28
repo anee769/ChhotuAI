@@ -308,6 +308,37 @@ def send_reminders(payload: dict = Body(default={}),
     return notify.send_due_reminders(repo, current_user(), days_before=days)
 
 
+@app.get("/api/cron/reminders")
+def cron_reminders(request: Request):
+    """Nightly credit reminders, for Vercel Cron.
+
+    Cron can only issue a GET and carries no session, so this authenticates on
+    a shared secret instead and then runs once per shop. Vercel sends
+    `Authorization: Bearer $CRON_SECRET`; CHHOTU_CRON_TOKEN is accepted too so
+    the job can be triggered by hand.
+    """
+    import notify
+    expected = (os.environ.get("CRON_SECRET")
+                or os.environ.get("CHHOTU_CRON_TOKEN") or "").strip()
+    if not expected:
+        raise HTTPException(503, "CRON_SECRET is not configured.")
+    supplied = ((request.headers.get("authorization") or "")
+                .removeprefix("Bearer ").strip()
+                or request.headers.get("x-cron-token") or "")
+    if not secrets.compare_digest(supplied, expected):
+        raise HTTPException(403, "Bad cron token.")
+    runs = []
+    for u in auth.all_users():
+        bind_user(u)
+        try:
+            runs.append({"shop": u.get("shop_name") or u["phone"],
+                         **notify.send_due_reminders(repo, u, days_before=2)})
+        except Exception as e:
+            # One shop's failure must not stop the rest of the run.
+            runs.append({"shop": u["phone"], "error": str(e)[:160]})
+    return {"ran_at": clock.today().isoformat(), "shops": len(runs), "runs": runs}
+
+
 # ---------------------------------------------------------------------------
 # Generated documents (Twilio fetches these; token is the only guard)
 # ---------------------------------------------------------------------------
