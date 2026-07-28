@@ -151,6 +151,43 @@ PARAMS = {
     "send_reminders": ("days_before",),
 }
 
+# One line per argument: the type the console should use, and the description
+# the model reads when deciding what to put in it. A field marked agent-filled
+# with no description is a field the model fills badly.
+PARAM_DOCS = {
+    "item": ("Text", "Jo caller ne bola, jaisa bola. Hindi, English ya mix. "
+                     "Sudhaarne ki koshish mat karo."),
+    "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),
+    "name": ("Text", "Item ya customer ka naam."),
+    "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
+    "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
+    "rate": ("Text", "Ek unit ka daam, rupaye mein."),
+    "amount": ("Text", "Kitne rupaye mile."),
+    "payment": ("Text", "cash ya credit."),
+    "customer": ("Text", "Customer ka naam. Udhaar ke liye zaroori."),
+    "customer_phone": ("Text", "Naye customer ka number, agar bataya ho."),
+    "payment_deadline": ("Text", "Udhaar kab tak, YYYY-MM-DD."),
+    "occurred_on": ("Text", "Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. "
+                            "Khaali chhodo to aaj."),
+    "request_id": ("Text", "Har confirm kiye kaam ke liye naya id. Dobara "
+                           "koshish par wahi id, taaki do baar na likhe."),
+    "cost_price": ("Text", "Kharid ka daam per unit."),
+    "selling_rate": ("Text", "Bechne ka daam per unit."),
+    "brand": ("Text", "Brand ka naam."),
+    "period": ("Text", "day, yesterday, week ya month."),
+    "days": ("Text", "Kitne din pichhe tak."),
+    "start": ("Text", "Shuru ki date, YYYY-MM-DD."),
+    "end": ("Text", "Aakhri date, YYYY-MM-DD."),
+    "limit": ("Text", "Kitne result chahiye."),
+    "order": ("Text", "top, slow ya margin."),
+    "days_before": ("Text", "Deadline se kitne din pehle."),
+    "shop_name": ("Text", "Dukaan ka naam."),
+    "owner": ("Text", "Maalik ka naam."),
+    "shop_type": ("Text", "Dukaan kis line ki hai, jaise hardware."),
+    "gstin": ("Text", "GSTIN number."),
+    "address": ("Text", "Dukaan ka pata."),
+}
+
 EXAMPLES = {
     "shop_profile": ({}, {
         "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
@@ -384,13 +421,19 @@ def main() -> None:
           "icon on the field). Left as literal text, the console sends the "
           "placeholder itself: the transcript shows the model composing the "
           "right values while `{\"item\": \"{{item}}\"}` goes over the wire.\n")
-    print("| Tool | Fields to mark agent-filled |")
-    print("| --- | --- |")
     for t in tools:
         names = PARAMS.get(t["name"], ())
-        cells = ", ".join(f"`{n}`" for n in names) if names else "_none_"
-        print(f"| `{t['name']}` | {cells} |")
-    print()
+        if not names:
+            continue
+        print(f"**`{t['name']}`**\n")
+        print("| Field | Type | Description for the model |")
+        print("| --- | --- | --- |")
+        for n in names:
+            kind, desc = PARAM_DOCS.get(n, ("Text", ""))
+            print(f"| `{n}` | {kind} | {desc} |")
+        print()
+    print("Tools with no arguments at all: " + ", ".join(
+        f"`{t['name']}`" for t in tools if not PARAMS.get(t["name"])) + ".\n")
     print("The four with no arguments work as soon as auth does, which is why "
           "`stock_value` started answering first.\n")
     print("### Step 3: what the agent gets back\n")
