@@ -199,6 +199,19 @@ class AgentToolTests(unittest.TestCase):
     def test_search_falls_back_to_fuzzy(self):
         self.assertGreater(self.call("search_items", query="tiscon")["count"], 0)
 
+    def test_search_finds_products_however_the_caller_says_it(self):
+        """A caller said "Tata Tisco 16 mm" and was told the shop had no such
+        thing, about three tonnes sitting on the shelf."""
+        for query in ("Tata Tisco 16 mm", "16 mm tata", "टाटा टिस्को टीएमटी",
+                      "सीमेंट", "tiscon 16mm"):
+            self.assertGreater(self.call("search_items", query=query)["count"],
+                               0, query)
+
+    def test_search_still_finds_nothing_for_nothing(self):
+        for query in ("biryani", "laptop"):
+            self.assertEqual(self.call("search_items", query=query)["count"],
+                             0, query)
+
     def test_summary_period_words_resolve_to_ranges(self):
         day = self.call("business_summary", period="day")
         week = self.call("business_summary", period="week")

@@ -565,16 +565,50 @@ def search_items(repo, user, args):
     if not q:
         return _no_item_named()
     catalogue = repo.load_catalogue()
-    hits = [s for s in catalogue
-            if q and (q in (s["canonical"] or "").lower()
-                      or q in (s.get("brand") or "").lower()
-                      or q in (s.get("family") or "").lower())]
-    if not hits and q:
-        # Fall back to the same fuzzy ranking the matcher uses, so a caller's
-        # approximate word still lands somewhere useful.
-        ids = [c.get("sku_id") if isinstance(c, dict) else c
-               for c in M.fuzzy_candidates(q, catalogue, limit=5)]
-        hits = [s for s in (repo.sku(i) for i in ids if i) if s]
+
+    def _words(text: str) -> list:
+        return [w for w in re.split(r"[\s,./-]+", text) if w]
+
+    import translit
+    forms = [q]
+    if translit.has_devanagari(q):
+        # "टाटा टिस्को टीएमटी" found nothing at all: every stage here works on
+        # Latin text, so a caller who spells the brand in Devanagari got
+        # "kuch nahi mila" about a product sitting on the shelf.
+        latin = (translit.to_latin(q) or "").strip().lower()
+        if latin and latin != q:
+            forms.append(latin)
+
+    hits, seen = [], set()
+
+    def _add(sku):
+        if sku and sku["sku_id"] not in seen:
+            seen.add(sku["sku_id"])
+            hits.append(sku)
+
+    for form in forms:
+        for sku in catalogue:
+            blob = " ".join([sku.get("canonical") or "", sku.get("brand") or "",
+                             sku.get("family") or "",
+                             " ".join(str(a) for a in (sku.get("aliases") or []))
+                             ]).lower()
+            # Every word the caller said, in any order: "16 mm tata" should
+            # find "Tata Tiscon TMT Bar 16mm" even though neither is a
+            # substring of the other.
+            if form in blob or all(w in blob.replace(" ", "") or w in blob
+                                   for w in _words(form)):
+                _add(sku)
+    if not hits:
+        for form in forms:
+            ids = [c.get("sku_id") if isinstance(c, dict) else c
+                   for c in M.fuzzy_candidates(form, catalogue, limit=5)]
+            for i in ids:
+                _add(repo.sku(i))
+    if not hits:
+        # Last resort, word by word: catches "Tisco" for "Tiscon".
+        names = _sounds_like(q, catalogue)
+        for name in names:
+            _add(next((s for s in catalogue if s["canonical"] == name), None))
     events = repo.all_events()
     rows = [{"sku_id": s["sku_id"], "name": s["canonical"],
              "stock": _stock_of(repo, s, events)["text"],
