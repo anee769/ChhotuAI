@@ -430,6 +430,47 @@ def agent_tool(request: Request,
                         args, key=payload.get("shop_key") or "")
 
 
+@app.post("/api/agent/tool/{tool_name}")
+def agent_tool_named(tool_name: str, request: Request,
+                     payload: dict = Body(default={}),
+                     x_agent_secret: str = Header(default=""),
+                     authorization: str = Header(default="")):
+    """Same webhook, but the tool is named in the PATH and the body is nothing
+    but the model's own arguments.
+
+    The console substitutes declared variables in a request body and does not
+    substitute the model's tool arguments, so a body written as
+    {"item": "{{item}}"} arrives with that placeholder intact, every time, on
+    every tool that takes an argument. Moving the tool name into the path and
+    the identity into the query string leaves the body free to be whatever the
+    model composed, which is the one thing that does arrive intact.
+
+    Identity comes from the query string here. That is a real trade-off: URLs
+    are recorded in access logs in a way that headers and bodies are not, so
+    prefer /api/agent/tool with a header when the console can manage it.
+    """
+    import agent
+    q = request.query_params
+    supplied = (x_agent_secret
+                or (authorization or "").removeprefix("Bearer ").strip()
+                or str(q.get("secret") or "").strip())
+    if "{{" in supplied:
+        supplied = ""
+    print(f"[agent] path-tool={tool_name!r} "
+          f"secret={'present' if supplied else 'MISSING'} "
+          f"args={json.dumps(payload, ensure_ascii=False)[:300]}", flush=True)
+    try:
+        if not agent.verify_secret(supplied):
+            raise HTTPException(403, "Bad agent secret.")
+    except agent.AgentError as e:
+        raise HTTPException(503, str(e))
+    args = payload.get("args") if isinstance(payload.get("args"), dict) else payload
+    return agent.handle(tool_name, q.get("caller") or q.get("from") or "",
+                        {k: v for k, v in (args or {}).items()
+                         if k not in ("tool", "caller", "secret", "shop_key")},
+                        key=q.get("shop_key") or "")
+
+
 @app.get("/api/agent/tools")
 def agent_tools():
     """The tool catalogue, for wiring up the Samvaad console."""
