@@ -609,6 +609,31 @@ def record_payment(repo, user, args):
                      f"{_say_number(after['outstanding'])} rupaye baaki hai."}
 
 
+def update_shop_profile(repo, user, args):
+    """Shop name, owner, GSTIN, address — the letterhead on every bill.
+
+    The owner's name lives on the users row rather than in config, because auth
+    reads it too, so this writes both sides and returns the merged result.
+    """
+    fields = {k: str(args[k]).strip() for k in ("shop_name", "gstin", "address")
+              if args.get(k) not in (None, "")}
+    owner = str(args.get("owner") or args.get("name") or "").strip()
+    if not fields and not owner:
+        return {"updated": False,
+                "speak": "Kya badalna hai — dukaan ka naam, GSTIN ya address?"}
+    if fields:
+        repo.save_config(fields)
+    if owner or fields.get("shop_name"):
+        auth.complete_onboarding(user["user_id"], name=owner,
+                                 shop_name=fields.get("shop_name", ""))
+        if owner:
+            user["name"] = owner
+    changed = sorted(list(fields) + (["owner"] if owner else []))
+    return {"updated": True, "changed": changed,
+            "profile": {**fields, "owner": owner or user.get("name") or ""},
+            "speak": f"{', '.join(changed)} update kar diya."}
+
+
 def add_item(repo, user, args):
     """A new SKU. Cost price is required — margin maths is useless without it."""
     name = (args.get("name") or args.get("item") or "").strip()
@@ -760,6 +785,9 @@ TOOLS = {
     "record_payment": (record_payment,
                        "Customer se udhaar ka paisa mila. args: customer (naam), "
                        "amount."),
+    "update_shop_profile": (update_shop_profile,
+                            "Dukaan ki details badlo — shop_name, owner, gstin, "
+                            "address. Yehi bill ke letterhead par chhapta hai."),
     "add_item": (add_item,
                  "Nayi item list mein daalo. args: name, cost_price (zaroori), "
                  "selling_rate, unit, brand."),

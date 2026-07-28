@@ -39,7 +39,7 @@ Aaj ki date bhi wahin se lo, apne se mat socho.
 | `caller_number` | The calling number, for telephony sessions. |
 | `shop_key` | `GET /api/voice/session` for the logged-in owner, for in-app sessions. |
 
-## Tools (21)
+## Tools (22)
 
 All of them POST to the same endpoint and differ only in `tool` and `args`. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
 
@@ -272,5 +272,16 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
   -d '{"tool": "top_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
+```
+
+### `update_shop_profile`
+
+Dukaan ki details badlo — shop_name, owner, gstin, address. Yehi bill ke letterhead par chhapta hai.
+
+```bash
+curl -X POST https://chhotuai.vercel.app/api/agent/tool \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
+  -d '{"tool": "update_shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 

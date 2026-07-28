@@ -269,6 +269,21 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(out["added"])
         self.assertTrue(self.call("check_stock", item="Apcolite")["found"])
 
+    def test_shop_profile_update_writes_config_and_owner(self):
+        saved = {}
+        self.repo.save_config = saved.update
+        with patch.object(agent.auth, "complete_onboarding") as onboard:
+            out = self.call("update_shop_profile", gstin="27ABCDE1234F1Z5",
+                            address="Main Road, Pune", owner="Ramesh Sharma")
+        self.assertTrue(out["updated"])
+        self.assertEqual(saved["gstin"], "27ABCDE1234F1Z5")
+        self.assertEqual(onboard.call_args.kwargs["name"], "Ramesh Sharma")
+
+    def test_empty_profile_update_changes_nothing(self):
+        self.repo.save_config = lambda patch: self.fail("should not write")
+        out = self.call("update_shop_profile")
+        self.assertFalse(out["updated"])
+
     def test_duplicate_item_is_not_added_twice(self):
         out = self.call("add_item", name="ppc cement", cost_price=400)
         self.assertFalse(out["added"])
