@@ -784,10 +784,17 @@ class DispatchTests(unittest.TestCase):
 
     def test_customer_names_are_sent_to_tools_in_latin_english_script(self):
         import samvaad_config as SC
-        self.assertIn("English (Latin) letters", SC.INSTRUCTIONS)
+        self.assertIn("HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO",
+                      SC.INSTRUCTIONS)
+        self.assertIn('GALAT: {"customer": "पंकज शर्मा"}', SC.INSTRUCTIONS)
+        self.assertIn('SAHI:  {"customer": "Pankaj Sharma"}', SC.INSTRUCTIONS)
+        self.assertIn("TOOL MAT CHALAO", SC.INSTRUCTIONS)
         self.assertIn("Pankaj Sharma", SC.INSTRUCTIONS)
-        self.assertIn("English (Latin) letters", SC.PARAM_DOCS["name"][1])
-        self.assertIn("English (Latin) letters", SC.PARAM_DOCS["customer"][1])
+        self.assertIn("Never send Devanagari", SC.PARAM_DOCS["name"][1])
+        self.assertIn("Never send Devanagari", SC.PARAM_DOCS["customer"][1])
+        for tool in ("customer_account", "record_sale", "record_payment",
+                     "send_bill"):
+            self.assertIn("Latin script", agent.TOOLS[tool][1])
 
     def test_a_description_only_names_arguments_the_body_carries(self):
         """The description is the model's only spec for the arguments. Every

@@ -1411,7 +1411,9 @@ TOOLS = {
                        "Saare customer aur unka outstanding udhaar."),
     "customer_account": (customer_account,
                          "Ek customer ka hisaab: kitna udhaar baaki, kab tak. "
-                         "args: name ya exact customer_id/customer_phone."),
+                         "args: name English Latin script mein, ya exact "
+                         "customer_id/customer_phone. Devanagari naam ko tool "
+                         "call se pehle transliterate karo."),
     "dues": (dues, "Jo udhaar due ho rahe hain. args: days_before."),
     "recent_activity": (recent_activity,
                         "Pichhli entries: kya bika, kya aaya. args: limit."),
@@ -1426,7 +1428,8 @@ TOOLS = {
                     "Sale record karo. Ek item ek call mein. args: item ya "
                     "sku_id, qty, "
                     "unit, rate, payment (cash ya credit), customer (naam, "
-                    "credit ke liye zaroori), customer_phone, "
+                    "English Latin script mein; credit ke liye zaroori), "
+                    "customer_phone, "
                     "payment_deadline, occurred_on, request_id."),
     "record_purchase": (record_purchase,
                         "Supplier se aaya stock record karo. Ek item ek call mein. "
@@ -1436,8 +1439,9 @@ TOOLS = {
                    "Ginti ke baad stock theek karo. Ek item ek call mein. "
                    "args: item ya sku_id, qty, unit, occurred_on, request_id."),
     "record_payment": (record_payment,
-                       "Customer se udhaar ka paisa mila. args: customer (naam) "
-                       "ya customer_id/customer_phone, amount, request_id."),
+                       "Customer se udhaar ka paisa mila. args: customer (naam "
+                       "English Latin script mein) ya customer_id/"
+                       "customer_phone, amount, request_id."),
     "update_shop_profile": (update_shop_profile,
                             "Dukaan ki details badlo: shop_name, owner, gstin, "
                             "address, shop_type (jaise 'hardware' ya 'building "
@@ -1455,8 +1459,8 @@ TOOLS = {
                     "koi sale ya stock chal raha ho, wo nahi hatega."),
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
-                  "(naam) ya customer_id/customer_phone, item ya sku_id, qty, "
-                  "rate, payment."),
+                  "(naam English Latin script mein) ya customer_id/"
+                  "customer_phone, item ya sku_id, qty, rate, payment."),
     "send_summary": (send_summary,
                      "Owner ko day ya week ki summary PDF WhatsApp par bhejo. "
                      "args: period (day ya week). Bhejne se pehle poochho."),

@@ -27,13 +27,25 @@ English ya dono mila kar baat karega. Usi zubaan mein jawab do jismein usne
 poochha, aur chhote jawab do. Do line se zyada nahi, kyunki jawab bola jaata
 hai, padha nahi jaata.
 
-Customer ka naam caller Hindi, English ya kisi bhi script mein bole, lekin
-customer ko dhoondhne ya likhne wale tool ke `name` ya `customer` argument
-mein naam hamesha English (Latin) letters mein bhejo. Sirf transliterate karo,
-naam ka matlab, spelling ya pehchaan apne se mat badlo. Jaise "पंकज शर्मा"
-ko "Pankaj Sharma" bhejo. Agar pehle tool se exact `customer_id` ya phone mila
-ho to naam ka andaaza lagane ke bajay wahi exact identifier bhejo. Ye rule
-sirf tool query ke liye hai; caller ko jawab usi zubaan mein dete raho.
+CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
+`customer_account`, `record_sale`, `record_payment` aur `send_bill` ke JSON
+arguments mein customer ka naam HAMESHA English Latin script mein hona chahiye.
+Caller naam Hindi, English ya kisi bhi script mein bole, pehle us naam ko
+awaaz ke hisaab se Latin letters mein transliterate karo. Translate, correct
+ya naya spelling invent mat karo.
+
+GALAT: {"customer": "पंकज शर्मा"}
+SAHI:  {"customer": "Pankaj Sharma"}
+GALAT: {"name": "रमेश कुमार"}
+SAHI:  {"name": "Ramesh Kumar"}
+
+Tool call bhejne se turant pehle `customer` aur customer ko identify karne
+wala `name` field dekho. Agar usmein ek bhi Devanagari ya doosri non-Latin
+script ka akshar ho, TOOL MAT CHALAO. Pehle poora naam Latin letters mein
+likho, phir tool chalao. Ye rule user ke Hindi mein baat karne par bhi nahi
+badalta. Caller ko jawab usi ki zubaan mein dete raho. Agar pehle tool se exact
+`customer_id` ya phone mila ho to naam ka andaaza lagane ke bajay wahi exact
+identifier bhejo.
 
 Sabse zaroori niyam: koi bhi number khud mat banao. Stock, rate, udhaar, sale,
 har aankda tool se aayega. Agar tool ne kuch nahi diya, saaf keh do ki pata
@@ -175,16 +187,18 @@ PARAM_DOCS = {
     "sku_id": ("Text", "Exact SKU id, sirf tab bharo jab kisi pehle tool ne "
                "ye id di ho. Andaaza mat lagao."),
     "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),
-    "name": ("Text", "Item ka naam. Customer query mein English (Latin) "
-             "letters mein transliterated customer name."),
+    "name": ("Text", "Item ka naam. MANDATORY for customer lookup: transliterate "
+             "the complete customer name into English Latin script before the "
+             "tool call. Never send Devanagari in a customer name field."),
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
     "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
     "rate": ("Text", "Ek unit ka daam, rupaye mein."),
     "amount": ("Text", "Kitne rupaye mile."),
     "payment": ("Text", "cash ya credit."),
-    "customer": ("Text", "Customer ka naam English (Latin) letters mein "
-                 "transliterate karke. Naam translate ya invent mat karo. "
-                 "Udhaar ke liye zaroori."),
+    "customer": ("Text", "MANDATORY: transliterate the complete customer name "
+                 "into English Latin script before the tool call. Never send "
+                 "Devanagari in this field. Transliterate phonetically; do not "
+                 "translate, correct or invent the name. Required for credit."),
     "customer_id": ("Text", "Exact customer id, sirf pehle tool se mila ho "
                     "to bharo. Andaaza mat lagao."),
     "customer_phone": ("Text", "Naye customer ka number, agar bataya ho."),
