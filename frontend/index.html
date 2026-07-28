@@ -474,6 +474,57 @@
   .voice-draft-list {
     overflow:hidden; border:1px solid #dde0e4; border-radius:10px; background:#fff;
   }
+  .auth-screen {
+    position:fixed; inset:0; z-index:200; display:grid; place-items:center;
+    padding:24px; background:var(--surface); overflow-y:auto;
+  }
+  .auth-screen.hidden { display:none; }
+  .auth-card {
+    width:100%; max-width:380px; padding:28px 26px 26px;
+    border:1px solid #dde0e4; border-radius:16px; background:#fff;
+    box-shadow:0 12px 40px rgba(20,24,32,.06);
+  }
+  .auth-brand { display:flex; align-items:center; gap:6px; margin-bottom:22px;
+    color:#20242a; font-size:19px; font-weight:800; letter-spacing:-.02em; }
+  .auth-dot { width:9px; height:9px; border-radius:50%; background:#006c49; }
+  .auth-ai { color:#006c49; }
+  .auth-title { color:#20242a; font-size:20px; font-weight:800; letter-spacing:-.01em; }
+  .auth-sub { margin-top:5px; color:#6c7179; font-size:13px; line-height:1.5; }
+  .auth-label { display:block; margin:18px 0 6px; color:#30343a;
+    font-size:11px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; }
+  .auth-input, .auth-phone {
+    display:flex; align-items:center; gap:8px; width:100%;
+    padding:11px 13px; border:1px solid #dde0e4; border-radius:10px;
+    background:#fff; color:#20242a; font-size:15px;
+  }
+  .auth-phone span { color:#6c7179; font-weight:700; }
+  .auth-phone input, .auth-input { border:0; outline:0; width:100%; font-size:15px; padding:0; }
+  .auth-input { padding:11px 13px; }
+  .auth-phone:focus-within, .auth-input:focus-within { border-color:#006c49; }
+  .auth-code {
+    width:100%; margin-top:2px; padding:13px; border:1px solid #dde0e4;
+    border-radius:10px; font-size:26px; font-weight:700; letter-spacing:.34em;
+    text-align:center; font-variant-numeric:tabular-nums;
+  }
+  .auth-code:focus { outline:2px solid #006c49; outline-offset:-1px; }
+  .auth-primary {
+    width:100%; margin-top:18px; padding:12px; border:0; border-radius:10px;
+    background:#14181f; color:#fff; font-size:14px; font-weight:700; cursor:pointer;
+  }
+  .auth-primary:disabled { opacity:.55; cursor:default; }
+  .auth-row { display:flex; justify-content:space-between; margin-top:14px; }
+  .auth-link { border:0; background:none; color:#006c49; font-size:12.5px;
+    font-weight:700; cursor:pointer; padding:4px 0; }
+  .auth-link:disabled { color:#969aa1; cursor:default; }
+  .auth-divide { margin:22px 0 4px; padding-top:16px; border-top:1px solid #eceef0;
+    color:#30343a; font-size:11px; font-weight:800; letter-spacing:.1em;
+    text-transform:uppercase; }
+  .auth-error { margin-top:14px; padding:9px 12px; border-radius:9px;
+    background:#fdecec; color:#a3231f; font-size:12.5px; }
+  .auth-error.hidden { display:none; }
+  .ob-row { display:grid; grid-template-columns:1fr 68px 74px; gap:6px; margin-top:8px; }
+  .ob-row input { padding:9px 10px; border:1px solid #dde0e4; border-radius:9px; font-size:13px; }
+  .ob-row input:focus { outline:2px solid #006c49; outline-offset:-1px; }
   .setting-row {
     display:flex; align-items:center; justify-content:space-between; gap:24px;
   }
@@ -658,6 +709,57 @@
 </head>
 <body class="min-h-screen bg-[var(--surface)] text-slate-900">
 
+<!-- Auth gate. Covers the app until a session exists; onboarding reuses it so
+     a brand-new shop never sees an empty dashboard first. -->
+<div id="authScreen" class="auth-screen">
+  <div class="auth-card">
+    <div class="auth-brand"><span class="auth-dot"></span>Chhotu<span class="auth-ai">.ai</span></div>
+
+    <div id="authStepPhone">
+      <h1 class="auth-title">Apne number se login karein</h1>
+      <p class="auth-sub">Hum ek 6-digit code SMS karenge.</p>
+      <label class="auth-label" for="authPhone">Mobile number</label>
+      <div class="auth-phone">
+        <span>+91</span>
+        <input id="authPhone" type="tel" inputmode="numeric" maxlength="10"
+               placeholder="98765 43210" autocomplete="tel"
+               onkeydown="if(event.key==='Enter')requestOtp()">
+      </div>
+      <button class="auth-primary" onclick="requestOtp()" id="authSendBtn">Code bhejein</button>
+    </div>
+
+    <div id="authStepCode" class="hidden">
+      <h1 class="auth-title">Code daaliye</h1>
+      <p class="auth-sub" id="authSentTo"></p>
+      <label class="auth-label" for="authCode">6-digit code</label>
+      <input id="authCode" class="auth-code" type="text" inputmode="numeric"
+             maxlength="6" placeholder="000000" autocomplete="one-time-code"
+             onkeydown="if(event.key==='Enter')submitOtp()">
+      <button class="auth-primary" onclick="submitOtp()" id="authVerifyBtn">Login</button>
+      <div class="auth-row">
+        <button class="auth-link" onclick="authBack()">Number badlein</button>
+        <button class="auth-link" id="authResend" onclick="requestOtp(true)">Dobara bhejein</button>
+      </div>
+    </div>
+
+    <div id="authStepOnboard" class="hidden">
+      <h1 class="auth-title">Dukaan set karein</h1>
+      <p class="auth-sub">Ye naam aapke bill aur report par chhpega.</p>
+      <label class="auth-label" for="obShop">Dukaan ka naam</label>
+      <input id="obShop" class="auth-input" placeholder="Sharma Building Materials">
+      <label class="auth-label" for="obOwner">Aapka naam</label>
+      <input id="obOwner" class="auth-input" placeholder="Aneesh Gupta">
+      <div class="auth-divide">Pehla saamaan</div>
+      <p class="auth-sub">Ek item abhi daal dijiye — baaki aap bol kar jodte rahiye.</p>
+      <div id="obItems"></div>
+      <button class="auth-link" onclick="addOnboardRow()">+ Aur item</button>
+      <button class="auth-primary" onclick="submitOnboarding()" id="obBtn">Shuru karein</button>
+    </div>
+
+    <div id="authError" class="auth-error hidden"></div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header class="app-header">
   <div class="topbar-inner">
@@ -703,6 +805,7 @@
   <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
   <div class="nav-footer">
     <button class="tab-btn" data-tab="settings" onclick="showTab('settings')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
+    <button onclick="logout()" id="logoutBtn"><span class="material-symbols-outlined">logout</span><span>Logout</span></button>
   </div>
 </nav>
 
@@ -979,7 +1082,29 @@ function toast(msg, ok=true){ const t=document.getElementById('toast'); t.textCo
   t.className='fixed bottom-5 left-1/2 -translate-x-1/2 px-5 py-3 rounded-xl font-semibold z-50 '+(ok?'bg-emerald-700':'bg-rose-700');
   t.classList.remove('hidden'); setTimeout(()=>t.classList.add('hidden'),2600); }
 
-async function api(path, opts){ const r=await fetch(path,opts); if(!r.ok) throw new Error(await r.text()); return r.json(); }
+// ================= SESSION =================
+// The token is kept in localStorage so a reload, or closing the tab, keeps the
+// shopkeeper signed in — they sign out only by pressing Logout. The server
+// also sets an httpOnly cookie; the header is what survives a browser that
+// blocks third-party cookies.
+const TOKEN_KEY='chhotu_token';
+function getToken(){ try{ return localStorage.getItem(TOKEN_KEY)||''; }catch(e){ return ''; } }
+function setToken(t){ try{ t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY); }catch(e){} }
+
+async function api(path, opts){
+  opts = opts||{};
+  const tok = getToken();
+  if(tok) opts.headers = Object.assign({}, opts.headers||{}, {Authorization:'Bearer '+tok});
+  const r = await fetch(path, opts);
+  if(r.status===401){
+    // Session gone (expired, or revoked elsewhere). Drop it and show login
+    // rather than leaving the shell up with every panel failing.
+    setToken(''); showAuth();
+    throw new Error('Login required');
+  }
+  if(!r.ok) throw new Error(await r.text());
+  return r.json();
+}
 function fmtNum(n){ const x=Number(n); return Number.isFinite(x) ? (Number.isInteger(x)?x:parseFloat(x.toFixed(2))) : n; }
 function escHtml(value){ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
@@ -1942,7 +2067,119 @@ async function commitInvoice(){
   toast(`Catalogue + cost updated. ${stockedCount} line(s) added to stock.`);
 }
 
-boot();
+// ================= AUTH =================
+let AUTH = {phone:'', resendAt:0};
+
+function showAuth(step){
+  document.getElementById('authScreen').classList.remove('hidden');
+  ['authStepPhone','authStepCode','authStepOnboard'].forEach(id=>
+    document.getElementById(id).classList.toggle('hidden', id!== (step||'authStepPhone')));
+  authError('');
+}
+function hideAuth(){ document.getElementById('authScreen').classList.add('hidden'); }
+function authError(msg){
+  const el=document.getElementById('authError');
+  el.textContent=msg||''; el.classList.toggle('hidden', !msg);
+}
+function authBack(){ showAuth('authStepPhone'); }
+
+async function requestOtp(isResend){
+  const raw=(document.getElementById('authPhone').value||'').replace(/\D/g,'');
+  if(raw.length<10){ authError('10 digit number daaliye.'); return; }
+  AUTH.phone=raw;
+  const btn=document.getElementById(isResend?'authResend':'authSendBtn');
+  btn.disabled=true;
+  try{
+    const r=await fetch('/api/auth/otp',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:raw})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Code bhej nahi paye');
+    if(d.sent===false){ authError(`Thoda rukiye — ${d.retry_after}s baad dobara.`); return; }
+    document.getElementById('authSentTo').textContent=
+      `+91 ${raw.slice(0,5)} ${raw.slice(5)} par code bheja gaya.`;
+    showAuth('authStepCode');
+    // Dev mode returns the code so the flow is testable with no SMS.
+    if(d.dev_code){ document.getElementById('authCode').value=d.dev_code;
+      authError('Dev mode: code '+d.dev_code); }
+    document.getElementById('authCode').focus();
+  }catch(e){ authError(String(e.message||e).slice(0,140)); }
+  finally{ btn.disabled=false; }
+}
+
+async function submitOtp(){
+  const code=(document.getElementById('authCode').value||'').replace(/\D/g,'');
+  if(code.length<4){ authError('6 digit code daaliye.'); return; }
+  const btn=document.getElementById('authVerifyBtn'); btn.disabled=true;
+  try{
+    const r=await fetch('/api/auth/verify',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:AUTH.phone, code})});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.detail||'Code sahi nahi hai');
+    setToken(d.token);
+    if(d.user && d.user.onboarded===false){ startOnboarding(); return; }
+    hideAuth(); await boot();
+  }catch(e){ authError(String(e.message||e).slice(0,140)); }
+  finally{ btn.disabled=false; }
+}
+
+async function logout(){
+  try{ await fetch('/api/auth/logout',{method:'POST',
+    headers:{Authorization:'Bearer '+getToken()}}); }catch(e){}
+  setToken('');
+  // Clear in-memory shop data so the next login can't see the last one's.
+  STATE={catalogue:[], byId:{}, today:'', learning_state:'day1'}; CONV={};
+  document.getElementById('authPhone').value='';
+  document.getElementById('authCode').value='';
+  showAuth('authStepPhone');
+}
+
+// ---- onboarding ----
+function startOnboarding(){
+  document.getElementById('obItems').innerHTML='';
+  addOnboardRow();
+  showAuth('authStepOnboard');
+}
+function addOnboardRow(){
+  const wrap=document.getElementById('obItems');
+  const row=document.createElement('div');
+  row.className='ob-row';
+  row.innerHTML=`<input placeholder="Item ka naam" class="ob-name">
+    <input placeholder="Qty" class="ob-qty" inputmode="decimal">
+    <input placeholder="Unit" class="ob-unit" value="piece">`;
+  wrap.appendChild(row);
+}
+async function submitOnboarding(){
+  const shop=document.getElementById('obShop').value.trim();
+  const owner=document.getElementById('obOwner').value.trim();
+  if(!shop){ authError('Dukaan ka naam daaliye.'); return; }
+  const items=[...document.querySelectorAll('#obItems .ob-row')].map(r=>({
+    canonical:r.querySelector('.ob-name').value.trim(),
+    qty:parseFloat(r.querySelector('.ob-qty').value)||0,
+    unit:r.querySelector('.ob-unit').value.trim()||'piece',
+  })).filter(x=>x.canonical);
+  const btn=document.getElementById('obBtn'); btn.disabled=true;
+  try{
+    await api('/api/onboarding',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({shop_name:shop, name:owner, items})});
+    hideAuth(); await boot();
+  }catch(e){ authError(String(e.message||e).slice(0,140)); }
+  finally{ btn.disabled=false; }
+}
+
+// Decide on load: a stored token means straight into the app, so the
+// shopkeeper stays signed in across reloads until they press Logout.
+async function start(){
+  if(!getToken()){ showAuth('authStepPhone'); return; }
+  try{
+    const me=await api('/api/me');
+    if(me.onboarded===false){ startOnboarding(); return; }
+    hideAuth(); await boot();
+  }catch(e){ showAuth('authStepPhone'); }
+}
+start();
+
 </script>
 </body>
 </html>

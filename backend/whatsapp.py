@@ -50,9 +50,30 @@ class MessagingError(RuntimeError):
     pass
 
 
+def test_recipient() -> str:
+    """Every outbound message is redirected here, when set.
+
+    While the customer list holds real phone numbers and the Twilio account is
+    a trial, a reminder run must not be able to reach a stranger. This is the
+    single choke point — every send goes through _post, so no call site can
+    route around it — and the intended recipient is kept in the body so the
+    redirect is visible rather than silent.
+    """
+    return (os.environ.get("CHHOTU_TEST_RECIPIENT") or "").strip()
+
+
 def _post(to: str, body: str, from_: str, media_url: Optional[str] = None) -> dict:
     if not is_configured():
         raise MessagingError("TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN not set")
+    redirect = test_recipient()
+    if redirect:
+        intended = to
+        prefix = "whatsapp:" if to.startswith("whatsapp:") else ""
+        target = redirect if redirect.startswith("+") else "+" + redirect
+        to = f"{prefix}{target}"
+        if to != intended:
+            body = (f"[TEST — would have gone to "
+                    f"{intended.removeprefix('whatsapp:')}]\n\n{body}")
     data = {"To": to, "From": from_, "Body": body}
     if media_url:
         data["MediaUrl"] = media_url
