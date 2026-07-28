@@ -1124,6 +1124,12 @@ function toast(msg, ok=true){ const t=document.getElementById('toast'); t.textCo
 const TOKEN_KEY='chhotu_token';
 function getToken(){ try{ return localStorage.getItem(TOKEN_KEY)||''; }catch(e){ return ''; } }
 function setToken(t){ try{ t?localStorage.setItem(TOKEN_KEY,t):localStorage.removeItem(TOKEN_KEY); }catch(e){} }
+async function responseJson(r){
+  const text=await r.text();
+  if(!text) return {};
+  try{ return JSON.parse(text); }
+  catch(e){ return {detail:r.ok?'Server ne galat response diya.':'Server error. Dobara try karein.'}; }
+}
 
 async function api(path, opts){
   opts = opts||{};
@@ -1136,8 +1142,9 @@ async function api(path, opts){
     setToken(''); showAuth();
     throw new Error('Login required');
   }
-  if(!r.ok) throw new Error(await r.text());
-  return r.json();
+  const data=await responseJson(r);
+  if(!r.ok) throw new Error(data.detail||'Request complete nahi hui.');
+  return data;
 }
 function fmtNum(n){ const x=Number(n); return Number.isFinite(x) ? (Number.isInteger(x)?x:parseFloat(x.toFixed(2))) : n; }
 function escHtml(value){ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
@@ -2145,7 +2152,7 @@ async function submitLogin(){
     const r=await fetch('/api/auth/login',{method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw,password})});
-    const d=await r.json();
+    const d=await responseJson(r);
     if(!r.ok && (d.code==='signup_required'||d.code==='password_setup_required')){
       showSignup(raw,d.code==='password_setup_required');
       return;
@@ -2172,7 +2179,7 @@ async function submitSignup(){
     const r=await fetch('/api/auth/signup',{method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({phone:raw,name,password})});
-    const d=await r.json();
+    const d=await responseJson(r);
     if(!r.ok && d.code==='sign_in_required'){
       document.getElementById('authPhone').value=raw.slice(-10);
       authBack();
