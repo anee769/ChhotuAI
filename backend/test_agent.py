@@ -653,6 +653,21 @@ class DispatchTests(unittest.TestCase):
         for text in speakable:
             self.assertNotIn("\u2014", text, text[:80])
 
+    def test_a_description_only_names_arguments_the_body_carries(self):
+        """The description is the model's only spec for the arguments. Every
+        one that said items[{...}] made the model compose an array the body
+        template had no slot for, so nothing substituted and the call arrived
+        as raw {{placeholders}}."""
+        import re
+        import samvaad_config as SC
+        known = set(SC.PARAM_DOCS) | {"items"}
+        for name, (_, desc) in agent.TOOLS.items():
+            if "args:" not in desc:
+                continue
+            named = set(re.findall(r"[a-z_]{3,}", desc.split("args:", 1)[1]))
+            self.assertEqual(named & known - set(SC.PARAMS.get(name, ())),
+                             set(), f"{name} describes arguments it cannot take")
+
     def test_every_tool_is_documented_for_the_console(self):
         """A tool with no worked example ships as an empty args box, which the
         agent then fills in by guesswork."""

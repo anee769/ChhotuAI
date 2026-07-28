@@ -624,7 +624,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 
 ### `price_quote`
 
-Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: items[{item, qty, unit}].
+Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: item, qty, unit.
 
 **Request**
 
@@ -713,7 +713,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 
 ### `record_purchase`
 
-Supplier se aaya stock record karo. args: items[{item, qty, unit, rate}] jahan rate cost price hai.
+Supplier se aaya stock record karo. Ek item ek call mein. args: item, qty, unit, rate (cost price), occurred_on, request_id.
 
 **Request**
 
@@ -739,7 +739,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 
 ### `record_sale`
 
-Sale record karo. args: items[{item, qty, unit, rate}], payment (cash ya credit), customer (naam, credit ke liye zaroori), customer_phone, payment_deadline. Agar item inventory mein na ho to poochhega; add_item ke baad add_unknown true bhej kar dobara chalao.
+Sale record karo. Ek item ek call mein. args: item, qty, unit, rate, payment (cash ya credit), customer (naam, credit ke liye zaroori), customer_phone, payment_deadline, occurred_on, request_id.
 
 **Request**
 
@@ -822,7 +822,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 
 ### `send_bill`
 
-Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), items[{item, qty, rate}], payment.
+Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), item, qty, rate, payment.
 
 **Request**
 
@@ -931,7 +931,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 
 ### `stock_take`
 
-Ginti ke baad stock theek karo. args: items[{item, qty, unit}].
+Ginti ke baad stock theek karo. Ek item ek call mein. args: item, qty, unit, occurred_on, request_id.
 
 **Request**
 

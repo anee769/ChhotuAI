@@ -1347,19 +1347,20 @@ TOOLS = {
                     "bikne par kitna aayega. 'maal kitne ka pada hai' ke liye."),
     "price_quote": (price_quote,
                     "Kisi saamaan ka bhaav aur GST ke saath total, bina kuch "
-                    "record kiye. args: items[{item, qty, unit}]."),
+                    "record kiye. args: item, qty, unit."),
 
     "record_sale": (record_sale,
-                    "Sale record karo. args: items[{item, qty, unit, rate}], "
-                    "payment (cash ya credit), customer (naam, credit ke liye "
-                    "zaroori), customer_phone, payment_deadline. Agar item "
-                    "inventory mein na ho to poochhega; add_item ke baad "
-                    "add_unknown true bhej kar dobara chalao."),
+                    "Sale record karo. Ek item ek call mein. args: item, qty, "
+                    "unit, rate, payment (cash ya credit), customer (naam, "
+                    "credit ke liye zaroori), customer_phone, "
+                    "payment_deadline, occurred_on, request_id."),
     "record_purchase": (record_purchase,
-                        "Supplier se aaya stock record karo. args: items[{item, "
-                        "qty, unit, rate}] jahan rate cost price hai."),
+                        "Supplier se aaya stock record karo. Ek item ek call mein. "
+                        "args: item, qty, unit, rate (cost price), "
+                        "occurred_on, request_id."),
     "stock_take": (stock_take,
-                   "Ginti ke baad stock theek karo. args: items[{item, qty, unit}]."),
+                   "Ginti ke baad stock theek karo. Ek item ek call mein. "
+                   "args: item, qty, unit, occurred_on, request_id."),
     "record_payment": (record_payment,
                        "Customer se udhaar ka paisa mila. args: customer (naam), "
                        "amount."),
@@ -1380,7 +1381,7 @@ TOOLS = {
                     "koi sale ya stock chal raha ho, wo nahi hatega."),
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
-                  "(naam), items[{item, qty, rate}], payment."),
+                  "(naam), item, qty, rate, payment."),
     "send_summary": (send_summary,
                      "Owner ko day ya week ki summary PDF WhatsApp par bhejo. "
                      "args: period (day ya week). Bhejne se pehle poochho."),
