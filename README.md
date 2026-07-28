@@ -23,6 +23,9 @@ supported language and does not need to learn conventional ERP screens.
 - **Multilingual by design.** Chhotu supports all languages provided by Sarvam
   AI Agents, understands code-mixed conversations, and automatically replies
   in the language used by the owner.
+- **Self-learning for every shop.** Confirmed product matches and corrections
+  teach Chhotu that shop's aliases, preferred units, and attribute patterns, so
+  repeated work needs fewer clarification questions over time.
 - **The ledger is the source of truth.** Current stock is derived by replaying
   immutable events; there is no editable `current_stock` number.
 - **AI interprets; deterministic code calculates.** Product resolution,
@@ -55,6 +58,17 @@ mixed-language conversations—and calls 27 grounded HTTP tools for:
 The assistant does not retain old chat threads in the UI. Ending a conversation
 releases the microphone, refreshes operational data, and returns Voice Entry to
 its clean starting state.
+
+### Self-learning shop intelligence
+
+- Every confirmed product match can become a shop-specific spoken alias.
+- Manual corrections preserve the chosen SKU and rejected alternatives for
+  better future resolution.
+- Confirmed units and product attributes build per-shop priors that reduce
+  repeated questions as usage grows.
+- Learning is tenant-scoped: one shop's vocabulary never affects another shop.
+- Learning improves interpretation and matching only. Stock, rates, GST,
+  margin, credit, and other business calculations remain deterministic.
 
 ### Inventory and catalogue
 
