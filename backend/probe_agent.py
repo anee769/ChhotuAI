@@ -78,8 +78,12 @@ class ScriptedLine(AsyncAudioInterface):
     separately.
     """
 
-    QUIET = 2.5          # seconds of silence that means "it has finished"
-    MAX_WAIT = 45.0      # a tool call plus a reply should never take longer
+    # The ENDING block tells the agent to hang up on a silent caller, and it
+    # does: waiting 45s for a greeting got the call terminated every time.
+    # Answer promptly, like a person would.
+    QUIET = 1.2          # seconds of silence that means "it has finished"
+    MAX_WAIT = 20.0      # a tool call plus a reply should never take longer
+    GREETING = 2.5       # do not wait for it, just let it start
 
     def __init__(self):
         self.turns: list[bytearray] = []
@@ -118,7 +122,7 @@ class ScriptedLine(AsyncAudioInterface):
 
     async def _run(self):
         try:
-            await self._wait_for_quiet()       # let the greeting finish
+            await asyncio.sleep(self.GREETING)  # let the greeting start
             for line in LINES:
                 self.turns.append(self.current)
                 self.current = bytearray()
@@ -152,11 +156,11 @@ async def main():
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
         version=1,                                   # the agent is still a draft
-        user_identifier="919156142204",              # this is the shop's identity
+        user_identifier="917021356939",              # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
         sample_rate=RATE,
-        agent_variables={"caller_number": "919156142204"},
+        agent_variables={"caller_number": "917021356939"},
     )
     async def on_transcript(m):
         print(f"[{getattr(m,'role','?')}] {getattr(m,'text','')}", flush=True)
@@ -165,7 +169,11 @@ async def main():
         if t:
             print(f"AGENT> {t}", flush=True)
     async def on_event(e):
-        print(f"EVENT> {type(e).__name__}", flush=True)
+        try:
+            detail = e.model_dump()
+        except Exception:
+            detail = str(e)
+        print(f"EVENT> {type(e).__name__} {detail}", flush=True)
 
     line = ScriptedLine()
     agent = AsyncSamvaadAgent(api_key=SecretStr(os.environ["SAMVAAD_API_KEY"]),

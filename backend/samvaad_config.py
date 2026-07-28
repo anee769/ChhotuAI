@@ -278,11 +278,16 @@ def body(tool: str) -> str:
                       ensure_ascii=False)
 
 
+# The name of the stored secret in the console, not the secret itself. Pasting
+# the header lets the console prefill Auth (Api Key / header / X-Agent-Secret)
+# instead of it being filled in by hand 23 times.
+SECRET_REF = "{{SECRET_KEY}}"
+
+
 def curl(tool: str) -> str:
-    # No X-Agent-Secret here: it belongs in the Auth tab as an Api Key, and a
-    # header pasted alongside it would be a second copy to rotate and leak.
     return (f"curl -X POST {BASE}/api/agent/tool \\\n"
             f"  -H 'Content-Type: application/json' \\\n"
+            f"  -H 'X-Agent-Secret: {SECRET_REF}' \\\n"
             f"  -d '{body(tool)}'")
 
 
@@ -306,7 +311,11 @@ def main() -> None:
           "and reused, instead of being pasted in clear text into all "
           f"{len(tools)} tools — and rotating it later becomes one edit "
           "rather than {0}.\n".format(len(tools)))
-    print("The Auth dropdown offers Bearer / Api Key / Basic rather than a "
+    print("The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the "
+          "stored secret rather than its value, so pasting prefills the Auth tab "
+          "(Api Key / header / X-Agent-Secret) instead of you filling it in 23 "
+          "times. Check the Value dropdown points at your stored secret and "
+          "move on.\n\nThe Auth dropdown offers Bearer / Api Key / Basic rather than a "
           "free-form header, so the endpoint accepts the secret two ways:\n")
     print("| Auth Type | What to set |")
     print("| --- | --- |")

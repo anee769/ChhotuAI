@@ -554,10 +554,14 @@ class DispatchTests(unittest.TestCase):
             for k, v in args.items():
                 self.assertEqual(v, "{{%s}}" % k, name)
 
-    def test_generated_curls_carry_no_secret(self):
+    def test_generated_curls_reference_the_secret_never_contain_it(self):
+        """The header is there so the console can prefill Auth, but it must
+        carry the stored secret's NAME, never a real key."""
         import samvaad_config as SC
         for name in SC.PARAMS:
-            self.assertNotIn("X-Agent-Secret", SC.curl(name))
+            text = SC.curl(name)
+            self.assertIn("X-Agent-Secret: {{SECRET_KEY}}", text)
+            self.assertNotIn(os.environ["SAMVAAD_WEBHOOK_SECRET"], text)
 
     def test_every_reply_carries_the_whole_payload_as_facts(self):
         """The console templates named fields out of the reply, so one field

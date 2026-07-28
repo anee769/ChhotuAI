@@ -102,6 +102,8 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 
 The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 23 tools — and rotating it later becomes one edit rather than 23.
 
+The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 23 times. Check the Value dropdown points at your stored secret and move on.
+
 The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header, so the endpoint accepts the secret two ways:
 
 | Auth Type | What to set |
@@ -181,6 +183,7 @@ Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit,
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "add_item", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "unit": "{{unit}}", "brand": "{{brand}}"}}'
 ```
 
@@ -204,6 +207,7 @@ Sale, gross profit, cash aur udhaar kisi bhi period ka. args: period (day/yester
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "business_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}", "days": "{{days}}", "start": "{{start}}", "end": "{{end}}"}}'
 ```
 
@@ -230,6 +234,7 @@ Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix, 
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "check_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
@@ -254,6 +259,7 @@ Ek customer ka hisaab: kitna udhaar baaki, kab tak. args: name.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "customer_account", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}"}}'
 ```
 
@@ -290,6 +296,7 @@ Jo udhaar due ho rahe hain. args: days_before.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "dues", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
@@ -318,6 +325,7 @@ Ek item ki poori detail: cost price, selling rate, GST, stock, aakhri sale kab h
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "item_details", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
@@ -343,6 +351,7 @@ Saare customer aur unka outstanding udhaar.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "list_customers", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -372,6 +381,7 @@ Poori inventory: har item ka naam, stock, unit, rate. 'kya kya hai', 'stock list
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "list_inventory", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -402,6 +412,7 @@ Woh item jo khatam ho gaye ya khatam hone waale hain. args: limit (optional).
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "low_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
@@ -429,6 +440,7 @@ Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: items
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "price_quote", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}"}}'
 ```
 
@@ -461,6 +473,7 @@ Pichhli entries: kya bika, kya aaya. args: limit.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "recent_activity", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
@@ -492,6 +505,7 @@ Customer se udhaar ka paisa mila. args: customer (naam), amount.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "record_payment", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "amount": "{{amount}}", "request_id": "{{request_id}}"}}'
 ```
 
@@ -515,6 +529,7 @@ Supplier se aaya stock record karo. args: items[{item, qty, unit, rate}] jahan r
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}}'
 ```
 
@@ -540,6 +555,7 @@ Sale record karo. args: items[{item, qty, unit, rate}], payment (cash ya credit)
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}}'
 ```
 
@@ -572,6 +588,7 @@ Naam ya brand se item dhoondo jab caller ka shabd exact na ho. args: query.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "search_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"query": "{{query}}"}}'
 ```
 
@@ -598,6 +615,7 @@ Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), items[{item, qty
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "send_bill", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "item": "{{item}}", "qty": "{{qty}}", "rate": "{{rate}}", "payment": "{{payment}}"}}'
 ```
 
@@ -621,6 +639,7 @@ Jinka udhaar due hai unhe reminder bhejo. args: days_before.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "send_reminders", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
@@ -655,6 +674,7 @@ Owner ko day ya week ki summary PDF WhatsApp par bhejo. args: period (day ya wee
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "send_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}"}}'
 ```
 
@@ -676,6 +696,7 @@ Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udh
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -703,6 +724,7 @@ Ginti ke baad stock theek karo. args: items[{item, qty, unit}].
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "request_id": "{{request_id}}"}}'
 ```
 
@@ -728,6 +750,7 @@ Poore stock ki value: cost par kitna paisa phansa hai aur bikne par kitna aayega
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "stock_value", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -759,6 +782,7 @@ Sabse zyada ya sabse kam bikne waale item, aur har ek ka revenue aur margin. arg
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "top_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days": "{{days}}", "limit": "{{limit}}", "order": "{{order}}"}}'
 ```
 
@@ -789,6 +813,7 @@ Dukaan ki details badlo: shop_name, owner, gstin, address, shop_type (jaise 'har
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
   -d '{"tool": "update_shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"shop_name": "{{shop_name}}", "owner": "{{owner}}", "shop_type": "{{shop_type}}", "gstin": "{{gstin}}", "address": "{{address}}"}}'
 ```
 
