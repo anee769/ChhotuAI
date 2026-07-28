@@ -68,6 +68,16 @@ def main() -> None:
     print("| `caller_number` | The calling number, for telephony sessions. |")
     print("| `shop_key` | `GET /api/voice/session` for the logged-in owner, "
           "for in-app sessions. |\n")
+    print("## Auth\n")
+    print("The console will flag `X-Agent-Secret` as a credential sitting "
+          "outside Auth. Take the suggestion: move it into the **Auth** "
+          "section and store the value as a secret. It is then entered once "
+          "and reused, instead of being pasted in clear text into all "
+          f"{len(tools)} tools — and rotating it later becomes one edit "
+          "rather than {0}.\n".format(len(tools)))
+    print("The cURLs below keep the header in place so the console prefills "
+          "the header *name*; the placeholder is not a real secret, so replace "
+          "it in Auth rather than in the command.\n")
     print(f"## Tools ({len(tools)})\n")
     print("All of them POST to the same endpoint and differ only in `tool` and "
           "`args`. Every one runs **During conversation**, except "

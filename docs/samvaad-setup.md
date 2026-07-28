@@ -39,6 +39,12 @@ Aaj ki date bhi wahin se lo, apne se mat socho.
 | `caller_number` | The calling number, for telephony sessions. |
 | `shop_key` | `GET /api/voice/session` for the logged-in owner, for in-app sessions. |
 
+## Auth
+
+The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 22 tools — and rotating it later becomes one edit rather than 22.
+
+The cURLs below keep the header in place so the console prefills the header *name*; the placeholder is not a real secret, so replace it in Auth rather than in the command.
+
 ## Tools (22)
 
 All of them POST to the same endpoint and differ only in `tool` and `args`. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
