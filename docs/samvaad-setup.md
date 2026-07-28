@@ -167,6 +167,49 @@ And an item this shop does not carry comes back with the shop's own trade attach
 }
 ```
 
+### Which Body fields the agent fills in
+
+Four fields are the same on every tool and are NOT agent-filled:
+
+| Field | Value | Kind |
+| --- | --- | --- |
+| `tool` | the tool's own name | fixed text |
+| `caller` | `{{caller_number}}` | variable |
+| `shop_key` | `{{shop_key}}` | variable |
+| `secret` | `{{agent_secret}}` | variable |
+
+Everything inside `args` must be marked **agent-filled** (the gear icon on the field). Left as literal text, the console sends the placeholder itself: the transcript shows the model composing the right values while `{"item": "{{item}}"}` goes over the wire.
+
+| Tool | Fields to mark agent-filled |
+| --- | --- |
+| `add_item` | `name`, `cost_price`, `selling_rate`, `unit`, `brand` |
+| `business_summary` | `period`, `days`, `start`, `end` |
+| `check_stock` | `item` |
+| `customer_account` | `name` |
+| `dues` | `days_before` |
+| `item_details` | `item` |
+| `list_customers` | _none_ |
+| `list_inventory` | _none_ |
+| `low_stock` | `limit` |
+| `price_quote` | `item`, `qty`, `unit` |
+| `recent_activity` | `limit` |
+| `record_payment` | `customer`, `amount`, `request_id` |
+| `record_purchase` | `item`, `qty`, `unit`, `occurred_on`, `rate`, `request_id` |
+| `record_sale` | `item`, `qty`, `unit`, `occurred_on`, `rate`, `payment`, `customer`, `customer_phone`, `payment_deadline`, `request_id` |
+| `remove_item` | `item` |
+| `search_items` | `query` |
+| `send_bill` | `customer`, `item`, `qty`, `rate`, `payment` |
+| `send_reminders` | `days_before` |
+| `send_summary` | `period` |
+| `shop_profile` | _none_ |
+| `stock_take` | `item`, `qty`, `unit`, `occurred_on`, `request_id` |
+| `stock_value` | _none_ |
+| `top_items` | `days`, `limit`, `order` |
+| `update_item` | `item`, `name`, `unit`, `cost_price`, `selling_rate` |
+| `update_shop_profile` | `shop_name`, `owner`, `shop_type`, `gstin`, `address` |
+
+The four with no arguments work as soon as auth does, which is why `stock_value` started answering first.
+
 ### Step 3: what the agent gets back
 
 Put this in the **What the agent gets back** box. The same line for every tool:

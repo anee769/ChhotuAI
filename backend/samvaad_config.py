@@ -372,6 +372,27 @@ def main() -> None:
           "database's:\n")
     print("```json\n" + json.dumps(MISS_EXAMPLE, indent=2, ensure_ascii=False)
           + "\n```\n")
+    print("### Which Body fields the agent fills in\n")
+    print("Four fields are the same on every tool and are NOT agent-filled:\n")
+    print("| Field | Value | Kind |")
+    print("| --- | --- | --- |")
+    print("| `tool` | the tool's own name | fixed text |")
+    print("| `caller` | `{{caller_number}}` | variable |")
+    print("| `shop_key` | `{{shop_key}}` | variable |")
+    print("| `secret` | `{{agent_secret}}` | variable |\n")
+    print("Everything inside `args` must be marked **agent-filled** (the gear "
+          "icon on the field). Left as literal text, the console sends the "
+          "placeholder itself: the transcript shows the model composing the "
+          "right values while `{\"item\": \"{{item}}\"}` goes over the wire.\n")
+    print("| Tool | Fields to mark agent-filled |")
+    print("| --- | --- |")
+    for t in tools:
+        names = PARAMS.get(t["name"], ())
+        cells = ", ".join(f"`{n}`" for n in names) if names else "_none_"
+        print(f"| `{t['name']}` | {cells} |")
+    print()
+    print("The four with no arguments work as soon as auth does, which is why "
+          "`stock_value` started answering first.\n")
     print("### Step 3: what the agent gets back\n")
     print("Put this in the **What the agent gets back** box. The same line for "
           "every tool:\n")
