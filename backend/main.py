@@ -1166,16 +1166,11 @@ def bill(payload: dict = Body(...)):
         headers={"Content-Disposition": f'inline; filename="bill-{bill_no}.pdf"'})
 
 
-@app.post("/api/reset")
-def reset(x_admin_token: str = Header(default="")):
-    allowed, why = _reset_allowed(x_admin_token)
-    if not allowed:
-        raise HTTPException(status_code=403, detail=why)
-    import seed
-    seed.main()
-    global repo
-    repo = JsonRepo()
-    return {"ok": True, "message": "Reset to clean demo state."}
+# /api/reset was removed with the move to multi-tenancy. It called seed.main(),
+# which rewrites the JSON files this app no longer reads, and there is no
+# sensible meaning for "reset" once several shops share one database — the
+# nearest honest equivalent is deleting your own account, which is a different
+# feature with a different confirmation.
 
 
 if __name__ == "__main__":
