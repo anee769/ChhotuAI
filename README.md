@@ -116,8 +116,8 @@ Delivery status is checked before the UI or agent claims success.
 - Voice and in-app summaries for day, yesterday, week, month, a number of days,
   or an exact date range.
 - `show_summary` displays the latest summary in Voice Entry without sending it.
-- Only the latest bill or summary preview remains visible, so previews do not
-  accumulate like chat history.
+- Only the latest bill or summary preview is visible, and it dismisses
+  automatically after 10 seconds.
 
 ### Accounts and tenancy
 

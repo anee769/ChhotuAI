@@ -1505,7 +1505,7 @@ function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Ma
 // playback. The backend only brokers a short-lived signed URL, so the Sarvam
 // API key never reaches this page.
 let SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',
-  ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null};
+  ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null,presentationTimer:null};
 
 function samvaadStatusCopy(state){
   return {
@@ -1526,7 +1526,10 @@ function renderSamvaadConversation(){
     <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
     <div class="voice-assistant-copy">${escHtml(SAMVAAD.assistant)}</div>
   </div>`:'';
-  const presentations=(SAMVAAD.presentations||[]).map(renderVoicePresentation).join('');
+  // A presentation is a temporary visual answer, not conversation history.
+  // Render the newest one only, even if stale state contains older rows.
+  const latestPresentation=(SAMVAAD.presentations||[]).slice(-1)[0];
+  const presentations=latestPresentation?renderVoicePresentation(latestPresentation):'';
   panel.innerHTML=`<div class="voice-conversation">
     <div class="voice-conversation-turn">
       ${user}${assistant}${presentations}
@@ -1597,20 +1600,32 @@ async function pollVoicePresentations(){
       // A preview is the current visual answer, not conversation history.
       // Replacing here keeps a new bill from being hidden below an older
       // summary (and matches the app's deliberate no-old-chats behaviour).
-      SAMVAAD.presentations=[row]; changed=true;
+      SAMVAAD.presentations=[row];
+      if(SAMVAAD.presentationTimer) clearTimeout(SAMVAAD.presentationTimer);
+      const presentationId=row.presentation_id;
+      SAMVAAD.presentationTimer=setTimeout(()=>{
+        const visible=(SAMVAAD.presentations||[]).slice(-1)[0];
+        if(visible?.presentation_id!==presentationId) return;
+        SAMVAAD.presentations=[];
+        SAMVAAD.presentationTimer=null;
+        renderSamvaadConversation();
+      },10000);
+      changed=true;
     }
     if(changed) renderSamvaadConversation();
   }catch(e){}
 }
 function stopSamvaadPresentationPoll(){
   if(SAMVAAD.pollTimer) clearInterval(SAMVAAD.pollTimer);
+  if(SAMVAAD.presentationTimer) clearTimeout(SAMVAAD.presentationTimer);
   SAMVAAD.pollTimer=null;
+  SAMVAAD.presentationTimer=null;
 }
 function resetAfterSamvaad(tab){
   stopSamvaadPresentationPoll();
   setMicListening(tab,false);
   SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',
-    ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null};
+    ending:false,presentations:[],seen:{},startedAt:null,pollTimer:null,presentationTimer:null};
   resetVoiceConversation(tab,'auto');
 }
 function samvaadMessageText(msg){
@@ -1648,7 +1663,7 @@ async function startSamvaadConversation(tab){
   const card=document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card');
   card?.classList.add('conversation-active');
   SAMVAAD={agent:null,tab,state:'connecting',user:'',assistant:'',activity:'',
-    ending:false,presentations:[],seen:{},startedAt:new Date().toISOString(),pollTimer:null};
+    ending:false,presentations:[],seen:{},startedAt:new Date().toISOString(),pollTimer:null,presentationTimer:null};
   renderSamvaadConversation();
   await pollVoicePresentations();
   SAMVAAD.pollTimer=setInterval(pollVoicePresentations,1000);
