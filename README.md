@@ -18,8 +18,9 @@ Digitization.
   Invoice, Inventory, Customers, Today, and Dashboard.
 - Phone-and-password authentication with a separate signup screen. Signup
   captures the owner's name; first-time onboarding captures company details.
-- Stateful voice conversations that retain the complete turn history and ask
-  only for information that is still missing.
+- Live Samvaad voice-to-voice conversations with streaming microphone input,
+  spoken responses, interruptions, agent tools, and one session of context
+  until the user ends the conversation.
 - Multi-item sale capture from one sentence. All items are kept together in a
   single transaction and a single GST bill.
 - A complete preview—customer, phone, payment type, deadline, item quantities,
@@ -54,10 +55,21 @@ Add the database, session secret, and Sarvam key to a `.env` file:
 DATABASE_URL=postgresql://...
 CHHOTU_SECRET=replace-with-a-long-random-value
 SARVAM_API_KEY=sk_...
+SAMVAAD_API_KEY=...
+SAMVAAD_WEBHOOK_SECRET=replace-with-another-long-random-value
+SAMVAAD_ORG_ID=019f9945-ebf7-77f9-b60b-dc1963284e44
+SAMVAAD_WORKSPACE_ID=019f9945-ebfb-76ac-9855-2f2c5985abbb
+SAMVAAD_APP_ID=Voice-Assis-9018c9fb-e7c8
+SAMVAAD_AGENT_VERSION=5
 ```
 
 Generate `CHHOTU_SECRET` with `openssl rand -hex 32`. Passwords are stored as
 salted PBKDF2 hashes and are never written to `.env`.
+
+`SAMVAAD_AGENT_VERSION` should be the exact committed dashboard version that
+contains the tested Chhotu instructions and tools. Update it deliberately after
+committing a newer agent version. The application currently defaults to
+committed version 5 when the variable is absent.
 
 Accounts created before password authentication receive the temporary demo
 password `admin123` during migration. New signups keep the password they chose.
@@ -69,6 +81,16 @@ The application loads `.env` automatically. Start it with:
 ```
 
 Open [http://127.0.0.1:8000](http://127.0.0.1:8000).
+
+The checked-in browser bundle is built from the pinned TypeScript SDK. Rebuild
+it after changing the SDK version:
+
+```bash
+npm install --omit=optional
+npm run build:samvaad
+```
+
+The optional Node speaker package is not needed or bundled for the browser.
 
 The ledger, customer, Today, and Dashboard screens can be inspected without a
 Sarvam key. A key is required for the unified conversational Voice Entry flow,
@@ -109,7 +131,28 @@ The end-to-end acceptance script needs a running server:
 **Warning:** the acceptance script resets the running application to demo data
 before executing its integration checks.
 
-## Voice transaction flow
+## In-app Samvaad architecture
+
+1. The logged-in browser calls `GET /api/voice/session`.
+2. The backend returns the shop's caller number, signed `shop_key`, and
+   non-secret agent configuration.
+3. The Sarvam browser SDK requests a connection through the authenticated
+   `/api/voice/samvaad/.../url` proxy.
+4. The proxy validates the configured org, workspace, app, and version, then
+   uses the server-only `SAMVAAD_API_KEY` to obtain a short-lived WebSocket URL.
+5. The browser connects directly to Samvaad for low-latency microphone and
+   speaker streaming. The API key never reaches browser code.
+6. The interaction starts with `caller_number` and `shop_key`. Agent HTTP
+   tools call `/api/agent/tool/{tool_name}`, where the backend resolves the
+   exact tenant and performs all reads and writes.
+7. Ending the conversation releases the microphone and refreshes local
+   catalogue state. The UI retains no earlier conversation.
+
+If the browser SDK, microphone, or Samvaad configuration is unavailable, Voice
+Entry automatically falls back to the existing record/transcribe/converse
+flow. This keeps the app usable while making Samvaad the primary Chhotu.
+
+## Legacy/fallback voice transaction flow
 
 1. The user speaks or types a sale or delivery containing one or more items.
 2. Sarvam extracts the structured transaction once. Follow-up answers update

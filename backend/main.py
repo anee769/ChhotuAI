@@ -37,6 +37,7 @@ from repo import JsonRepo
 import sqlrepo
 import auth
 import documents
+import samvaad_runtime
 from contextvars import ContextVar
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -535,9 +536,48 @@ def voice_session():
     try:
         return {"shop_key": agent.shop_key(user["user_id"]),
                 "shop": user.get("shop_name") or "",
-                "owner": user.get("name") or ""}
-    except agent.AgentError as e:
+                "owner": user.get("name") or "",
+                "caller_number": re.sub(r"\D", "", user.get("phone") or ""),
+                "samvaad": samvaad_runtime.browser_config()}
+    except (agent.AgentError, samvaad_runtime.SamvaadConfigurationError) as e:
         raise HTTPException(503, str(e))
+
+
+@app.get(
+    "/api/voice/samvaad/orgs/{org_id}/workspaces/{workspace_id}"
+    "/apps/{app_id}/url"
+)
+async def samvaad_signed_url(
+    org_id: str,
+    workspace_id: str,
+    app_id: str,
+    interaction_type: str = "call",
+    version: int | None = None,
+):
+    """Issue a short-lived Samvaad URL to the logged-in browser.
+
+    Authentication is enforced by the normal /api middleware.  The browser
+    receives a signed session URL, never SAMVAAD_API_KEY itself.
+    """
+    current_user()
+    try:
+        payload = await samvaad_runtime.get_signed_url(
+            org_id,
+            workspace_id,
+            app_id,
+            interaction_type=interaction_type,
+            version=version,
+        )
+        return JSONResponse(
+            payload,
+            headers={"Cache-Control": "no-store, private"},
+        )
+    except PermissionError as exc:
+        raise HTTPException(403, str(exc))
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except samvaad_runtime.SamvaadConfigurationError as exc:
+        raise HTTPException(503, str(exc))
 
 
 # ---------------------------------------------------------------------------

@@ -1,0 +1,13 @@
+{
+  "name": "chhotu-ai-web",
+  "private": true,
+  "scripts": {
+    "build:samvaad": "esbuild frontend/src/samvaad.js --bundle --format=iife --platform=browser --target=es2020 --minify --pure:console.log --pure:console.debug --outfile=frontend/assets/samvaad.bundle.js"
+  },
+  "dependencies": {
+    "sarvam-conv-ai-sdk": "0.0.42"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.8"
+  }
+}

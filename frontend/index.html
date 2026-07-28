@@ -471,6 +471,18 @@
   .voice-command-input input { border:0 !important; background:transparent !important; }
   .voice-entry-card.conversation-active .voice-stage,
   .voice-entry-card.conversation-active .voice-processing { display:none !important; }
+  .samvaad-session-actions {
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:14px 18px; border-top:1px solid #e3e6e9; background:#f7f8f9;
+  }
+  .samvaad-session-note { color:#686d75; font-size:11px; line-height:1.45; }
+  .samvaad-end-button {
+    flex:0 0 auto; display:inline-flex; align-items:center; gap:7px;
+    padding:9px 13px; border:1px solid #d4d7dc; border-radius:9px;
+    background:#fff; color:#252a31; font-size:12px; font-weight:750;
+  }
+  .samvaad-end-button:hover { border-color:#aeb3bb; background:#f1f3f4; }
+  .samvaad-end-button .material-symbols-outlined { font-size:16px; }
   .voice-conversation {
     margin-top:22px; overflow:hidden; border:1px solid #d8dbe0;
     border-radius:14px; background:#fff;
@@ -1179,6 +1191,7 @@
   </section>
 </div>
 
+<script src="/assets/samvaad.bundle.js"></script>
 <script>
 const GATES = {live_sale:0.80, delivery:0.92, recall:0.88, count:0.92, stock_take:0.92};
 let STATE = {catalogue:[], byId:{}, today:'2026-07-26', learning_state:'day1'};
@@ -1252,7 +1265,9 @@ async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'da
     : 'Day 1 — nothing learned yet, every product is asked about';
   toast(r.learning_state==='day60'?'Day 60 — seekha hua sab yaad hai':'Day 1 — kuch nahi seekha abhi'); }
 
-function showTab(t){ document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
+function showTab(t){
+  if(SAMVAAD?.agent && SAMVAAD.tab && SAMVAAD.tab!==t) endSamvaadConversation(SAMVAAD.tab, false);
+  document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
@@ -1448,8 +1463,176 @@ let _fillerAudio=new Audio();
 function playFiller(){ if(!FILLERS.length) return; const b=FILLERS[Math.floor(Math.random()*FILLERS.length)];
   try{ _fillerAudio.src='data:audio/mp3;base64,'+b; _fillerAudio.play().catch(()=>{}); }catch(e){} }
 
+// ================= LIVE SAMVAAD SDK CONVERSATION =================
+// The browser SDK owns microphone capture, VAD, interruptions and streaming
+// playback. The backend only brokers a short-lived signed URL, so the Sarvam
+// API key never reaches this page.
+let SAMVAAD={agent:null,tab:null,state:'idle',user:'',assistant:'',activity:'',ending:false};
+
+function samvaadStatusCopy(state){
+  return {
+    connecting:'Chhotu se jud raha hai…',
+    connected:'Connected — bolna shuru kijiye.',
+    listening:'Sun raha hoon… bolna poora ho to bas ruk jaiye.',
+    speaking:'Chhotu bol raha hai — beech mein bolkar rok bhi sakte hain.',
+    error:'Voice connection mein dikkat aayi.',
+    idle:'Baat khatam ho gayi.'
+  }[state]||'Voice session chal raha hai.';
+}
+function renderSamvaadConversation(){
+  const tab=SAMVAAD.tab; if(!tab) return;
+  const panel=document.getElementById('conv-'+tab); if(!panel) return;
+  const user=SAMVAAD.user?`<div class="voice-speaker-label"><span class="material-symbols-outlined">person</span>Aapne kaha</div>
+    <div class="voice-user-utterance">${escHtml(SAMVAAD.user)}</div>`:'';
+  const assistant=SAMVAAD.assistant?`<div class="voice-assistant-turn">
+    <div class="voice-speaker-label"><span class="material-symbols-outlined">graphic_eq</span>Chhotu</div>
+    <div class="voice-assistant-copy">${escHtml(SAMVAAD.assistant)}</div>
+  </div>`:'';
+  panel.innerHTML=`<div class="voice-conversation">
+    <div class="voice-conversation-turn">
+      ${user}${assistant}
+      <div class="voice-turn-state ${SAMVAAD.state==='listening'?'is-listening':SAMVAAD.state==='error'?'is-error':''}">
+        ${escHtml(SAMVAAD.activity||samvaadStatusCopy(SAMVAAD.state))}
+      </div>
+    </div>
+    <div class="samvaad-session-actions">
+      <div class="samvaad-session-note">Yeh live conversation isi entry tak rahegi. Purani baat yahan save nahi hoti.</div>
+      <button onclick="endSamvaadConversation('${tab}')" class="samvaad-end-button">
+        <span class="material-symbols-outlined">call_end</span>End conversation
+      </button>
+    </div>
+  </div>`;
+  const badge=document.getElementById('voiceUI-'+tab)?.querySelector('.voice-live-badge');
+  if(badge) badge.textContent=SAMVAAD.state==='speaking'?'Speaking':SAMVAAD.state==='listening'?'Listening':SAMVAAD.state==='connecting'?'Connecting':'Live';
+}
+function samvaadMessageText(msg){
+  return String(msg?.content??msg?.text??'').trim();
+}
+async function refreshAfterSamvaad(){
+  try{
+    const s=await api('/api/state');
+    STATE.catalogue=s.catalogue; STATE.byId={}; s.catalogue.forEach(x=>STATE.byId[x.sku_id]=x);
+    STATE.today=s.today; STATE.learning_state=s.learning_state;
+    setCounts(s.learning_counts); setDayUI(s.learning_state);
+  }catch(e){}
+}
+async function endSamvaadConversation(tab='sale', showEnded=true){
+  const agent=SAMVAAD.agent;
+  if(!agent) return;
+  SAMVAAD.ending=true; SAMVAAD.activity='Conversation band kar rahe hain…';
+  renderSamvaadConversation();
+  try{ await agent.stop(); }catch(e){}
+  SAMVAAD.agent=null; SAMVAAD.ending=false; SAMVAAD.state='idle';
+  setMicListening(tab,false);
+  await refreshAfterSamvaad();
+  if(showEnded){
+    SAMVAAD.activity='Baat khatam. Ledger aur reports refresh ho gaye.';
+    renderSamvaadConversation();
+  }else{
+    SAMVAAD.tab=null;
+  }
+}
+async function startSamvaadConversation(tab){
+  if(SAMVAAD.agent){
+    if(SAMVAAD.tab===tab){ await endSamvaadConversation(tab); return; }
+    await endSamvaadConversation(SAMVAAD.tab,false);
+  }
+  const sdk=window.ChhotuSamvaadSDK;
+  if(!sdk) throw new Error('Samvaad browser SDK load nahi hua.');
+  const session=await api('/api/voice/session');
+  if(!session.samvaad?.enabled) throw new Error(session.samvaad?.reason||'Samvaad configured nahi hai.');
+  const tok=getToken();
+  const card=document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card');
+  card?.classList.add('conversation-active');
+  SAMVAAD={agent:null,tab,state:'connecting',user:'',assistant:'',activity:'',ending:false};
+  renderSamvaadConversation();
+
+  const audioInterface=new sdk.BrowserAudioInterface(16000,{outputGain:1.25});
+  const config={
+    user_identifier_type:'phone_number',
+    user_identifier:session.caller_number,
+    org_id:session.samvaad.org_id,
+    workspace_id:session.samvaad.workspace_id,
+    app_id:session.samvaad.app_id,
+    interaction_type:sdk.InteractionType.CALL,
+    input_sample_rate:16000,
+    output_sample_rate:16000,
+    agent_variables:{
+      caller_number:session.caller_number,
+      shop_key:session.shop_key,
+      shop_name:session.shop||'',
+      owner_name:session.owner||''
+    }
+  };
+  if(session.samvaad.version!=null) config.version=Number(session.samvaad.version);
+  const agent=new sdk.ConversationAgent({
+    apiKey:'authenticated-session',
+    platform:'browser',
+    baseUrl:location.origin+session.samvaad.proxy_base_url,
+    customHeaders:tok?{Authorization:'Bearer '+tok}:{},
+    config,
+    audioInterface,
+    stateCallback:(next)=>{
+      SAMVAAD.state=String(next||'').toLowerCase();
+      SAMVAAD.activity='';
+      setMicListening(tab,SAMVAAD.state==='listening');
+      renderSamvaadConversation();
+    },
+    audioLevelCallback:(level)=>{
+      if(level?.direction==='input') paintMicLevel(tab,level.rms||0);
+    },
+    transcriptCallback:async(msg)=>{
+      const text=samvaadMessageText(msg); if(!text) return;
+      const role=String(msg?.role||'').toLowerCase();
+      if(role==='user'){
+        SAMVAAD.user=text;
+        SAMVAAD.assistant='';
+      }else{
+        SAMVAAD.assistant=text;
+      }
+      SAMVAAD.activity='';
+      renderSamvaadConversation();
+    },
+    textCallback:async(msg)=>{
+      const text=samvaadMessageText(msg);
+      if(text){ SAMVAAD.assistant=text; SAMVAAD.activity=''; renderSamvaadConversation(); }
+    },
+    eventCallback:async(event)=>{
+      const type=String(event?.type||'');
+      if(type.includes('tool_call')){
+        SAMVAAD.activity='Ledger check karke action le raha hoon…';
+        renderSamvaadConversation();
+      }
+    },
+    endCallback:async()=>{
+      if(SAMVAAD.ending) return;
+      SAMVAAD.agent=null; SAMVAAD.state='idle';
+      SAMVAAD.activity='Chhotu ne conversation poori kar di.';
+      setMicListening(tab,false);
+      await refreshAfterSamvaad();
+      renderSamvaadConversation();
+    }
+  });
+  SAMVAAD.agent=agent;
+  await agent.start();
+  const connected=await agent.waitForConnect(12);
+  if(!connected) throw new Error('Samvaad se connection timeout ho gaya.');
+}
+
 // start conversation from a spoken utterance (mic)
 async function convStartVoice(tab, flow){
+  if(flow==='auto'){
+    try{ await startSamvaadConversation(tab); return; }
+    catch(e){
+      try{ if(SAMVAAD.agent) await SAMVAAD.agent.stop(); }catch(_){}
+      SAMVAAD.agent=null; SAMVAAD.tab=null;
+      document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card')?.classList.remove('conversation-active');
+      toast('Live Chhotu available nahi — regular voice mode use ho raha hai.',false);
+    }
+  }
+  return convStartVoiceLegacy(tab,flow);
+}
+async function convStartVoiceLegacy(tab, flow){
   const proc=document.getElementById('proc-'+tab); proc.classList.remove('hidden');
   proc.innerHTML='<span class="pulse">Sun raha hoon… Bolna poora ho to bas ruk jaiye.</span>';
   setMicListening(tab,true);
@@ -2323,6 +2506,7 @@ async function submitSignup(){
 }
 
 async function logout(){
+  if(SAMVAAD.agent) await endSamvaadConversation(SAMVAAD.tab||'sale',false);
   try{ await fetch('/api/auth/logout',{method:'POST',
     headers:{Authorization:'Bearer '+getToken()}}); }catch(e){}
   setToken('');
