@@ -385,13 +385,17 @@ def agent_tool(request: Request,
     # Header NAMES only, never values. Which headers a console actually sends
     # is the one thing that cannot be guessed from the outside, and four
     # different auth configurations all failed the same silent way without it.
-    names = sorted(k.lower() for k in request.headers
-                   if k.lower() not in ("cookie", "authorization"))
-    print(f"[agent] tool={payload.get('tool')!r} "
-          f"secret={'present' if supplied else 'MISSING'} "
-          f"caller={'set' if str(payload.get('caller') or '').strip() else 'EMPTY'} "
-          f"auth_header={'yes' if authorization else 'no'} "
-          f"headers={names}", flush=True)
+    line = (f"[agent] tool={payload.get('tool')!r} "
+            f"secret={'present' if supplied else 'MISSING'} "
+            f"caller={'set' if str(payload.get('caller') or '').strip() else 'EMPTY'}")
+    if not supplied:
+        # The header list is thirty entries of Vercel plumbing. It earns its
+        # place only when the secret is missing, which is the one case where
+        # knowing whether the header arrived at all decides the diagnosis.
+        line += " headers=" + str(sorted(
+            k.lower() for k in request.headers
+            if k.lower() not in ("cookie", "authorization")))
+    print(line, flush=True)
     try:
         if not agent.verify_secret(supplied):
             raise HTTPException(403, "Bad agent secret.")
