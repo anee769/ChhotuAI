@@ -185,7 +185,13 @@ def transcribe_both(audio_bytes: bytes, filename: str = "audio.wav") -> dict:
 # ---------------------------------------------------------------------------
 def text_to_speech(text: str, language_code: str = "hi-IN",
                    speaker: str = None, pace: float = 1.0) -> str:
-    """Returns a base64-encoded mp3 string (first audio chunk)."""
+    """Return a base64-encoded MP3.
+
+    Long ledger summaries take materially longer to synthesize than the short
+    acknowledgement prompts. The old 10-second request deadline could abort
+    synthesis before Sarvam had produced the complete summary, so TTS gets a
+    bounded but realistic 30-second window.
+    """
     body = {
         "text": text[:2400],
         "target_language_code": language_code,
@@ -195,7 +201,7 @@ def text_to_speech(text: str, language_code: str = "hi-IN",
         "output_audio_codec": "mp3",
     }
     out = _request("POST", "/text-to-speech", json_body=body,
-                   timeout=10, max_retries=1)
+                   timeout=30, max_retries=2)
     audios = out.get("audios") or []
     if not audios:
         raise SarvamError("TTS returned no audio")

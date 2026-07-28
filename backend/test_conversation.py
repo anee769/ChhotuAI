@@ -117,6 +117,47 @@ class ConversationStateTests(unittest.TestCase):
                             for row in out["state"]["history"]))
         self.assertEqual(committed["customer"]["name"], "Ravi Builder")
 
+    def test_finished_sale_asks_before_sending_the_bill(self):
+        item = dict(self.extracted["items"][0], rate=450, payment="cash")
+        state = {
+            "flow": "live_sale", "said": [], "history": [], "lang": "en",
+            "customer": {"customer_id": "cust_test", "name": "Ravi Builder",
+                         "phone": "+919876543210"},
+        }
+        committed = {
+            "committed": [{"event_id": "evt_1", "sku_id": item["sku_id"],
+                           "amount": 22500}],
+            "affected_stock": {},
+        }
+        with patch.object(main, "_write_events", return_value=committed):
+            out = conversation._commit(state, "sale", [item], [], self.repo)
+
+        self.assertFalse(out["done"])
+        self.assertTrue(out["listen"])
+        self.assertEqual(out["state"]["awaiting"], "send_bill")
+        self.assertIn("send the bill", out["say"])
+        self.assertEqual(out["committed"]["committed"][0]["event_id"], "evt_1")
+
+    def test_bill_send_prompt_accepts_yes_or_no_without_reextracting(self):
+        state = {
+            "flow": "live_sale", "said": [], "history": [], "lang": "en",
+            "awaiting": "send_bill",
+            "last_commit": {"items": [{"sku_id": "CEM_ULTRATECH_PPC"}]},
+        }
+        sent = conversation._reply("sent", listen=False, done=True, state=state)
+        with patch.object(conversation, "_send_bill_now",
+                          return_value=sent) as send:
+            out = conversation.converse(state, "yes", "live_sale", self.repo)
+        self.assertEqual(out["say"], "sent")
+        send.assert_called_once()
+
+        state["awaiting"] = "send_bill"
+        with patch.object(conversation, "_send_bill_now") as send:
+            out = conversation.converse(state, "no", "live_sale", self.repo)
+        self.assertTrue(out["done"])
+        self.assertIn("didn't send", out["say"])
+        send.assert_not_called()
+
     def test_extractor_receives_complete_role_history_once(self):
         state = {
             "said": ["50 bori cement", "PPC"],

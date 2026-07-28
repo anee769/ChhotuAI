@@ -675,6 +675,14 @@ def converse(state, user_text, flow, repo):
     # the first turn. This preserves the complete order and avoids another
     # 30-second model call for simple answers such as "12 mm", "50", or "cash".
     aw = state.get("awaiting")
+    if aw == "send_bill":
+        state["awaiting"] = None
+        state["history"].append({"role": "user", "content": user_text or ""})
+        if _yes_no(user_text) is not True:
+            return _reply(_L(state, "Theek hai, bill nahi bheja.",
+                             "Alright, I didn't send the bill."),
+                          listen=False, done=True, state=state)
+        return _send_bill_now(state, repo)
     if aw == "send_summary":
         state["awaiting"] = None
         state["history"].append({"role": "user", "content": user_text or ""})
@@ -1682,9 +1690,6 @@ def _commit(state, flow, items, skipped, repo):
                   "gin lo, jab chaho voice se bata dena.",
                   f" {_oxford(needs_count, state)} may already have stock on the shelf — do a "
                   "count when you can, you can tell me the number by voice anytime.")
-    out = _say(state, say, listen=False, done=True)
-    out["summary"] = {"items": rows}
-    out["committed"] = result
     # Keep the finished sale on the state so a follow-up "bill bhej do unke"
     # knows what to bill and to whom.
     if flow == "sale":
@@ -1695,6 +1700,14 @@ def _commit(state, flow, items, skipped, repo):
             "customer": dict(customer), "payment": items[0].get("payment") if items else "cash",
             "payment_deadline": deadline,
         }
+        if customer.get("phone"):
+            say += _L(state, " Customer ko bill WhatsApp par bhej doon?",
+                      " Shall I send the bill to the customer on WhatsApp?")
+            state["awaiting"] = "send_bill"
+    waiting_to_send = state.get("awaiting") == "send_bill"
+    out = _say(state, say, listen=waiting_to_send, done=not waiting_to_send)
+    out["summary"] = {"items": rows}
+    out["committed"] = result
     return out
 
 
