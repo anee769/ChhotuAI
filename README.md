@@ -7,8 +7,10 @@ hardware, building-material, and inventory-led businesses.
 
 It brings daily operations into one calm workspace: catalogue, stock movement,
 sales, purchases, physical counts, customer credit, payments, invoices,
-billing, reminders, margin, low stock, and frozen capital. The owner can speak
-in Hindi, Hinglish, or English instead of learning conventional ERP screens.
+billing, reminders, margin, low stock, and frozen capital. Its multilingual
+voice experience supports every language available through Sarvam AI Agents,
+including natural code-mixed speech. The owner can speak naturally in a
+supported language and does not need to learn conventional ERP screens.
 
 > Most inventory systems assume perfect data entry. Chhotu.ai is designed for
 > the way a real shop operates: people speak, forget, correct themselves, sell
@@ -18,6 +20,9 @@ in Hindi, Hinglish, or English instead of learning conventional ERP screens.
 
 - **Voice is the operating interface.** The assistant can answer questions and
   perform approved actions through grounded backend tools.
+- **Multilingual by design.** Chhotu supports all languages provided by Sarvam
+  AI Agents, understands code-mixed conversations, and automatically replies
+  in the language used by the owner.
 - **The ledger is the source of truth.** Current stock is derived by replaying
   immutable events; there is no editable `current_stock` number.
 - **AI interprets; deterministic code calculates.** Product resolution,
@@ -32,9 +37,10 @@ in Hindi, Hinglish, or English instead of learning conventional ERP screens.
 
 ### Voice operations
 
-The primary assistant is a Sarvam Samvaad v6 voice-to-voice agent. It maintains
-context for the active job, supports interruptions, and calls 27 grounded HTTP
-tools for:
+The primary assistant is a multilingual Sarvam Samvaad v6 voice-to-voice
+agent. It maintains context for the active job, supports interruptions,
+supports the complete language set available to Sarvam AI Agents—including
+mixed-language conversations—and calls 27 grounded HTTP tools for:
 
 - shop profile and catalogue queries;
 - stock checks, product search, item details, low-stock alerts, and stock value;
