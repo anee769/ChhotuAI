@@ -915,6 +915,47 @@ def add_item(repo, user, args):
                      f"{unit} mein bata dijiye?"}
 
 
+def update_item(repo, user, args):
+    """Fix an existing product: its name, cost, price or unit.
+
+    Needed because a SKU with stock against it cannot simply be deleted and
+    re-added, and because onboarding can leave a product with no name at all,
+    which the agent then reads out as silence.
+    """
+    sku, question = _find_sku(repo, args.get("item") or args.get("sku_id"))
+    if not sku and args.get("sku_id"):
+        sku = repo.sku(args["sku_id"])          # exact id beats any matching
+    if question and not sku:
+        return {"updated": False, **_ask_which(question)}
+    if not sku:
+        return {"updated": False,
+                "speak": f"{args.get('item')} list mein mila hi nahi."}
+    patch = dict(sku)
+    changed = []
+    if args.get("name"):
+        patch["canonical"] = str(args["name"]).strip()
+        changed.append("naam")
+    if args.get("unit"):
+        patch["default_unit"] = args["unit"]
+        patch["units"] = {**(sku.get("units") or {}), args["unit"]: 1}
+        changed.append("unit")
+    if args.get("cost_price") not in (None, ""):
+        patch["opening_cost_per_kg"] = float(args["cost_price"])
+        changed.append("cost")
+    if args.get("selling_rate") not in (None, ""):
+        patch["attributes"] = {**(sku.get("attributes") or {}),
+                               "selling_rate": float(args["selling_rate"])}
+        changed.append("rate")
+    if not changed:
+        return {"updated": False, "needs": {"field": "what"},
+                "speak": "Kya badalna hai: naam, unit, cost ya rate?"}
+    repo.upsert_sku(patch)
+    return {"updated": True, "sku_id": sku["sku_id"],
+            "name": patch.get("canonical"), "changed": changed,
+            "speak": f"{patch.get('canonical')} ka {', '.join(changed)} "
+                     "update kar diya."}
+
+
 def remove_item(repo, user, args):
     """Delete a product that should never have been added.
 
@@ -1080,6 +1121,9 @@ TOOLS = {
                  "selling_rate, unit, brand. Add hone ke baad stock_take se "
                  "opening ginti likhwana zaroori hai."),
 
+    "update_item": (update_item,
+                    "Mojooda item theek karo: naam, unit, cost_price ya "
+                    "selling_rate. args: item (ya sku_id) aur jo badalna hai."),
     "remove_item": (remove_item,
                     "Galti se added item ko list se hatao. args: item. Jispe "
                     "koi sale ya stock chal raha ho, wo nahi hatega."),

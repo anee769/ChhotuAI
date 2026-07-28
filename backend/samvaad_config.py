@@ -144,6 +144,7 @@ PARAMS = {
     "add_item": ("name", "cost_price", "selling_rate", "unit", "brand"),
     "update_shop_profile": ("shop_name", "owner", "shop_type", "gstin",
                             "address"),
+    "update_item": ("item", "name", "unit", "cost_price", "selling_rate"),
     "remove_item": ("item",),
     "send_bill": ("customer", "item", "qty", "rate", "payment"),
     "send_summary": ("period",),
@@ -241,6 +242,9 @@ EXAMPLES = {
     "update_shop_profile": ({"gstin": "27AACCD8812K1ZG",
                              "address": "LBS Marg, Mumbai 400070"}, {
         "updated": True, "changed": ["address", "gstin"]}),
+    "update_item": ({"item": "Fevicol SH", "selling_rate": 360}, {
+        "updated": True, "sku_id": "sku_b7f572cf", "name": "Fevicol SH",
+        "changed": ["rate"]}),
     "remove_item": ({"item": "Test Probe Item"}, {
         "removed": True, "sku_id": "sku_84552642", "name": "Test Probe Item"}),
     "send_bill": ({"customer": "Ramesh",
