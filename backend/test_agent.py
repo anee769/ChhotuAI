@@ -207,6 +207,21 @@ class AgentToolTests(unittest.TestCase):
             self.assertGreater(self.call("search_items", query=query)["count"],
                                0, query)
 
+    def test_a_question_never_reads_out_a_database_id(self):
+        """The shop actually heard "Kajaria mein se kaunsa,
+        TILE_KAJARIA_CERAMIC_2X2 ya TILE_KAJARIA_VITRIFIED_600"."""
+        out = self.call("check_stock", item="kajaria")
+        for option in out["needs"]["options"]:
+            self.assertNotIn("_", option, option)
+            self.assertFalse(option.isupper(), option)
+
+    def test_an_acronym_spelled_out_in_devanagari_matches(self):
+        """"टीएमटी" is how TMT is said aloud; it transliterates to "tiemti"
+        and matched nothing at all."""
+        self.assertGreater(self.call("search_items", query="टीएमटी")["count"], 0)
+        out = self.call("check_stock", item="टीएमटी")
+        self.assertTrue(out.get("found") or out.get("needs"), out)
+
     def test_search_still_finds_nothing_for_nothing(self):
         for query in ("biryani", "laptop"):
             self.assertEqual(self.call("search_items", query=query)["count"],

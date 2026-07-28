@@ -199,6 +199,16 @@ def _stock_of(repo, sku: dict, events=None) -> dict:
             "text": f"{'~' if det.get('estimated') else ''}{_g(qty)} {unit}"}
 
 
+def _skeleton(word: str) -> str:
+    """Consonants only, for acronyms spelled out letter by letter.
+
+    "टीएमटी" is how TMT is said, and it transliterates to "tiemti", which
+    matches nothing. Dropping vowels turns both that and "tmt" into "tmt".
+    Only ever compared for exact equality, so it cannot loosely match.
+    """
+    return re.sub(r"[aeiou]", "", (word or "").lower())
+
+
 def _sounds_like(phrase: str, catalogue: list) -> list:
     """Product names whose WORDS sound close to what was said.
 
@@ -223,9 +233,12 @@ def _sounds_like(phrase: str, catalogue: list) -> list:
             words.update(re.split(r"[\s-]+", str(alias).lower()))
         best = 0.0
         for w in words:
-            if len(w) <= 3:
-                continue
             for q in said:
+                if len(q) >= 4 and len(w) >= 3 and _skeleton(q) == _skeleton(w):
+                    best = 1.0
+                    break
+                if len(w) <= 3:
+                    continue
                 best = max(best, difflib.SequenceMatcher(None, q, w).ratio())
         if best >= 0.66:
             hits.append((best, sku["canonical"]))
@@ -276,14 +289,27 @@ def _find_sku(repo, phrase: str):
     if m.get("status") == "disambiguate":
         # The matcher returns options as attribute VALUES ("OPC 53", "PPC") for
         # a variant question and as sku_ids elsewhere. Normalise both.
+        by_id = {sku["sku_id"]: sku["canonical"] for sku in catalogue}
+
+        def _name(value):
+            """Never let a sku_id reach the caller's ear.
+
+            "Kajaria mein se kaunsa, TILE_KAJARIA_CERAMIC_2X2 ya
+            TILE_KAJARIA_VITRIFIED_600" is what the shop actually heard. The
+            matcher hands back ids in some shapes and attribute values in
+            others, so resolve anything that looks like an id.
+            """
+            text = str(value or "").strip()
+            return by_id.get(text, text)
+
         names = []
         for o in m.get("options") or []:
             if isinstance(o, dict):
-                names.append(o.get("canonical") or o.get("value") or o.get("label"))
+                names.append(_name(o.get("canonical") or o.get("label")
+                                   or o.get("value")))
             elif isinstance(o, str):
-                s = repo.sku(o)
-                names.append(s["canonical"] if s else o)
-        names = [str(n) for n in names if n]
+                names.append(_name(o))
+        names = [n for n in names if n and n not in by_id]
         if not names:
             fam = m.get("family") or m.get("candidates_family")
             names = [s["canonical"] for s in catalogue if s.get("family") == fam]

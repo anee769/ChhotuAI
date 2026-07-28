@@ -170,7 +170,7 @@ async def main():
         org_id="019f9945-ebf7-77f9-b60b-dc1963284e44",
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
-        version=4,                                   # newest committed snapshot
+        version=4,                                   # the committed version under test
         user_identifier=CALLER,                      # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
