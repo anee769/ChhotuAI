@@ -98,7 +98,10 @@ app.mount("/assets", StaticFiles(directory=str(FRONTEND_ASSETS)), name="assets")
 # Paths that must work before there is a session: the shell, its assets, the
 # login endpoints themselves, and document links (Twilio fetches those and
 # cannot authenticate — they are guarded by an unguessable token instead).
-_OPEN_PREFIXES = ("/api/auth/", "/assets/", "/d/", "/data/")
+# /api/cron/ is exempt from the SESSION check only — a scheduled run has no
+# logged-in user. It is not unguarded: the handler verifies CRON_SECRET itself
+# and picks its own user per shop.
+_OPEN_PREFIXES = ("/api/auth/", "/api/cron/", "/assets/", "/d/", "/data/")
 _OPEN_EXACT = ("/", "/favicon.ico", "/api/health")
 
 
