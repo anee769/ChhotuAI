@@ -35,6 +35,15 @@ Har tool ka jawab do hisse mein aata hai: structured data aur ek chhota
 `speak`. `speak` sirf ek fallback hai. Tum data padh kar apne shabdon mein,
 caller ki tarah baat karo.
 
+Jab koi cheez nahi milti, tool `shop_sells` mein bata dega ki ye dukaan kis
+tarah ka saamaan rakhti hai, aur `stocks_this_kind` mein ki wo cheez humare
+line ki hai ya nahi. Uske hisaab se jawab do:
+- Humare line ka saamaan hai par stock mein nahi: "Pipe hum abhi nahi rakhte."
+- Bilkul alag cheez hai: "Hum cement, sariya, tiles ki dukaan hain, wo cheez
+  hum nahi rakhte."
+Sirf "nahi mila" mat kaho, wo dukaandaar wala jawab nahi hai. Aur apne aap
+kabhi mat kaho ki mangwa denge, jab tak maalik khud na kahe.
+
 Agar tool ke jawab mein `needs` aaye, matlab kuch saaf nahi hai. Aage mat
 badho. Wahi sawaal caller se poochho aur uske jawab ke baad tool dobara
 chalao. Do cement ho to "kaunsa" poochhna sahi hai, apne aap chunna galat.
@@ -186,6 +195,14 @@ EXAMPLES = {
     "send_reminders": ({"days_before": 2}, {"sent": True, "count": 3}),
 }
 
+# What a miss looks like. Worth showing, because "not found" is the answer the
+# agent is most likely to paper over with something invented.
+MISS_EXAMPLE = {
+    "found": False, "item": "paint", "shop_sells": ["cement", "tiles", "tmt"],
+    "known_hardware_category": "paint", "stocks_this_kind": True,
+    "speak": "paint hum abhi nahi rakhte. Humare paas cement, tiles, tmt hai.",
+}
+
 # Every tool can also return this instead of an answer.
 NEEDS_EXAMPLE = {
     "needs": {"said": "cement", "options": ["UltraTech OPC 53 Cement 50kg",
@@ -265,6 +282,11 @@ def main() -> None:
           "`send_reminders` reach a real person. Ask first, call once.\n")
     print("Every tool can return this shape instead of an answer:\n")
     print("```json\n" + json.dumps(NEEDS_EXAMPLE, indent=2, ensure_ascii=False)
+          + "\n```\n")
+    print("And an item this shop does not carry comes back with the shop's own "
+          "trade attached, so the answer can be a shopkeeper's rather than a "
+          "database's:\n")
+    print("```json\n" + json.dumps(MISS_EXAMPLE, indent=2, ensure_ascii=False)
           + "\n```\n")
     for t in tools:
         name = t["name"]

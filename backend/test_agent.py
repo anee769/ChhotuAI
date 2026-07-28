@@ -161,6 +161,21 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("check_stock", item="hydraulic press")
         self.assertFalse(out["found"])
 
+    def test_a_miss_says_what_kind_of_shop_this_is(self):
+        out = self.call("check_stock", item="laptop")
+        self.assertFalse(out["stocks_this_kind"])
+        self.assertIn("cement", out["shop_sells"])
+        self.assertIn("dukaan hain", out["speak"])
+
+    def test_hardware_we_do_not_carry_reads_differently_from_off_trade(self):
+        """"Pipe" is our trade and simply unstocked; "laptop" is not. A
+        shopkeeper would not answer those two the same way."""
+        pipe = self.call("check_stock", item="pipe")
+        laptop = self.call("check_stock", item="laptop")
+        self.assertEqual(pipe["known_hardware_category"], "pipe")
+        self.assertIsNone(laptop["known_hardware_category"])
+        self.assertNotEqual(pipe["speak"], laptop["speak"])
+
     def test_item_details_include_cost_and_gst(self):
         out = self.call("item_details", item="ppc cement")
         self.assertEqual(out["gst_rate"], 28)

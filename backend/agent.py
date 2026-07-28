@@ -175,6 +175,30 @@ def _find_sku(repo, phrase: str):
     return None, None
 
 
+def _not_stocked(repo, phrase: str) -> dict:
+    """A miss, with enough context for the agent to answer like a shopkeeper.
+
+    "Nahi mila" is a database answer. A real shopkeeper distinguishes two very
+    different misses: hardware they simply don't carry ("pipe abhi nahi rakhte"),
+    and something outside their trade entirely ("hum building material ki dukaan
+    hain"). The difference is whether the word matches a known hardware
+    category, so return that judgement and let the agent phrase it.
+    """
+    import conversation as C
+    lines = sorted({s.get("family") for s in repo.load_catalogue()
+                    if s.get("family")})
+    sells = ", ".join(lines[:6])
+    category = C._match_hardware_category(phrase or "")
+    if category:
+        speak = (f"{phrase} hum abhi nahi rakhte. Humare paas {sells} hai.")
+    else:
+        speak = (f"Hum {sells} ki dukaan hain, {phrase} jaisi cheez hum nahi "
+                 "rakhte.")
+    return {"found": False, "item": phrase, "shop_sells": lines,
+            "known_hardware_category": category,
+            "stocks_this_kind": bool(category), "speak": speak}
+
+
 def _ask_which(question: dict) -> dict:
     return {"needs": question,
             "speak": f"{question['said']} mein se kaunsa, "
@@ -284,8 +308,7 @@ def check_stock(repo, user, args):
     if question:
         return _ask_which(question)
     if not sku:
-        return {"found": False, "item": args.get("item"),
-                "speak": f"{args.get('item')} humare stock mein nahi mila."}
+        return _not_stocked(repo, args.get("item"))
     st = _stock_of(repo, sku)
     return {"found": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
             **st, "selling_rate": sku.get("selling_rate"),
@@ -297,7 +320,7 @@ def item_details(repo, user, args):
     if question:
         return _ask_which(question)
     if not sku:
-        return {"found": False, "speak": f"{args.get('item')} nahi mila."}
+        return _not_stocked(repo, args.get("item"))
     events = repo.events_for_sku(sku["sku_id"])
     cost = L.landed_cost_as_of(sku, events, clock.today())
     sales = sorted((e for e in events if e["type"] == "sale"),
