@@ -4,3 +4,7 @@ debug/
 __pycache__/
 .vercel
 .env*
+.DS_Store
+.agents/
+.claude/skills/
+skills-lock.json
