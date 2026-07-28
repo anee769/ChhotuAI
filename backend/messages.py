@@ -144,7 +144,9 @@ def summary(*, shop: str, period: str, on, sale: float, margin: float,
 def reminder(*, shop: str, owner: str, customer: str, amount: float,
              due_on, days_left: int, phone: str = "") -> str:
     when = ("kal" if days_left == 1 else
-            "aaj" if days_left == 0 else f"{days_left} din baad")
+            "aaj" if days_left == 0 else
+            f"{days_left} din baad" if days_left > 1 else
+            f"{abs(days_left)} din pehle")
     lead = (f"Namaste {customer} ji," if customer else "Namaste,")
     body = [
         lead,

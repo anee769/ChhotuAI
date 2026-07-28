@@ -123,6 +123,39 @@ def send_summary(repo, user: dict, period: str = "day", on: date = None) -> dict
 
 
 # ---------------------------------------------------------------------------
+def send_customer_reminder(repo, user: dict, customer_id: str,
+                           on: date = None) -> dict:
+    """Send the selected customer's next open credit reminder on demand."""
+    who = _identity(repo, user)
+    account = crm.account(repo, customer_id)
+    if not account:
+        raise ValueError("Customer not found.")
+    if not account.get("phone"):
+        raise ValueError("This customer has no phone number saved.")
+    open_dues = account.get("open_dues") or []
+    if not open_dues:
+        raise ValueError("This customer has no outstanding credit.")
+    on = on or clock.today()
+    due = open_dues[0]
+    due_on = date.fromisoformat(due["deadline"])
+    days_left = (due_on - on).days
+    body = messages.reminder(
+        shop=who["shop"], owner=who["owner"],
+        customer=account.get("name") or "", amount=due["remaining"],
+        due_on=due["deadline"], days_left=days_left, phone=who["phone"])
+    resp = whatsapp.send_whatsapp(account["phone"], body)
+    result = whatsapp.confirm(resp.get("sid"))
+    if not result.get("ok"):
+        status = result.get("status") or "failed"
+        code = result.get("error_code")
+        raise RuntimeError(f"WhatsApp {status}" + (f" ({code})" if code else ""))
+    return {"sent": True, "customer_id": customer_id,
+            "customer": account.get("name") or "",
+            "phone": account["phone"], "amount": round(due["remaining"], 2),
+            "due": due["deadline"], "status": result.get("status")}
+
+
+# ---------------------------------------------------------------------------
 def send_due_reminders(repo, user: dict, *, days_before: int = 2,
                        on: date = None) -> dict:
     """Text-only reminders for credit falling due. No PDF: a nudge about money

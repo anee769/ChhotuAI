@@ -385,10 +385,18 @@
   .balance-card.dark { color:#fff; background:#111827; border-color:#111827; }
   .balance-card .value { margin-top:7px; font-size:27px; font-weight:800; }
   .payment-bar {
-    display:flex; align-items:center; gap:10px; padding:15px;
+    display:flex; align-items:center; flex-wrap:wrap; gap:10px; padding:15px;
     background:#f2f4f6; border:1px solid #dadddf; border-radius:12px; margin-bottom:20px;
   }
-  .payment-bar input { min-width:0; flex:1; padding:11px 12px; }
+  .payment-bar input { min-width:180px; flex:1 1 220px; padding:11px 12px; }
+  .customer-reminder-button {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    padding:11px 14px; border:1px solid #c8ccd1; background:#fff;
+    color:#20242a; font-size:12px; font-weight:750; white-space:nowrap;
+  }
+  .customer-reminder-button:hover { border-color:#969ca4; background:#f6f7f8; }
+  .customer-reminder-button:disabled { cursor:wait; opacity:.62; }
+  .customer-reminder-button .material-symbols-outlined { font-size:17px; }
   .voice-entry-card { max-width:920px; overflow:hidden; }
   .voice-entry-head {
     display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
@@ -2290,7 +2298,11 @@ function renderCustomerDetail(){
     </div>
     ${c.outstanding>0?`<div class="payment-bar"><span class="material-symbols-outlined">payments</span>
       <input id="pay-${c.customer_id}" type="number" min="1" max="${c.outstanding}" placeholder="Payment amount">
-      <button onclick="recordCustomerPayment('${c.customer_id}')" class="btn-primary px-4 py-3 text-sm font-semibold">Record payment</button></div>`:''}
+      <button onclick="recordCustomerPayment('${c.customer_id}')" class="btn-primary px-4 py-3 text-sm font-semibold">Record payment</button>
+      <button id="reminder-${c.customer_id}" onclick="sendCustomerReminder('${c.customer_id}')"
+        class="customer-reminder-button rounded-lg">
+        <span class="material-symbols-outlined">notifications</span><span>Send reminder</span>
+      </button></div>`:''}
     <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Credit history</div><span class="text-xs text-slate-500">${c.open_dues.length} open entries</span></div>
     <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Deadline</th><th class="amount">Original</th><th class="amount">Balance</th><th>Status</th></tr></thead>
       <tbody>${dues||'<tr><td colspan="4" class="muted">No outstanding credit.</td></tr>'}</tbody></table></div>
@@ -2314,6 +2326,19 @@ async function recordCustomerPayment(customerId){
       body:JSON.stringify({amount,paid_on:STATE.today})});
     toast('Payment record ho gaya'); loadCustomers();
   }catch(e){ toast((''+e).includes('exceeds')?'Outstanding se zyada payment hai':'Payment record nahi hua',false); }
+}
+async function sendCustomerReminder(customerId){
+  const button=document.getElementById('reminder-'+customerId);
+  const label=button?.querySelector('span:last-child');
+  if(button){ button.disabled=true; if(label) label.textContent='Sending…'; }
+  try{
+    const out=await api('/api/customers/'+encodeURIComponent(customerId)+'/reminder',{method:'POST'});
+    toast(`${out.customer||'Customer'} ko reminder bhej diya`);
+  }catch(e){
+    toast(e.message||'Reminder nahi bhej saka',false);
+  }finally{
+    if(button){ button.disabled=false; if(label) label.textContent='Send reminder'; }
+  }
 }
 // ---------- Today ----------
 async function loadToday(){

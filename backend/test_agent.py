@@ -651,6 +651,27 @@ class AgentToolTests(unittest.TestCase):
         self.assertIn("sale", store.call_args.args[2])
         send.assert_not_called()
 
+    def test_selected_customer_reminder_sends_only_the_next_open_due(self):
+        import notify
+        customer = self.repo.upsert_customer("9876543210", "Ramesh Kumar")
+        self.repo.add_receivable(
+            customer["customer_id"], 4200, "2026-07-28", ["evt_sale_1"])
+        self.repo.add_receivable(
+            customer["customer_id"], 9000, "2026-08-15", ["evt_sale_2"])
+        with patch.object(
+                notify.whatsapp, "send_whatsapp",
+                return_value={"sid": "SM123"}) as send, \
+                patch.object(
+                    notify.whatsapp, "confirm",
+                    return_value={"ok": True, "status": "delivered"}):
+            out = notify.send_customer_reminder(
+                self.repo, USER, customer["customer_id"])
+        self.assertTrue(out["sent"])
+        self.assertEqual(out["amount"], 4200)
+        self.assertEqual(out["due"], "2026-07-28")
+        self.assertEqual(send.call_count, 1)
+        self.assertIn("Ramesh Kumar", send.call_args.args[1])
+
     def test_new_item_requires_a_cost_price(self):
         out = self.call("add_item", name="Asian Paints Apcolite 20L")
         self.assertFalse(out["added"])

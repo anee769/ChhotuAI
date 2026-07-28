@@ -929,6 +929,20 @@ def record_payment(customer_id: str, payload: dict = Body(...)):
     return {"payment": row, "account": crm.account(repo, customer_id)}
 
 
+@app.post("/api/customers/{customer_id}/reminder")
+def send_customer_reminder(customer_id: str):
+    import notify
+    if not repo.customer(customer_id):
+        raise HTTPException(404, "Customer not found.")
+    try:
+        return notify.send_customer_reminder(
+            repo, current_user(), customer_id)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except Exception as e:
+        raise HTTPException(502, f"Reminder could not be sent: {str(e)[:160]}")
+
+
 def _stock_view(sku: dict, det: dict) -> dict:
     if det["qty"] == L.UNCOUNTED:
         return {"display": "abhi tak gina nahi", "uncounted": True,
