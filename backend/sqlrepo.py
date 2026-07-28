@@ -256,7 +256,7 @@ class SqlRepo:
     def load_config(self) -> dict:
         return self._cached("config", self._load_config)
 
-    _SETTING_KEYS = ("shop_name", "gstin", "address", "phone",
+    _SETTING_KEYS = ("shop_name", "shop_type", "gstin", "address", "phone",
                      "reply_language", "silence_timeout_s",
                      "confirm_new_items", "learning_state")
 

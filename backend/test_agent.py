@@ -161,11 +161,25 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("check_stock", item="hydraulic press")
         self.assertFalse(out["found"])
 
-    def test_a_miss_says_what_kind_of_shop_this_is(self):
+    def test_a_miss_names_the_trade_not_the_shelves(self):
         out = self.call("check_stock", item="laptop")
         self.assertFalse(out["stocks_this_kind"])
-        self.assertIn("cement", out["shop_sells"])
         self.assertIn("dukaan hain", out["speak"])
+        # "hum cement, tiles, tmt ki dukaan hain" describes an inventory
+        # table. A shopkeeper names a line of business.
+        for family in ("cement", "tiles", "tmt"):
+            self.assertNotIn(family, out["speak"])
+
+    def test_shop_kind_comes_from_the_name_and_can_be_overridden(self):
+        self.repo.load_config = lambda: {"shop_name": "MM Hardware"}
+        self.assertEqual(agent._shop_kind(self.repo, USER), "hardware")
+        self.repo.load_config = lambda: {"shop_name": "Sharma & Sons"}
+        self.assertEqual(agent._shop_kind(self.repo, USER),
+                         agent._DEFAULT_SHOP_KIND)
+        self.repo.load_config = lambda: {"shop_name": "Sharma & Sons",
+                                         "shop_type": "sanitary aur plumbing"}
+        self.assertEqual(agent._shop_kind(self.repo, USER),
+                         "sanitary aur plumbing")
 
     def test_hardware_we_do_not_carry_reads_differently_from_off_trade(self):
         """"Pipe" is our trade and simply unstocked; "laptop" is not. A

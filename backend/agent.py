@@ -175,26 +175,60 @@ def _find_sku(repo, phrase: str):
     return None, None
 
 
-def _not_stocked(repo, phrase: str) -> dict:
+# What kind of shop this is, in the words a shopkeeper would use. Inferred from
+# the registered name so it works without extra setup, and overridable in
+# config for the shop whose name gives nothing away ("Sharma & Sons").
+_SHOP_KINDS = (
+    ("hardware", "hardware"),
+    ("building", "building material"),
+    ("construction", "construction material"),
+    ("builder", "building material"),
+    ("timber", "timber aur plywood"),
+    ("plywood", "timber aur plywood"),
+    ("sanitary", "sanitary aur plumbing"),
+    ("electric", "electrical"),
+    ("paint", "paint aur hardware"),
+    ("cement", "building material"),
+    ("steel", "building material"),
+    ("traders", "hardware aur building material"),
+)
+_DEFAULT_SHOP_KIND = "hardware aur building material"
+
+
+def _shop_kind(repo, user) -> str:
+    cfg = repo.load_config()
+    if cfg.get("shop_type"):
+        return str(cfg["shop_type"])
+    name = (cfg.get("shop_name") or user.get("shop_name") or "").lower()
+    for keyword, label in _SHOP_KINDS:
+        if keyword in name:
+            return label
+    return _DEFAULT_SHOP_KIND
+
+
+def _not_stocked(repo, user, phrase: str) -> dict:
     """A miss, with enough context for the agent to answer like a shopkeeper.
 
-    "Nahi mila" is a database answer. A real shopkeeper distinguishes two very
-    different misses: hardware they simply don't carry ("pipe abhi nahi rakhte"),
-    and something outside their trade entirely ("hum building material ki dukaan
-    hain"). The difference is whether the word matches a known hardware
+    "Nahi mila" is a database answer. A shopkeeper distinguishes two very
+    different misses: hardware they simply don't carry ("pipe abhi nahi
+    rakhte"), and something outside their trade entirely ("hum hardware ki
+    dukaan hain"). The difference is whether the word matches a known hardware
     category, so return that judgement and let the agent phrase it.
+
+    The trade is named as a trade, not as a list of the shelves. Answering
+    "hum cement, tiles, tmt ki dukaan hain" describes an inventory table; a
+    shopkeeper says what line of business they are in.
     """
     import conversation as C
-    lines = sorted({s.get("family") for s in repo.load_catalogue()
-                    if s.get("family")})
-    sells = ", ".join(lines[:6])
+    kind = _shop_kind(repo, user)
     category = C._match_hardware_category(phrase or "")
     if category:
-        speak = (f"{phrase} hum abhi nahi rakhte. Humare paas {sells} hai.")
+        speak = f"{phrase} hum abhi nahi rakhte."
     else:
-        speak = (f"Hum {sells} ki dukaan hain, {phrase} jaisi cheez hum nahi "
-                 "rakhte.")
-    return {"found": False, "item": phrase, "shop_sells": lines,
+        speak = f"Hum {kind} ki dukaan hain, {phrase} hum nahi rakhte."
+    return {"found": False, "item": phrase, "shop_kind": kind,
+            "shop_sells": sorted({s.get("family") for s in repo.load_catalogue()
+                                  if s.get("family")}),
             "known_hardware_category": category,
             "stocks_this_kind": bool(category), "speak": speak}
 
@@ -275,6 +309,7 @@ def shop_profile(repo, user, args):
         "phone": user.get("phone") or "",
         "gstin": cfg.get("gstin") or "",
         "address": cfg.get("address") or "",
+        "shop_kind": _shop_kind(repo, user),
         "today": clock.today().isoformat(),
         "item_count": len(catalogue),
         "customer_count": len(accounts),
@@ -308,7 +343,7 @@ def check_stock(repo, user, args):
     if question:
         return _ask_which(question)
     if not sku:
-        return _not_stocked(repo, args.get("item"))
+        return _not_stocked(repo, user, args.get("item"))
     st = _stock_of(repo, sku)
     return {"found": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
             **st, "selling_rate": sku.get("selling_rate"),
@@ -320,7 +355,7 @@ def item_details(repo, user, args):
     if question:
         return _ask_which(question)
     if not sku:
-        return _not_stocked(repo, args.get("item"))
+        return _not_stocked(repo, user, args.get("item"))
     events = repo.events_for_sku(sku["sku_id"])
     cost = L.landed_cost_as_of(sku, events, clock.today())
     sales = sorted((e for e in events if e["type"] == "sale"),
@@ -689,7 +724,8 @@ def update_shop_profile(repo, user, args):
     The owner's name lives on the users row rather than in config, because auth
     reads it too, so this writes both sides and returns the merged result.
     """
-    fields = {k: str(args[k]).strip() for k in ("shop_name", "gstin", "address")
+    fields = {k: str(args[k]).strip()
+              for k in ("shop_name", "shop_type", "gstin", "address")
               if args.get(k) not in (None, "")}
     owner = str(args.get("owner") or args.get("name") or "").strip()
     if not fields and not owner:
@@ -861,7 +897,8 @@ TOOLS = {
                        "amount."),
     "update_shop_profile": (update_shop_profile,
                             "Dukaan ki details badlo: shop_name, owner, gstin, "
-                            "address. Yehi bill ke letterhead par chhapta hai."),
+                            "address, shop_type (jaise 'hardware' ya 'building "
+                            "material'). Yehi bill ke letterhead par chhapta hai."),
     "add_item": (add_item,
                  "Nayi item list mein daalo. args: name, cost_price (zaroori), "
                  "selling_rate, unit, brand."),
