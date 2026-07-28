@@ -21,7 +21,8 @@ Two things the runtime insists on, both learned the hard way:
   * the input must be exactly 16k mono s16le and paced in real time. Send it
     faster and the agent's VAD never sees a pause, so it never replies.
 """
-import asyncio, base64, io, os, subprocess, sys, wave
+import asyncio, base64, io, os, shutil, subprocess, sys, tempfile, wave
+from pathlib import Path
 import httpx
 from pydantic import SecretStr
 from sarvam_conv_ai_sdk import (AsyncSamvaadAgent, AsyncAudioInterface,
@@ -34,6 +35,23 @@ LINES = sys.argv[1:] or ["cement kitna hai"]
 # Which shop the agent should open. Override so write tests can run against a
 # throwaway tenant instead of a real shop's ledger.
 CALLER = os.environ.get("CHHOTU_PROBE_CALLER", "917006322772")
+
+
+def _redact(value):
+    """Keep SDK diagnostics useful without printing credentials."""
+    if isinstance(value, dict):
+        out = {}
+        for key, item in value.items():
+            lowered = str(key).lower()
+            if any(word in lowered for word in
+                   ("secret", "token", "authorization", "api_key", "shop_key")):
+                out[key] = "[redacted]" if item else ""
+            else:
+                out[key] = _redact(item)
+        return out
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    return value
 
 
 def transcribe(pcm: bytes) -> str:
@@ -50,7 +68,7 @@ def transcribe(pcm: bytes) -> str:
 
 
 def tts(text: str) -> bytes:
-    """Sarvam TTS, then ffmpeg to exactly 16k mono s16le.
+    """Sarvam TTS, then convert to exactly 16k mono s16le.
 
     bulbul:v3 rejects speech_sample_rate, and its wav is not 16k, so resample
     rather than trusting whatever comes back. The agent's VAD is unforgiving
@@ -64,11 +82,31 @@ def tts(text: str) -> bytes:
                    timeout=60)
     r.raise_for_status()
     wav = base64.b64decode(r.json()["audios"][0])
-    out = subprocess.run(
-        ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0",
-         "-ac", "1", "-ar", str(RATE), "-f", "s16le", "pipe:1"],
-        input=wav, capture_output=True, check=True)
-    return out.stdout
+    if shutil.which("ffmpeg"):
+        out = subprocess.run(
+            ["ffmpeg", "-hide_banner", "-loglevel", "error", "-i", "pipe:0",
+             "-ac", "1", "-ar", str(RATE), "-f", "s16le", "pipe:1"],
+            input=wav, capture_output=True, check=True)
+        return out.stdout
+
+    # macOS ships afconvert even when Homebrew/ffmpeg is unavailable. Convert
+    # to a 16 kHz mono WAV, then return only its PCM frames to the SDK.
+    if shutil.which("afconvert"):
+        with tempfile.TemporaryDirectory() as tmp:
+            source = Path(tmp) / "source.wav"
+            converted = Path(tmp) / "converted.wav"
+            source.write_bytes(wav)
+            subprocess.run(
+                ["afconvert", str(source), "-o", str(converted),
+                 "-f", "WAVE", "-d", f"LEI16@{RATE}", "-c", "1"],
+                capture_output=True, check=True)
+            with wave.open(str(converted), "rb") as audio:
+                if (audio.getframerate(), audio.getnchannels(),
+                        audio.getsampwidth()) != (RATE, 1, 2):
+                    raise RuntimeError("afconvert produced an unexpected format")
+                return audio.readframes(audio.getnframes())
+
+    raise RuntimeError("Install ffmpeg or use macOS afconvert for the SDK probe.")
 
 
 class ScriptedLine(AsyncAudioInterface):
@@ -195,7 +233,7 @@ async def main():
             print(f"TEXT> {d.get('type','')} {t}", flush=True)
     async def on_event(e):
         try:
-            detail = e.model_dump()
+            detail = _redact(e.model_dump())
         except Exception:
             detail = str(e)
         print(f"EVENT> {type(e).__name__} {detail}", flush=True)
@@ -220,4 +258,5 @@ async def main():
             continue
         print(f"AGENT[{n}]> {transcribe(bytes(turn))}", flush=True)
 
-asyncio.run(main())
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -20,6 +20,7 @@ import os
 import random
 import secrets
 import sys
+import urllib.parse
 import urllib.request
 
 BASE = os.environ.get("CHHOTU_URL", "https://chhotuai.vercel.app")
@@ -49,9 +50,10 @@ failures: list[str] = []
 
 
 def call(tool: str, **args) -> dict:
-    body = json.dumps({"tool": tool, "caller": CALLER, "secret": SECRET,
-                       "args": args}).encode()
-    req = urllib.request.Request(f"{BASE}/api/agent/tool", data=body,
+    query = urllib.parse.urlencode({"caller": CALLER, "secret": SECRET})
+    body = json.dumps(args).encode()
+    req = urllib.request.Request(
+        f"{BASE}/api/agent/tool/{tool}?{query}", data=body,
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         return json.loads(r.read())
@@ -198,9 +200,10 @@ def main() -> None:
           call("remove_item", item="Mistake Item").get("removed"))
 
     section("isolation and refusals")
-    other = json.dumps({"tool": "list_inventory", "caller": "+919999999999",
-                        "secret": SECRET, "args": {}}).encode()
-    req = urllib.request.Request(f"{BASE}/api/agent/tool", data=other,
+    other_query = urllib.parse.urlencode(
+        {"caller": "+919999999999", "secret": SECRET})
+    req = urllib.request.Request(
+        f"{BASE}/api/agent/tool/list_inventory?{other_query}", data=b"{}",
                                  headers={"Content-Type": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as r:
         unknown = json.loads(r.read())

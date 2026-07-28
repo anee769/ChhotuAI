@@ -9,11 +9,14 @@ far worse over a phone line than one that asks.
 from __future__ import annotations
 
 import json
+import io
 import sys
 import unittest
+from contextlib import redirect_stdout
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
+from fastapi.testclient import TestClient
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -135,6 +138,26 @@ class AgentToolTests(unittest.TestCase):
     def call(self, tool, **args):
         fn = agent.TOOLS[agent._ALIASES.get(tool, tool)][0]
         return fn(self.repo, USER, args)
+
+    def test_every_registered_tool_handles_a_safe_smoke_request(self):
+        """Exercise the function behind every manifest entry at least once.
+
+        Detailed assertions below cover the transactional tools. This catches
+        newly registered reporting/sending tools that reference a missing
+        repository method or return a non-JSON value before they ever reach
+        Samvaad.
+        """
+        import notify
+        with patch.object(notify, "send_summary",
+                          return_value={"sent_to": "+910000000000"}), \
+                patch.object(notify, "send_due_reminders",
+                             return_value={"sent": [], "skipped": [],
+                                           "as_of": "2026-07-26"}):
+            for name, (fn, _description) in agent.TOOLS.items():
+                with self.subTest(tool=name):
+                    out = fn(self.repo, USER, {})
+                    self.assertIsInstance(out, dict)
+                    json.dumps(out)
 
     # --- reads -----------------------------------------------------------
     def test_profile_counts_the_shop(self):
@@ -674,14 +697,27 @@ class DispatchTests(unittest.TestCase):
         import samvaad_config
         self.assertEqual(set(samvaad_config.EXAMPLES), set(agent.TOOLS))
         self.assertEqual(set(samvaad_config.PARAMS), set(agent.TOOLS))
+        for name, (example_args, _reply) in samvaad_config.EXAMPLES.items():
+            self.assertEqual(
+                set(example_args) - set(samvaad_config.PARAMS[name]), set(),
+                f"{name} example uses fields absent from its console body")
 
-    def test_generated_bodies_are_templates_not_fixed_values(self):
-        """A literal in the body freezes the tool: check_stock would look up
-        the same item forever."""
+    def test_checked_in_setup_guide_matches_the_generator(self):
+        import samvaad_config
+        rendered = io.StringIO()
+        with redirect_stdout(rendered):
+            samvaad_config.main()
+        guide = (Path(__file__).resolve().parent.parent
+                 / "docs" / "samvaad-setup.md")
+        self.assertEqual(guide.read_text(encoding="utf-8"), rendered.getvalue())
+
+    def test_generated_bodies_are_flat_agent_filled_templates(self):
+        """Nested args are not substituted by Samvaad during live calls."""
         import samvaad_config as SC
         for name, params in SC.PARAMS.items():
-            args = json.loads(SC.body(name))["args"]
+            args = json.loads(SC.body(name))
             self.assertEqual(set(args), set(params), name)
+            self.assertNotIn("args", args, name)
             for k, v in args.items():
                 self.assertEqual(v, "{{%s}}" % k, name)
 
@@ -691,8 +727,47 @@ class DispatchTests(unittest.TestCase):
         import samvaad_config as SC
         for name in SC.PARAMS:
             text = SC.curl(name)
+            self.assertIn(f"/api/agent/tool/{name}?", text)
+            self.assertIn("caller={{caller_number}}", text)
+            self.assertIn("shop_key={{shop_key}}", text)
+            self.assertIn("secret={{agent_secret}}", text)
             self.assertIn("X-Agent-Secret: {{SECRET_KEY}}", text)
             self.assertNotIn(os.environ["SAMVAAD_WEBHOOK_SECRET"], text)
+
+    def test_named_http_route_delivers_direct_arguments_for_every_tool(self):
+        """All 25 console tools must reach handle with the model's own args.
+
+        This is the transport regression that the in-memory function tests
+        cannot catch: the model composed correct fields, but the old nested
+        body delivered literal {{placeholders}} to production.
+        """
+        import samvaad_config as SC
+        client = TestClient(main.app)
+        received = []
+
+        def capture(tool, caller, args, key=""):
+            received.append((tool, caller, args, key))
+            return {"ok": True, "tool": tool, "received": args}
+
+        with patch.object(agent, "verify_secret", return_value=True), \
+                patch.object(agent, "handle", side_effect=capture):
+            for name, params in SC.PARAMS.items():
+                payload = {field: f"value-for-{field}" for field in params}
+                response = client.post(
+                    f"/api/agent/tool/{name}",
+                    params={"caller": "917006322772",
+                            "shop_key": "browser-shop-key",
+                            "secret": "test-agent-secret"},
+                    json=payload)
+                self.assertEqual(response.status_code, 200, name)
+                self.assertEqual(response.json()["received"], payload, name)
+
+        self.assertEqual([row[0] for row in received], list(SC.PARAMS))
+        for (name, caller, args, key), params in zip(
+                received, SC.PARAMS.values()):
+            self.assertEqual(caller, "917006322772", name)
+            self.assertEqual(key, "browser-shop-key", name)
+            self.assertEqual(set(args), set(params), name)
 
     def test_every_reply_carries_the_whole_payload_as_facts(self):
         """The console templates named fields out of the reply, so one field

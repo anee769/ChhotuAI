@@ -117,9 +117,10 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 # args the agent fills in per tool, and a trimmed real reply. Both matter: the
 # console's Body tab needs the arg shape, and seeing the reply is what stops an
 # agent inventing a field name that never existed.
-# What the agent must fill in at runtime, per tool. These go into the Body tab
-# as {{placeholders}}, NOT as example values: a literal "ppc cement" in the
-# body makes check_stock look up ppc cement forever, whatever the caller asked.
+# What the agent must fill in at runtime, per tool. These become TOP-LEVEL Body
+# fields. Samvaad can mark top-level fields as agent-filled, but nested fields
+# under an `args` object arrive as literal {{placeholders}} in a live call.
+# A literal "ppc cement" would likewise freeze check_stock to that one item.
 # Empty tuple means the tool needs no arguments.
 PARAMS = {
     "shop_profile": (),
@@ -244,26 +245,24 @@ EXAMPLES = {
         "potential_margin": 108850.0, "uncounted": [],
         "items": [{"name": "UltraTech PPC Cement 50kg", "qty": 190,
                    "unit": "bori", "value_at_cost": 73150.0}]}),
-    "price_quote": ({"items": [{"item": "ppc cement", "qty": 10}]}, {
+    "price_quote": ({"item": "ppc cement", "qty": 10, "unit": "bori"}, {
         "lines": [{"name": "UltraTech PPC Cement 50kg", "qty": 10,
                    "unit": "bori", "rate": 420, "amount": 4200.0}],
         "subtotal": 4200.0, "gst": 1176.0, "total": 5376.0, "unavailable": []}),
-    "record_sale": ({"items": [{"item": "ppc cement", "qty": 10, "unit": "bori",
-                                "rate": 420}],
-                     "payment": "credit", "customer": "Ramesh",
+    "record_sale": ({"item": "ppc cement", "qty": 10, "unit": "bori",
+                     "rate": 420, "payment": "credit", "customer": "Ramesh",
                      "payment_deadline": "2026-08-27",
                      "request_id": "<unique per confirmed action>"}, {
         "recorded": True, "total": 4200.0, "payment": "credit",
         "customer": "Ramesh Kumar",
         "stock_after": {"CEM_ULTRATECH_PPC": {"display": "190 bori"}},
         "receivable": {"amount": 4200.0, "deadline": "2026-08-27"}}),
-    "record_purchase": ({"items": [{"item": "ppc cement", "qty": 100,
-                                    "unit": "bori", "rate": 385}],
+    "record_purchase": ({"item": "ppc cement", "qty": 100,
+                         "unit": "bori", "rate": 385,
                          "request_id": "<unique per confirmed action>"}, {
         "recorded": True,
         "stock_after": {"CEM_ULTRATECH_PPC": {"display": "290 bori"}}}),
-    "stock_take": ({"items": [{"item": "ppc cement", "qty": 173,
-                               "unit": "bori"}],
+    "stock_take": ({"item": "ppc cement", "qty": 173, "unit": "bori",
                     "request_id": "<unique per confirmed action>"}, {
         "recorded": True,
         "stock_after": {"CEM_ULTRATECH_PPC": {"display": "173 bori"}}}),
@@ -284,8 +283,8 @@ EXAMPLES = {
         "changed": ["rate"]}),
     "remove_item": ({"item": "Test Probe Item"}, {
         "removed": True, "sku_id": "sku_84552642", "name": "Test Probe Item"}),
-    "send_bill": ({"customer": "Ramesh",
-                   "items": [{"item": "ppc cement", "qty": 10, "rate": 420}],
+    "send_bill": ({"customer": "Ramesh", "item": "ppc cement",
+                   "qty": 10, "rate": 420,
                    "payment": "cash"}, {
         "sent": True, "sent_to": "+919876543210", "total": 5376.0,
         "bill_no": "20260728-5376"}),
@@ -315,19 +314,15 @@ NEEDS_EXAMPLE = {
 
 
 def body(tool: str) -> str:
-    """The request body, with every argument left as a runtime placeholder.
+    """A flat request body whose fields are all agent-filled at runtime.
 
-    The console parses this into its Body tab, so whatever is written here
-    becomes the tool's shape. Real values would freeze it: check_stock would
-    look up "ppc cement" no matter what the caller actually asked for.
+    Do not nest these under `args`. The console's model composes the correct
+    tool arguments, but nested template variables are not substituted in live
+    conversations. The named backend route accepts this direct object.
     """
-    args = {name: "{{%s}}" % name for name in PARAMS.get(tool, ())}
-    return json.dumps({"tool": tool, "caller": "{{caller_number}}",
-                       "shop_key": "{{shop_key}}",
-                       # The Auth tab's secret does not resolve inside a live
-                       # conversation; an agent variable does.
-                       "secret": "{{agent_secret}}", "args": args},
-                      ensure_ascii=False)
+    return json.dumps(
+        {name: "{{%s}}" % name for name in PARAMS.get(tool, ())},
+        ensure_ascii=False)
 
 
 # The name of the stored secret in the console, not the secret itself. Pasting
@@ -337,7 +332,15 @@ SECRET_REF = "{{SECRET_KEY}}"
 
 
 def curl(tool: str) -> str:
-    return (f"curl -X POST {BASE}/api/agent/tool \\\n"
+    # Agent variables reliably resolve in the URL during live calls. Keeping
+    # identity out of the body leaves every body field available for the
+    # model's direct tool arguments. The stored header remains the preferred
+    # secret; agent_secret in the query is the live-console fallback.
+    url = (f"{BASE}/api/agent/tool/{tool}"
+           "?caller={{caller_number}}"
+           "&shop_key={{shop_key}}"
+           "&secret={{agent_secret}}")
+    return (f"curl -X POST '{url}' \\\n"
             f"  -H 'Content-Type: application/json' \\\n"
             f"  -H 'X-Agent-Secret: {SECRET_REF}' \\\n"
             f"  -d '{body(tool)}'")
@@ -355,7 +358,10 @@ def main() -> None:
     print("| --- | --- |")
     print("| `caller_number` | The calling number, for telephony sessions. |")
     print("| `shop_key` | `GET /api/voice/session` for the logged-in owner, "
-          "for in-app sessions. |\n")
+          "for in-app sessions. |")
+    print("| `agent_secret` | The same value as `SAMVAAD_WEBHOOK_SECRET`; "
+          "used as the live-console fallback when stored Auth is not "
+          "resolved. |\n")
     print("## Auth\n")
     print("The console will flag `X-Agent-Secret` as a credential sitting "
           "outside Auth. Take the suggestion: move it into the **Auth** "
@@ -379,8 +385,9 @@ def main() -> None:
           "prefills the header *name* — the placeholder is not a real secret, "
           "so set the value in Auth and delete the header afterwards.\n")
     print(f"## Tools ({len(tools)})\n")
-    print("All of them POST to the same endpoint and differ only in `tool` and "
-          "`args`. Every one runs **During conversation**, except "
+    print("Each tool POSTs to its own named path under `/api/agent/tool/`. "
+          "Identity is in the URL variables and the body contains only direct "
+          "agent-filled arguments. Every one runs **During conversation**, except "
           "`shop_profile`, which runs **On start**.\n")
     print("### Chaining rules\n")
     print("These matter more than any single tool's shape, because the agent "
@@ -410,17 +417,11 @@ def main() -> None:
     print("```json\n" + json.dumps(MISS_EXAMPLE, indent=2, ensure_ascii=False)
           + "\n```\n")
     print("### Which Body fields the agent fills in\n")
-    print("Four fields are the same on every tool and are NOT agent-filled:\n")
-    print("| Field | Value | Kind |")
-    print("| --- | --- | --- |")
-    print("| `tool` | the tool's own name | fixed text |")
-    print("| `caller` | `{{caller_number}}` | variable |")
-    print("| `shop_key` | `{{shop_key}}` | variable |")
-    print("| `secret` | `{{agent_secret}}` | variable |\n")
-    print("Everything inside `args` must be marked **agent-filled** (the gear "
-          "icon on the field). Left as literal text, the console sends the "
-          "placeholder itself: the transcript shows the model composing the "
-          "right values while `{\"item\": \"{{item}}\"}` goes over the wire.\n")
+    print("The body must contain only the fields listed below, directly at the "
+          "top level. Mark every one **agent-filled** using the gear icon. Do "
+          "not create an `args` object. Nested fields were the failure: the "
+          "model composed the right value while "
+          "`{\"args\":{\"item\":\"{{item}}\"}}` went over the wire unchanged.\n")
     for t in tools:
         names = PARAMS.get(t["name"], ())
         if not names:
