@@ -286,7 +286,10 @@ def body(tool: str) -> str:
     """
     args = {name: "{{%s}}" % name for name in PARAMS.get(tool, ())}
     return json.dumps({"tool": tool, "caller": "{{caller_number}}",
-                       "shop_key": "{{shop_key}}", "args": args},
+                       "shop_key": "{{shop_key}}",
+                       # The Auth tab's secret does not resolve inside a live
+                       # conversation; an agent variable does.
+                       "secret": "{{agent_secret}}", "args": args},
                       ensure_ascii=False)
 
 

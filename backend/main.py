@@ -369,8 +369,16 @@ def agent_tool(request: Request,
     # free-form header, so the same secret may arrive either way. Accept both
     # rather than forcing the credential to live in a plain header field, which
     # is where the console warns against putting it.
+    # Third accepted position: the request body. The console's secret store
+    # resolves in its editor but NOT in a running conversation, where the
+    # header arrives empty every time. Agent variables do resolve live, so a
+    # secret passed as {{agent_secret}} in the body is the only route that
+    # currently works end to end. Same strength as the header over TLS; the
+    # difference is only where the console keeps it.
+    body_secret = str(payload.get("secret") or "").strip()
     supplied = (x_agent_secret
-                or (authorization or "").removeprefix("Bearer ").strip())
+                or (authorization or "").removeprefix("Bearer ").strip()
+                or (body_secret if "{{" not in body_secret else ""))
     # Logged before the secret check, not after. A rejected call is the failure
     # that most needs a trace, and it was the one leaving no trace at all: the
     # caller heard "entry nahi ho payi" and the server recorded a bare 200.
@@ -400,7 +408,8 @@ def agent_tool(request: Request,
             args = None
     if not isinstance(args, dict):
         args = {k: v for k, v in payload.items()
-                if k not in ("tool", "caller", "From", "shop_key", "args")}
+                if k not in ("tool", "caller", "From", "shop_key", "args",
+                             "secret")}
     # Log the SHAPE of every agent call, never the values: debugging a voice
     # agent from the outside is guesswork without knowing what actually
     # arrived, and "it errored" is all the caller ever hears.
