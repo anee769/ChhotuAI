@@ -588,6 +588,37 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("update_shop_profile")
         self.assertFalse(out["updated"])
 
+    def test_update_item_matches_a_unique_canonical_substring(self):
+        out = self.call("update_item", item="UltraTech PPC",
+                        selling_rate=450)
+        self.assertTrue(out["updated"])
+        self.assertEqual(out["sku_id"], CEMENT_PPC)
+        self.assertEqual(
+            self.repo.sku(CEMENT_PPC)["attributes"]["selling_rate"], 450)
+
+    def test_update_item_matches_sku_id_passed_as_item(self):
+        out = self.call("update_item", item="cem_ultratech_ppc",
+                        selling_rate=451)
+        self.assertTrue(out["updated"])
+        self.assertEqual(out["sku_id"], CEMENT_PPC)
+
+    def test_update_item_explicit_sku_id_wins_over_conflicting_item(self):
+        out = self.call("update_item", item="UltraTech OPC 53",
+                        sku_id="cem_ultratech_ppc", selling_rate=452)
+        self.assertTrue(out["updated"])
+        self.assertEqual(out["sku_id"], CEMENT_PPC)
+        self.assertEqual(
+            self.repo.sku(CEMENT_PPC)["attributes"]["selling_rate"], 452)
+        self.assertNotEqual(
+            self.repo.sku("CEM_ULTRATECH_OPC53")
+            .get("attributes", {}).get("selling_rate"), 452)
+
+    def test_update_item_does_not_guess_an_ambiguous_substring(self):
+        out = self.call("update_item", item="UltraTech", selling_rate=450)
+        self.assertFalse(out["updated"])
+        self.assertIn("needs", out)
+        self.assertGreaterEqual(len(out["needs"]["options"]), 2)
+
     def test_duplicate_item_is_not_added_twice(self):
         out = self.call("add_item", name="ppc cement", cost_price=400)
         self.assertFalse(out["added"])

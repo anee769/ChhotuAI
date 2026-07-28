@@ -1173,9 +1173,31 @@ def update_item(repo, user, args):
     re-added, and because onboarding can leave a product with no name at all,
     which the agent then reads out as silence.
     """
-    sku, question = _find_sku(repo, args.get("item") or args.get("sku_id"))
-    if not sku and args.get("sku_id"):
-        sku = repo.sku(args["sku_id"])          # exact id beats any matching
+    requested_id = str(args.get("sku_id") or "").strip()
+    sku = None
+    if requested_id:
+        # sku_id is an identifier, not a fuzzy product description. Resolve it
+        # first and case-insensitively; when both item and sku_id arrive, the
+        # explicit id must win.
+        sku = repo.sku(requested_id)
+        if not sku:
+            sku = next(
+                (row for row in repo.load_catalogue()
+                 if str(row.get("sku_id") or "").casefold()
+                 == requested_id.casefold()),
+                None)
+    lookup = args.get("item") or (requested_id if not sku else "")
+    question = None
+    if not sku:
+        sku, question = _find_sku(repo, lookup)
+    print(
+        "[agent] update_item lookup "
+        f"item={str(args.get('item') or '')[:100]!r} "
+        f"sku_id={requested_id[:100]!r} "
+        f"matched={(sku or {}).get('sku_id')!r} "
+        f"ambiguous={bool(question)}",
+        flush=True,
+    )
     if question and not sku:
         return {"updated": False, **_ask_which(question)}
     if not sku:
@@ -1201,6 +1223,11 @@ def update_item(repo, user, args):
         return {"updated": False, "needs": {"field": "what"},
                 "speak": "Kya badalna hai: naam, unit, cost ya rate?"}
     repo.upsert_sku(patch)
+    print(
+        f"[agent] update_item saved sku_id={sku['sku_id']!r} "
+        f"changed={changed!r}",
+        flush=True,
+    )
     return {"updated": True, "sku_id": sku["sku_id"],
             "name": patch.get("canonical"), "changed": changed,
             "speak": f"{patch.get('canonical')} ka {', '.join(changed)} "

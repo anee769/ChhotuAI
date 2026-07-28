@@ -286,6 +286,37 @@ def match(phrase: str, catalogue: list, learning: dict, flow: str = "live_sale")
     alias_idx = build_alias_index(catalogue, learning)
     gate = GATES.get(flow, 0.8)
 
+    # Stage 1b — deterministic identifiers and canonical-name substrings.
+    # Administrative tools often send a SKU id copied from list_inventory,
+    # while the voice model commonly shortens a canonical name ("UltraTech
+    # PPC" for "UltraTech PPC Cement 50kg"). Neither should need fuzzy or LLM
+    # matching. Only accept a substring when it identifies exactly one SKU;
+    # generic fragments such as "cement" must still be disambiguated.
+    raw = str(phrase or "").strip().casefold()
+    id_hits = [sku_id for sku_id in by_id if sku_id.casefold() == raw]
+    if len(id_hits) == 1:
+        return {"status": "matched", "sku_id": id_hits[0],
+                "confidence": 1.0, "assumed": {}, "stage": "sku_id"}
+
+    if norm:
+        substring_hits = []
+        padded_query = f" {norm} "
+        for sku in catalogue:
+            names = [sku.get("canonical") or "", *(sku.get("aliases") or [])]
+            candidate_norms = {normalize(str(name)) for name in names if name}
+            if any(
+                candidate
+                and (f" {norm} " in f" {candidate} "
+                     or f" {candidate} " in padded_query)
+                for candidate in candidate_norms
+            ):
+                substring_hits.append(sku["sku_id"])
+        substring_hits = list(dict.fromkeys(substring_hits))
+        if len(substring_hits) == 1:
+            return {"status": "matched", "sku_id": substring_hits[0],
+                    "confidence": 1.0, "assumed": {},
+                    "stage": "unique_substring"}
+
     # Stage 2 — exact alias: whole phrase, then multiword-substring (learned
     # phrases like "chhota patla rod"), then single-token scan.
     hit_ids = None
