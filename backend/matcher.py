@@ -70,6 +70,7 @@ def build_alias_index(catalogue: list, learning: dict) -> dict:
 # ---------------------------------------------------------------------------
 def extract_attrs(phrase: str) -> dict:
     p = normalize(phrase)
+    compact = re.sub(r"\s+", "", p)
     attrs: dict = {}
     # diameter: require the mm unit so a quantity digit ("2 ton") isn't grabbed.
     m = re.search(r"\b(\d{1,2})\s*m\s?m\b", p)
@@ -89,7 +90,10 @@ def extract_attrs(phrase: str) -> dict:
     elif re.search(r"\b500\s*d\b|500d", p):
         attrs["grade"] = "Fe500D"
     # brand
-    for hint, brand in BRAND_HINTS.items():
+    for hint, brand in {
+        **BRAND_HINTS,
+        "अल्ट्राटेक": "UltraTech",
+    }.items():
         if re.search(rf"\b{hint}\b", p):
             attrs["brand"] = brand
             break
@@ -98,7 +102,7 @@ def extract_attrs(phrase: str) -> dict:
         attrs["type"] = "OPC 53"
     elif re.search(r"opc\s*43|43\s*grade", p):
         attrs["type"] = "OPC 43"
-    elif re.search(r"\bppc\b", p):
+    elif re.search(r"\bppc\b", p) or "पीपीसी" in compact:
         attrs["type"] = "PPC"
     # pipe class
     mc = re.search(r"class\s*(\d)", p)

@@ -16,8 +16,8 @@ transcribe it back with Sarvam STT.
 Needs SAMVAAD_API_KEY and SARVAM_API_KEY in .env, and ffmpeg on PATH.
 
 Two things the runtime insists on, both learned the hard way:
-  * version=1 is required while the agent is a DRAFT. Without it the signed
-    URL endpoint 404s with "App not found for the interaction".
+  * Set SAMVAAD_AGENT_VERSION to reproduce a committed version. Leave it
+    unset to test the current unversioned/draft configuration.
   * the input must be exactly 16k mono s16le and paced in real time. Send it
     faster and the agent's VAD never sees a pause, so it never replies.
 """
@@ -32,6 +32,8 @@ from sarvam_conv_ai_sdk.messages.config import UserIdentifierType as UIT
 RATE = 16000
 FRAME = int(RATE * 0.02) * 2          # 20ms of 16-bit mono
 LINES = sys.argv[1:] or ["cement kitna hai"]
+TEXT_MODE = os.environ.get("CHHOTU_PROBE_TEXT", "").strip().lower() in (
+    "1", "true", "yes")
 # Which shop the agent should open. Override so write tests can run against a
 # throwaway tenant instead of a real shop's ledger.
 CALLER = os.environ.get("CHHOTU_PROBE_CALLER", "917006322772")
@@ -52,6 +54,21 @@ def _redact(value):
     if isinstance(value, list):
         return [_redact(item) for item in value]
     return value
+
+
+class DiagnosticSamvaadAgent(AsyncSamvaadAgent):
+    """Expose server tool events that SDK 1.0.21 currently cannot parse.
+
+    The package declares ``server.event.tool_call`` in its enum but omits that
+    event from the parser union, so the normal event callback never sees it.
+    Printing the redacted raw event here distinguishes model-proposed
+    arguments from the HTTP tool result.
+    """
+
+    async def _route_message(self, message):
+        if str(message.get("type") or "") == "server.event.tool_call":
+            print(f"TOOL_EVENT> {_redact(message)}", flush=True)
+        await super()._route_message(message)
 
 
 def transcribe(pcm: bytes) -> str:
@@ -204,11 +221,15 @@ class ScriptedLine(AsyncAudioInterface):
 
 
 async def main():
+    configured_version = str(
+        os.environ.get("SAMVAAD_AGENT_VERSION") or "").strip()
     cfg = InteractionConfig(
         org_id="019f9945-ebf7-77f9-b60b-dc1963284e44",
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
-        version=4,                                   # the committed version under test
+        # Omit to use the latest published version. Set the env variable only
+        # when reproducing an older committed agent configuration.
+        version=int(configured_version) if configured_version else None,
         user_identifier=CALLER,                      # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
@@ -238,21 +259,34 @@ async def main():
             detail = str(e)
         print(f"EVENT> {type(e).__name__} {detail}", flush=True)
 
-    print("rendering speech...", flush=True)
-    clips = [tts(t) for t in LINES]
-    line = ScriptedLine(clips)
-    agent = AsyncSamvaadAgent(api_key=SecretStr(os.environ["SAMVAAD_API_KEY"]),
-                              config=cfg, audio_interface=line,
-                              text_callback=on_text,
-                              transcript_callback=on_transcript,
-                              event_callback=on_event)
+    if TEXT_MODE:
+        print("using exact text input...", flush=True)
+        line = None
+    else:
+        print("rendering speech...", flush=True)
+        clips = [tts(t) for t in LINES]
+        line = ScriptedLine(clips)
+    agent = DiagnosticSamvaadAgent(
+        api_key=SecretStr(os.environ["SAMVAAD_API_KEY"]),
+        config=cfg, audio_interface=line,
+        text_callback=on_text,
+        transcript_callback=on_transcript,
+        event_callback=on_event)
     await agent.start()
     await agent.wait_for_connect()
     print("CONNECTED", flush=True)
-    while line._task and not line._task.done():
-        await asyncio.sleep(0.5)
-    await asyncio.sleep(1.0)
+    if TEXT_MODE:
+        for text in LINES:
+            print(f"CALLER_TEXT> {text}", flush=True)
+            await agent.send_text(text)
+            await asyncio.sleep(15)
+    else:
+        while line._task and not line._task.done():
+            await asyncio.sleep(0.5)
+        await asyncio.sleep(1.0)
     await agent.stop()
+    if TEXT_MODE:
+        return
     for n, turn in enumerate(line.turns):
         if len(turn) < RATE:          # under a second is not speech
             continue

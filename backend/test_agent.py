@@ -219,6 +219,62 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(out["gst_rate"], 28)
         self.assertIsNotNone(out["landed_cost"])
 
+    def test_every_product_tool_accepts_substring_and_sku_id(self):
+        """A SKU returned by one tool must be valid input to every next tool."""
+        import notify
+
+        cases = {
+            "check_stock": lambda out: out.get("found")
+            and out.get("sku_id") == CEMENT_PPC,
+            "item_details": lambda out: out.get("found")
+            and out.get("sku_id") == CEMENT_PPC,
+            "price_quote": lambda out: bool(out.get("lines"))
+            and out["lines"][0]["sku_id"] == CEMENT_PPC,
+            "record_sale": lambda out: out.get("recorded"),
+            "record_purchase": lambda out: out.get("recorded"),
+            "stock_take": lambda out: out.get("recorded"),
+            "update_item": lambda out: out.get("updated")
+            and out.get("sku_id") == CEMENT_PPC,
+            # Opening stock deliberately prevents deletion; returning this id
+            # proves resolution reached the safety rule rather than "not found".
+            "remove_item": lambda out: out.get("removed") is False
+            and out.get("sku_id") == CEMENT_PPC,
+            "send_bill": lambda out: out.get("sent"),
+        }
+
+        for reference_field, reference in (
+                ("item", "UltraTech PPC"),
+                ("sku_id", CEMENT_PPC.lower())):
+            for tool, assertion in cases.items():
+                with self.subTest(reference=reference_field, tool=tool):
+                    repo = FakeRepo()
+                    _opening(repo, CEMENT_PPC, 200, "bori", 385)
+                    main._CURRENT.set(repo)
+                    main._CURRENT_USER.set(USER)
+                    args = {
+                        reference_field: reference,
+                        "qty": 1,
+                        "unit": "bori",
+                        "rate": 420,
+                        "payment": "cash",
+                        "request_id": f"audit-{reference_field}-{tool}",
+                    }
+                    if tool == "send_bill":
+                        repo.upsert_customer("9876543210", "Audit Customer")
+                        args["customer"] = "Audit Customer"
+                    fn = agent.TOOLS[tool][0]
+                    with patch.object(
+                            notify, "send_bill",
+                            return_value={"total": 420,
+                                          "sent_to": "+919876543210"}):
+                        out = fn(repo, USER, args)
+                    self.assertTrue(assertion(out), (tool, reference, out))
+
+    def test_search_items_accepts_an_exact_sku_id(self):
+        out = self.call("search_items", query=CEMENT_PPC.lower())
+        self.assertTrue(any(row["sku_id"] == CEMENT_PPC
+                            for row in out["items"]), out)
+
     def test_search_falls_back_to_fuzzy(self):
         self.assertGreater(self.call("search_items", query="tiscon")["count"], 0)
 
@@ -528,6 +584,19 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(out["recorded"])
         self.assertEqual(out["outstanding"], 3000)
 
+    def test_customer_tools_accept_id_phone_and_unique_name_substring(self):
+        customer = self.repo.upsert_customer("9876543210", "Ramesh Kumar")
+        self.call("record_sale", item="ppc cement", qty=10, rate=420,
+                  payment="credit", customer="Ramesh Kumar")
+        for args in (
+                {"customer_id": customer["customer_id"]},
+                {"customer_phone": "9876543210"},
+                {"name": "Ramesh"}):
+            with self.subTest(args=args):
+                out = self.call("customer_account", **args)
+                self.assertTrue(out["found"], out)
+                self.assertEqual(out["customer_id"], customer["customer_id"])
+
     def test_overpayment_is_refused(self):
         self.repo.upsert_customer("9876543210", "Ramesh")
         self.call("record_sale", items=[{"item": "ppc cement", "qty": 1,
@@ -595,6 +664,12 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(out["sku_id"], CEMENT_PPC)
         self.assertEqual(
             self.repo.sku(CEMENT_PPC)["attributes"]["selling_rate"], 450)
+
+    def test_update_item_understands_hindi_ppc_acronym_and_brand(self):
+        out = self.call("update_item", item="अल्ट्राटेक पी पी सी सीमेंट",
+                        unit="bori")
+        self.assertTrue(out["updated"])
+        self.assertEqual(out["sku_id"], CEMENT_PPC)
 
     def test_update_item_matches_sku_id_passed_as_item(self):
         out = self.call("update_item", item="cem_ultratech_ppc",
@@ -799,6 +874,50 @@ class DispatchTests(unittest.TestCase):
             self.assertEqual(caller, "917006322772", name)
             self.assertEqual(key, "browser-shop-key", name)
             self.assertEqual(set(args), set(params), name)
+
+    def test_bad_agent_secret_is_a_structured_refusal_not_transport_error(self):
+        client = TestClient(main.app)
+        with patch.object(agent, "verify_secret", return_value=False), \
+                patch.object(agent, "handle") as handle:
+            response = client.post(
+                "/api/agent/tool/update_item",
+                params={"caller": "917006322772",
+                        "secret": "{{agent_secret}}"},
+                json={"item": "UltraTech PPC Cement 50kg",
+                      "selling_rate": 50})
+        self.assertEqual(response.status_code, 200)
+        out = response.json()
+        self.assertFalse(out["ok"])
+        self.assertFalse(out["authorised"])
+        self.assertFalse(out["updated"])
+        self.assertEqual(out["error"], "bad_agent_secret")
+        self.assertEqual(
+            json.loads(out["facts"])["error"], "bad_agent_secret")
+        handle.assert_not_called()
+
+    def test_named_route_debug_trace_shows_the_actual_http_arguments(self):
+        client = TestClient(main.app)
+        result = {
+            "ok": True, "updated": True, "tool": "update_item",
+            "authorised": True, "facts": "{}",
+        }
+        with patch.object(agent, "verify_secret", return_value=True), \
+                patch.object(agent, "handle", return_value=result):
+            response = client.post(
+                "/api/agent/tool/update_item",
+                params={"caller": "917006322772", "secret": "valid",
+                        "debug": "1"},
+                json={"item": "UltraTech PPC", "selling_rate": 50,
+                      "sku_id": "{{sku_id}}"})
+        self.assertEqual(response.status_code, 200)
+        trace = response.json()["_trace"]
+        self.assertEqual(
+            trace["received_args"],
+            {"item": "UltraTech PPC", "selling_rate": 50})
+        self.assertTrue(trace["caller_present"])
+        self.assertNotIn("secret", json.dumps(trace))
+        self.assertEqual(
+            json.loads(response.json()["facts"])["_trace"], trace)
 
     def test_every_reply_carries_the_whole_payload_as_facts(self):
         """The console templates named fields out of the reply, so one field

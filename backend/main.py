@@ -347,6 +347,29 @@ def cron_reminders(request: Request):
 # ---------------------------------------------------------------------------
 # Voice agent (Samvaad) tool webhook
 # ---------------------------------------------------------------------------
+def _agent_auth_refusal(error: str = "bad_agent_secret") -> dict:
+    """Return a tool-level refusal instead of an opaque HTTP error.
+
+    Samvaad treats non-2xx HTTP responses as transport failures and the model
+    may improvise a reason such as "item not found". A 200 here does not grant
+    access: no tenant is opened and no tool runs. It only makes the refusal
+    available to the model in the same structured shape as every other tool.
+    """
+    import agent
+    out = {
+        "ok": False,
+        "authorised": False,
+        "error": error,
+        "recorded": False,
+        "added": False,
+        "updated": False,
+        "sent": False,
+        "found": False,
+        "speak": "Agent authentication configure nahi hai. Koi entry nahi hui.",
+    }
+    return {**out, "facts": agent._facts(out)}
+
+
 @app.post("/api/agent/tool")
 def agent_tool(request: Request,
                payload: dict = Body(...),
@@ -398,9 +421,11 @@ def agent_tool(request: Request,
     print(line, flush=True)
     try:
         if not agent.verify_secret(supplied):
-            raise HTTPException(403, "Bad agent secret.")
+            return _agent_auth_refusal()
     except agent.AgentError as e:
-        raise HTTPException(503, str(e))
+        print(f"[agent] auth configuration failed: {type(e).__name__}",
+              flush=True)
+        return _agent_auth_refusal("agent_secret_not_configured")
     args = payload.get("args")
     if isinstance(args, str):
         # The console's Body tab types `args` as JSON but can send it as a
@@ -461,14 +486,33 @@ def agent_tool_named(tool_name: str, request: Request,
           f"args={json.dumps(payload, ensure_ascii=False)[:300]}", flush=True)
     try:
         if not agent.verify_secret(supplied):
-            raise HTTPException(403, "Bad agent secret.")
+            return _agent_auth_refusal()
     except agent.AgentError as e:
-        raise HTTPException(503, str(e))
+        print(f"[agent] auth configuration failed: {type(e).__name__}",
+              flush=True)
+        return _agent_auth_refusal("agent_secret_not_configured")
     args = payload.get("args") if isinstance(payload.get("args"), dict) else payload
-    return agent.handle(tool_name, q.get("caller") or q.get("from") or "",
-                        {k: v for k, v in (args or {}).items()
-                         if k not in ("tool", "caller", "secret", "shop_key")},
-                        key=q.get("shop_key") or "")
+    clean_args = {
+        k: v for k, v in (args or {}).items()
+        if k not in ("tool", "caller", "secret", "shop_key")
+    }
+    result = agent.handle(
+        tool_name, q.get("caller") or q.get("from") or "",
+        clean_args, key=q.get("shop_key") or "")
+    if str(q.get("debug") or "").lower() in ("1", "true", "yes"):
+        # Opt-in and sanitised. This is intentionally absent from normal tool
+        # replies, but lets a dashboard test prove what crossed the HTTP
+        # boundary rather than relying on the model's tool card.
+        result["_trace"] = {
+            "tool": tool_name,
+            "received_args": agent._scrub({
+                k: v for k, v in clean_args.items() if k != "request_id"
+            }),
+            "caller_present": bool(q.get("caller") or q.get("from")),
+            "shop_key_present": bool(q.get("shop_key")),
+        }
+        result["facts"] = agent._facts(result)
+    return result
 
 
 @app.get("/api/agent/tools")

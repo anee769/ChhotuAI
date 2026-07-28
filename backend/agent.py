@@ -181,6 +181,14 @@ def _number(value):
     return total if seen and total else None
 
 
+def _bounded_int(value, default: int, low: int = 1, high: int = 365) -> int:
+    """Parse spoken/text counts without allowing pathological query ranges."""
+    number = _number(value)
+    if number is None:
+        return default
+    return max(low, min(int(number), high))
+
+
 def _g(n) -> str:
     return f"{float(n or 0):g}"
 
@@ -318,6 +326,11 @@ def _find_sku(repo, phrase: str):
     return None, None
 
 
+def _item_ref(args: dict) -> str:
+    """Prefer a tool-chained SKU id, otherwise use the caller's item words."""
+    return str(args.get("sku_id") or args.get("item") or "").strip()
+
+
 # What kind of shop this is, in the words a shopkeeper would use. Inferred from
 # the registered name so it works without extra setup, and overridable in
 # config for the shop whose name gives nothing away ("Sharma & Sons").
@@ -438,10 +451,12 @@ def _lines(args: dict) -> list:
             rows = json.loads(rows)
         except (ValueError, TypeError):
             rows = [{"item": rows}]
-    if not rows and args.get("item"):
-        rows = [{"item": args.get("item"), "qty": args.get("qty"),
+    if not rows and (args.get("item") or args.get("sku_id")):
+        rows = [{"item": args.get("item"), "sku_id": args.get("sku_id"),
+                 "qty": args.get("qty"),
                  "unit": args.get("unit"), "rate": args.get("rate")}]
-    return [r for r in (rows or []) if isinstance(r, dict) and r.get("item")]
+    return [r for r in (rows or [])
+            if isinstance(r, dict) and (r.get("item") or r.get("sku_id"))]
 
 
 def _ask_which(question: dict) -> dict:
@@ -451,12 +466,28 @@ def _ask_which(question: dict) -> dict:
 
 
 def _customer_by_name(repo, name: str):
-    """Returns (account, options). Owners speak names, never customer ids."""
-    want = (name or "").strip().lower()
+    """Resolve an exact id/phone, exact name, or unique name substring."""
+    want = str(name or "").strip().casefold()
     if not want:
         return None, []
     accounts = crm.accounts(repo)
-    exact = [a for a in accounts if (a.get("name") or "").lower() == want]
+    exact_id = [
+        a for a in accounts
+        if str(a.get("customer_id") or "").casefold() == want
+    ]
+    if len(exact_id) == 1:
+        return exact_id[0], []
+    digits = "".join(c for c in want if c.isdigit())
+    if len(digits) >= 7:
+        exact_phone = [
+            a for a in accounts
+            if "".join(c for c in str(a.get("phone") or "") if c.isdigit())
+            .endswith(digits[-10:])
+        ]
+        if len(exact_phone) == 1:
+            return exact_phone[0], []
+    exact = [a for a in accounts
+             if str(a.get("name") or "").casefold() == want]
     if len(exact) == 1:
         return exact[0], []
     part = [a for a in accounts if want in (a.get("name") or "").lower()]
@@ -464,6 +495,11 @@ def _customer_by_name(repo, name: str):
         return part[0], []
     return None, [{"name": a.get("name"), "phone": a.get("phone"),
                    "outstanding": a["outstanding"]} for a in (exact or part)[:5]]
+
+
+def _customer_ref(args: dict) -> str:
+    return str(args.get("customer_id") or args.get("customer_phone")
+               or args.get("customer") or args.get("name") or "").strip()
 
 
 def _ask_which_customer(options: list) -> dict:
@@ -482,7 +518,8 @@ def _period_range(args: dict):
     if args.get("start") and args.get("end"):
         return L._d(args["start"]), L._d(args["end"])
     if args.get("days"):
-        return end - timedelta(days=max(int(args["days"]), 1) - 1), end
+        return end - timedelta(
+            days=_bounded_int(args["days"], 1, high=3650) - 1), end
     period = (args.get("period") or "day").lower()
     if period in ("week", "weekly", "hafta", "hafte"):
         return end - timedelta(days=6), end
@@ -550,13 +587,14 @@ def list_inventory(repo, user, args):
 
 
 def check_stock(repo, user, args):
-    if not (args.get("item") or "").strip():
+    ref = _item_ref(args)
+    if not ref:
         return _no_item_named()
-    sku, question = _find_sku(repo, args.get("item"))
+    sku, question = _find_sku(repo, ref)
     if question:
         return _ask_which(question)
     if not sku:
-        return _not_stocked(repo, user, args.get("item"))
+        return _not_stocked(repo, user, ref)
     st = _stock_of(repo, sku)
     return {"found": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
             **st, "selling_rate": _selling_rate(sku),
@@ -564,13 +602,14 @@ def check_stock(repo, user, args):
 
 
 def item_details(repo, user, args):
-    if not (args.get("item") or "").strip():
+    ref = _item_ref(args)
+    if not ref:
         return _no_item_named()
-    sku, question = _find_sku(repo, args.get("item"))
+    sku, question = _find_sku(repo, ref)
     if question:
         return _ask_which(question)
     if not sku:
-        return _not_stocked(repo, user, args.get("item"))
+        return _not_stocked(repo, user, ref)
     events = repo.events_for_sku(sku["sku_id"])
     cost = L.landed_cost_as_of(sku, events, clock.today())
     sales = sorted((e for e in events if e["type"] == "sale"),
@@ -614,7 +653,8 @@ def search_items(repo, user, args):
 
     for form in forms:
         for sku in catalogue:
-            blob = " ".join([sku.get("canonical") or "", sku.get("brand") or "",
+            blob = " ".join([sku.get("sku_id") or "",
+                             sku.get("canonical") or "", sku.get("brand") or "",
                              sku.get("family") or "",
                              " ".join(str(a) for a in (sku.get("aliases") or []))
                              ]).lower()
@@ -647,7 +687,8 @@ def low_stock(repo, user, args):
     """Uses the same velocity model as the dashboard, so the voice answer and
     the screen never disagree about what is running out."""
     import main
-    rows = main._low_stock_items(repo, limit=int(args.get("limit") or 8))
+    rows = main._low_stock_items(
+        repo, limit=_bounded_int(args.get("limit"), 8, high=100))
     if not rows:
         return {"count": 0, "items": [], "speak": "Koi item kam nahi hai."}
     said = ", ".join(f"{r['canonical']} khatam ho gaya" if r.get("out_of_stock")
@@ -729,7 +770,7 @@ def top_items(repo, user, args):
     # "sabse zyada kamai kis item se" is a margin question, not a revenue one.
     rows.sort(key=lambda r: r["margin" if order == "margin" else "revenue"],
               reverse=not slow)
-    rows = rows[:int(args.get("limit") or 5)]
+    rows = rows[:_bounded_int(args.get("limit"), 5, high=100)]
     return {"from": start.isoformat(), "to": end.isoformat(), "items": rows,
             "speak": ", ".join(f"{r['name']} {_say_number(r['revenue'])} rupaye"
                                for r in rows) or "Is period mein koi sale nahi."}
@@ -746,12 +787,13 @@ def list_customers(repo, user, args):
 
 
 def customer_account(repo, user, args):
-    acc, options = _customer_by_name(repo, args.get("name") or args.get("customer"))
+    ref = _customer_ref(args)
+    acc, options = _customer_by_name(repo, ref)
     if not acc:
         if options:
             return _ask_which_customer(options)
         return {"found": False,
-                "speak": f"{args.get('name')} naam ka koi customer nahi mila."}
+                "speak": f"{ref} naam ka koi customer nahi mila."}
     return {"found": True, "customer_id": acc["customer_id"], "name": acc.get("name"),
             "phone": acc.get("phone"), "outstanding": acc["outstanding"],
             "total_credit": acc["total_credit"], "total_paid": acc["total_paid"],
@@ -768,8 +810,9 @@ def customer_account(repo, user, args):
 
 
 def dues(repo, user, args):
-    rows = crm.due_receivables(repo, clock.today(),
-                               days_before=int(args.get("days_before", 7)))
+    rows = crm.due_receivables(
+        repo, clock.today(),
+        days_before=_bounded_int(args.get("days_before"), 7, low=0, high=365))
     if not rows:
         return {"count": 0, "dues": [], "speak": "Abhi koi udhaar due nahi hai."}
     out = [{"name": r["customer"].get("name"), "phone": r["customer"].get("phone"),
@@ -782,7 +825,7 @@ def dues(repo, user, args):
 
 
 def recent_activity(repo, user, args):
-    n = int(args.get("limit") or 8)
+    n = _bounded_int(args.get("limit"), 8, high=100)
     by = {s["sku_id"]: s for s in repo.load_catalogue()}
     events = sorted(repo.all_events(),
                     key=lambda e: (e.get("occurred_on") or "",
@@ -839,11 +882,12 @@ def price_quote(repo, user, args):
     lines, unknown = [], []
     subtotal = gst_total = 0.0
     for row in _lines(args):
-        sku, question = _find_sku(repo, row.get("item"))
+        ref = _item_ref(row)
+        sku, question = _find_sku(repo, ref)
         if question:
             return _ask_which(question)
         if not sku:
-            unknown.append(row.get("item"))
+            unknown.append(ref)
             continue
         qty = _number(row.get("qty")) or 0
         unit = row.get("unit") or sku.get("default_unit")
@@ -899,15 +943,16 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
                             "affected_stock": {}}}
     items, unknown = [], []
     for row in _lines(args):
-        sku, question = _find_sku(repo, row.get("item"))
+        ref = _item_ref(row)
+        sku, question = _find_sku(repo, ref)
         if question:
             return {"recorded": False, **_ask_which(question)}
         if not sku:
-            unknown.append(row.get("item"))
+            unknown.append(ref)
             continue
         if _number(row.get("qty")) is None:
             return {"recorded": False,
-                    "needs": {"said": row.get("item"), "field": "qty"},
+                    "needs": {"said": ref, "field": "qty"},
                     "speak": f"{sku['canonical']} kitna?"}
         unit = row.get("unit") or sku.get("default_unit")
         items.append({"sku_id": sku["sku_id"], "qty": _number(row["qty"]),
@@ -918,7 +963,7 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
                       "customer_id": (args.get("customer_id")
                                       if etype == "sale" else None),
                       "payment_deadline": args.get("payment_deadline"),
-                      "spoken": row.get("item", "")})
+                      "spoken": row.get("item") or ref})
     if unknown and not args.get("add_unknown"):
         # Recording the rest and quietly dropping this one leaves the owner
         # with a sale that does not match what went out of the door.
@@ -1026,7 +1071,7 @@ def stock_take(repo, user, args):
     """
     before = {}
     for row in _lines(args):
-        sku, _ = _find_sku(repo, row.get("item"))
+        sku, _ = _find_sku(repo, _item_ref(row))
         if sku:
             before[sku["sku_id"]] = _stock_of(repo, sku)
     out = _commit(repo, user, "stock_take", args)
@@ -1056,7 +1101,7 @@ def stock_take(repo, user, args):
 
 def record_payment(repo, user, args):
     """Cash received against an outstanding udhaar."""
-    acc, options = _customer_by_name(repo, args.get("customer") or args.get("name"))
+    acc, options = _customer_by_name(repo, _customer_ref(args))
     if not acc:
         if options:
             return {"recorded": False, **_ask_which_customer(options)}
@@ -1241,12 +1286,13 @@ def remove_item(repo, user, args):
     is replayed from the event log, so removing a referenced SKU would rewrite
     history rather than tidy it.
     """
-    sku, question = _find_sku(repo, args.get("item") or args.get("name"))
+    ref = _item_ref(args) or str(args.get("name") or "").strip()
+    sku, question = _find_sku(repo, ref)
     if question:
         return {"removed": False, **_ask_which(question)}
     if not sku:
         return {"removed": False,
-                "speak": f"{args.get('item')} list mein mila hi nahi."}
+                "speak": f"{ref} list mein mila hi nahi."}
     if repo.events_for_sku(sku["sku_id"]):
         return {"removed": False, "sku_id": sku["sku_id"],
                 "speak": f"{sku['canonical']} ka hisaab pehle se chal raha hai, "
@@ -1261,7 +1307,7 @@ def remove_item(repo, user, args):
 # ---------------------------------------------------------------------------
 def send_bill(repo, user, args):
     import notify
-    acc, options = _customer_by_name(repo, args.get("customer") or args.get("name"))
+    acc, options = _customer_by_name(repo, _customer_ref(args))
     if not acc:
         if options:
             return {"sent": False, **_ask_which_customer(options)}
@@ -1273,15 +1319,13 @@ def send_bill(repo, user, args):
                 "speak": "Bill mein kya-kya daalna hai?"}
     lines = []
     for row in rows:
-        if row.get("sku_id"):
-            lines.append(row)
-            continue
-        sku, question = _find_sku(repo, row.get("item"))
+        ref = _item_ref(row)
+        sku, question = _find_sku(repo, ref)
         if question:
             return {"sent": False, **_ask_which(question)}
         if not sku:
             return {"sent": False,
-                    "speak": f"{row.get('item')} nahi mila, bill nahi bhej saka."}
+                    "speak": f"{ref} nahi mila, bill nahi bhej saka."}
         lines.append({"sku_id": sku["sku_id"], "qty": row.get("qty"),
                       "unit": row.get("unit") or sku.get("default_unit"),
                       "rate": row.get("rate") or _selling_rate(sku) or 0})
@@ -1313,8 +1357,10 @@ def send_summary(repo, user, args):
 def send_reminders(repo, user, args):
     import notify
     try:
-        out = notify.send_due_reminders(repo, user,
-                                        days_before=int(args.get("days_before", 2)))
+        out = notify.send_due_reminders(
+            repo, user,
+            days_before=_bounded_int(args.get("days_before"), 2,
+                                     low=0, high=365))
     except Exception as e:
         return {"sent": False, "error": str(e)[:200],
                 "speak": "Reminder nahi bhej saka."}
@@ -1343,10 +1389,10 @@ TOOLS = {
                        "'kya kya hai', 'stock list' jaise sawaal ke liye."),
     "check_stock": (check_stock,
                     "Ek item ka current stock. args: item (jo caller ne bola, "
-                    "Hindi, English ya mix, kuch bhi chalega)."),
+                    "Hindi, English ya mix) ya exact sku_id."),
     "item_details": (item_details,
                      "Ek item ki poori detail: cost price, selling rate, GST, "
-                     "stock, aakhri sale kab hui. args: item."),
+                     "stock, aakhri sale kab hui. args: item ya exact sku_id."),
     "search_items": (search_items,
                      "Naam ya brand se item dhoondo jab caller ka shabd exact "
                      "na ho. args: query."),
@@ -1365,7 +1411,7 @@ TOOLS = {
                        "Saare customer aur unka outstanding udhaar."),
     "customer_account": (customer_account,
                          "Ek customer ka hisaab: kitna udhaar baaki, kab tak. "
-                         "args: name."),
+                         "args: name ya exact customer_id/customer_phone."),
     "dues": (dues, "Jo udhaar due ho rahe hain. args: days_before."),
     "recent_activity": (recent_activity,
                         "Pichhli entries: kya bika, kya aaya. args: limit."),
@@ -1374,23 +1420,24 @@ TOOLS = {
                     "bikne par kitna aayega. 'maal kitne ka pada hai' ke liye."),
     "price_quote": (price_quote,
                     "Kisi saamaan ka bhaav aur GST ke saath total, bina kuch "
-                    "record kiye. args: item, qty, unit."),
+                    "record kiye. args: item ya sku_id, qty, unit."),
 
     "record_sale": (record_sale,
-                    "Sale record karo. Ek item ek call mein. args: item, qty, "
+                    "Sale record karo. Ek item ek call mein. args: item ya "
+                    "sku_id, qty, "
                     "unit, rate, payment (cash ya credit), customer (naam, "
                     "credit ke liye zaroori), customer_phone, "
                     "payment_deadline, occurred_on, request_id."),
     "record_purchase": (record_purchase,
                         "Supplier se aaya stock record karo. Ek item ek call mein. "
-                        "args: item, qty, unit, rate (cost price), "
+                        "args: item ya sku_id, qty, unit, rate (cost price), "
                         "occurred_on, request_id."),
     "stock_take": (stock_take,
                    "Ginti ke baad stock theek karo. Ek item ek call mein. "
-                   "args: item, qty, unit, occurred_on, request_id."),
+                   "args: item ya sku_id, qty, unit, occurred_on, request_id."),
     "record_payment": (record_payment,
-                       "Customer se udhaar ka paisa mila. args: customer (naam), "
-                       "amount."),
+                       "Customer se udhaar ka paisa mila. args: customer (naam) "
+                       "ya customer_id/customer_phone, amount, request_id."),
     "update_shop_profile": (update_shop_profile,
                             "Dukaan ki details badlo: shop_name, owner, gstin, "
                             "address, shop_type (jaise 'hardware' ya 'building "
@@ -1404,11 +1451,12 @@ TOOLS = {
                     "Mojooda item theek karo: naam, unit, cost_price ya "
                     "selling_rate. args: item (ya sku_id) aur jo badalna hai."),
     "remove_item": (remove_item,
-                    "Galti se added item ko list se hatao. args: item. Jispe "
+                    "Galti se added item ko list se hatao. args: item ya sku_id. Jispe "
                     "koi sale ya stock chal raha ho, wo nahi hatega."),
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
-                  "(naam), item, qty, rate, payment."),
+                  "(naam) ya customer_id/customer_phone, item ya sku_id, qty, "
+                  "rate, payment."),
     "send_summary": (send_summary,
                      "Owner ko day ya week ki summary PDF WhatsApp par bhejo. "
                      "args: period (day ya week). Bhejne se pehle poochho."),

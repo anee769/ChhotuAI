@@ -196,12 +196,15 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`customer_account`**
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `name` | Text | Item ya customer ka naam. |
+| `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
+| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 
 **`dues`**
 
@@ -214,6 +217,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`low_stock`**
 
@@ -226,6 +230,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 
@@ -240,6 +245,8 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `customer` | Text | Customer ka naam. Udhaar ke liye zaroori. |
+| `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
+| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 | `amount` | Text | Kitne rupaye mile. |
 | `request_id` | Text | Har confirm kiye kaam ke liye naya id. Dobara koshish par wahi id, taaki do baar na likhe. |
 
@@ -248,6 +255,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `occurred_on` | Text | Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. Khaali chhodo to aaj. |
@@ -259,6 +267,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `occurred_on` | Text | Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. Khaali chhodo to aaj. |
@@ -274,6 +283,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`search_items`**
 
@@ -286,7 +296,10 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `customer` | Text | Customer ka naam. Udhaar ke liye zaroori. |
+| `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
+| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `rate` | Text | Ek unit ka daam, rupaye mein. |
 | `payment` | Text | cash ya credit. |
@@ -308,6 +321,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `occurred_on` | Text | Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. Khaali chhodo to aaj. |
@@ -411,7 +425,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/business_summary?caller
 
 ### `check_stock`
 
-Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix, kuch bhi chalega).
+Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix) ya exact sku_id.
 
 **Request**
 
@@ -419,7 +433,7 @@ Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix, 
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/check_stock?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -436,7 +450,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/check_stock?caller={{ca
 
 ### `customer_account`
 
-Ek customer ka hisaab: kitna udhaar baaki, kab tak. args: name.
+Ek customer ka hisaab: kitna udhaar baaki, kab tak. args: name ya exact customer_id/customer_phone.
 
 **Request**
 
@@ -444,7 +458,7 @@ Ek customer ka hisaab: kitna udhaar baaki, kab tak. args: name.
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/customer_account?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"name": "{{name}}"}'
+  -d '{"name": "{{name}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -502,7 +516,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/dues?caller={{caller_nu
 
 ### `item_details`
 
-Ek item ki poori detail: cost price, selling rate, GST, stock, aakhri sale kab hui. args: item.
+Ek item ki poori detail: cost price, selling rate, GST, stock, aakhri sale kab hui. args: item ya exact sku_id.
 
 **Request**
 
@@ -510,7 +524,7 @@ Ek item ki poori detail: cost price, selling rate, GST, stock, aakhri sale kab h
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/item_details?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -617,7 +631,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/low_stock?caller={{call
 
 ### `price_quote`
 
-Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: item, qty, unit.
+Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: item ya sku_id, qty, unit.
 
 **Request**
 
@@ -625,7 +639,7 @@ Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: item,
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/price_quote?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -682,7 +696,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/recent_activity?caller=
 
 ### `record_payment`
 
-Customer se udhaar ka paisa mila. args: customer (naam), amount.
+Customer se udhaar ka paisa mila. args: customer (naam) ya customer_id/customer_phone, amount, request_id.
 
 **Request**
 
@@ -690,7 +704,7 @@ Customer se udhaar ka paisa mila. args: customer (naam), amount.
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_payment?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"customer": "{{customer}}", "amount": "{{amount}}", "request_id": "{{request_id}}"}'
+  -d '{"customer": "{{customer}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}", "amount": "{{amount}}", "request_id": "{{request_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -706,7 +720,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_payment?caller={
 
 ### `record_purchase`
 
-Supplier se aaya stock record karo. Ek item ek call mein. args: item, qty, unit, rate (cost price), occurred_on, request_id.
+Supplier se aaya stock record karo. Ek item ek call mein. args: item ya sku_id, qty, unit, rate (cost price), occurred_on, request_id.
 
 **Request**
 
@@ -714,7 +728,7 @@ Supplier se aaya stock record karo. Ek item ek call mein. args: item, qty, unit,
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_purchase?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -732,7 +746,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_purchase?caller=
 
 ### `record_sale`
 
-Sale record karo. Ek item ek call mein. args: item, qty, unit, rate, payment (cash ya credit), customer (naam, credit ke liye zaroori), customer_phone, payment_deadline, occurred_on, request_id.
+Sale record karo. Ek item ek call mein. args: item ya sku_id, qty, unit, rate, payment (cash ya credit), customer (naam, credit ke liye zaroori), customer_phone, payment_deadline, occurred_on, request_id.
 
 **Request**
 
@@ -740,7 +754,7 @@ Sale record karo. Ek item ek call mein. args: item, qty, unit, rate, payment (ca
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_sale?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -765,7 +779,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_sale?caller={{ca
 
 ### `remove_item`
 
-Galti se added item ko list se hatao. args: item. Jispe koi sale ya stock chal raha ho, wo nahi hatega.
+Galti se added item ko list se hatao. args: item ya sku_id. Jispe koi sale ya stock chal raha ho, wo nahi hatega.
 
 **Request**
 
@@ -773,7 +787,7 @@ Galti se added item ko list se hatao. args: item. Jispe koi sale ya stock chal r
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/remove_item?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -815,7 +829,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/search_items?caller={{c
 
 ### `send_bill`
 
-Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), item, qty, rate, payment.
+Customer ko WhatsApp par bill PDF bhejo. args: customer (naam) ya customer_id/customer_phone, item ya sku_id, qty, rate, payment.
 
 **Request**
 
@@ -823,7 +837,7 @@ Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), item, qty, rate,
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/send_bill?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"customer": "{{customer}}", "item": "{{item}}", "qty": "{{qty}}", "rate": "{{rate}}", "payment": "{{payment}}"}'
+  -d '{"customer": "{{customer}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}", "item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "rate": "{{rate}}", "payment": "{{payment}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -924,7 +938,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/shop_profile?caller={{c
 
 ### `stock_take`
 
-Ginti ke baad stock theek karo. Ek item ek call mein. args: item, qty, unit, occurred_on, request_id.
+Ginti ke baad stock theek karo. Ek item ek call mein. args: item ya sku_id, qty, unit, occurred_on, request_id.
 
 **Request**
 
@@ -932,7 +946,7 @@ Ginti ke baad stock theek karo. Ek item ek call mein. args: item, qty, unit, occ
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/stock_take?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "request_id": "{{request_id}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "request_id": "{{request_id}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
