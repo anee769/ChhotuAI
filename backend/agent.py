@@ -37,6 +37,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import json
+import re
 import os
 import secrets
 from collections import defaultdict
@@ -140,6 +141,46 @@ def _selling_rate(sku: dict):
     return float(rate) if rate not in (None, "") else None
 
 
+def _number(value):
+    """A quantity or amount as the caller said it.
+
+    Speech gives "ek sau bees" or "एक सौ" far more often than "120". The old
+    controller parsed those with nlp.ONES; the agent called float() straight
+    on the string and raised, which the caller heard as "kuch gadbad ho gayi".
+    Returns None when there is genuinely no number, so the tool can ask.
+    """
+    if value is None or isinstance(value, bool):
+        return None
+    if isinstance(value, (int, float)):
+        return float(value)
+    text = str(value).strip().lower().replace(",", "")
+    if not text:
+        return None
+    try:
+        return float(text)
+    except ValueError:
+        pass
+    import nlp
+    total = running = 0.0
+    seen = False
+    for tok in re.split(r"[\s-]+", text):
+        n = nlp.ONES.get(tok)
+        if n is None and tok.isdigit():
+            n = float(tok)
+        if n is None:
+            continue
+        seen = True
+        # "ek sau bees" is 1 x 100 + 20, not 1 + 100 + 20.
+        if n >= 100:
+            running = (running or 1) * n
+            total += running
+            running = 0.0
+        else:
+            running += n
+    total += running
+    return total if seen and total else None
+
+
 def _g(n) -> str:
     return f"{float(n or 0):g}"
 
@@ -169,6 +210,15 @@ def _find_sku(repo, phrase: str):
         return None, None
     catalogue = repo.load_catalogue()
     m = M.match(phrase, catalogue, repo.load_learning(), "live_sale")
+    if m.get("status") not in ("matched", "disambiguate"):
+        # Seeded catalogues carry Devanagari aliases; anything the agent added
+        # by voice carries only Latin. "सीमेंट" then matched nothing and got
+        # called off-trade. Try the romanised form before giving up.
+        import translit
+        if translit.has_devanagari(phrase):
+            latin = translit.to_latin(phrase)
+            if latin and latin != phrase:
+                m = M.match(latin, catalogue, repo.load_learning(), "live_sale")
     if m.get("status") == "matched":
         return repo.sku(m.get("sku_id")), None
     if m.get("status") == "disambiguate":
@@ -683,9 +733,9 @@ def price_quote(repo, user, args):
         if not sku:
             unknown.append(row.get("item"))
             continue
-        qty = float(row.get("qty") or 0)
+        qty = _number(row.get("qty")) or 0
         unit = row.get("unit") or sku.get("default_unit")
-        rate = row.get("rate")
+        rate = _number(row.get("rate"))
         if rate is None:
             rate = _selling_rate(sku)
         if rate is None:
@@ -743,14 +793,15 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
         if not sku:
             unknown.append(row.get("item"))
             continue
-        if not row.get("qty"):
+        if _number(row.get("qty")) is None:
             return {"recorded": False,
                     "needs": {"said": row.get("item"), "field": "qty"},
                     "speak": f"{sku['canonical']} kitna?"}
         unit = row.get("unit") or sku.get("default_unit")
-        items.append({"sku_id": sku["sku_id"], "qty": float(row["qty"]),
-                      "unit": unit, "rate": row.get("rate"),
-                      "rate_unit": unit if row.get("rate") is not None else None,
+        items.append({"sku_id": sku["sku_id"], "qty": _number(row["qty"]),
+                      "unit": unit, "rate": _number(row.get("rate")),
+                      "rate_unit": unit if _number(row.get("rate")) is not None
+                                   else None,
                       "payment": args.get("payment"),
                       "customer_id": (args.get("customer_id")
                                       if etype == "sale" else None),
@@ -899,7 +950,7 @@ def record_payment(repo, user, args):
             return {"recorded": False, **_ask_which_customer(options)}
         return {"recorded": False, "speak": "Ye customer nahi mila."}
     try:
-        amount = float(args.get("amount") or 0)
+        amount = _number(args.get("amount")) or 0
     except (TypeError, ValueError):
         amount = 0
     if amount <= 0:
@@ -968,8 +1019,11 @@ def add_item(repo, user, args):
         return {"added": False, "sku_id": existing["sku_id"],
                 "speak": f"{existing['canonical']} pehle se list mein hai."}
     unit = args.get("unit") or "piece"
-    cost = float(args["cost_price"])
-    rate = float(args["selling_rate"]) if args.get("selling_rate") else None
+    cost = _number(args["cost_price"])
+    rate = _number(args.get("selling_rate"))
+    if cost is None:
+        return {"added": False, "needs": {"field": "cost_price"},
+                "speak": f"{name} ka cost price kya hai?"}
     attrs = dict(args.get("attributes") or {})
     if args.get("brand"):
         attrs["brand"] = args["brand"]
@@ -1025,11 +1079,11 @@ def update_item(repo, user, args):
         patch["units"] = {**(sku.get("units") or {}), args["unit"]: 1}
         changed.append("unit")
     if args.get("cost_price") not in (None, ""):
-        patch["opening_cost_per_kg"] = float(args["cost_price"])
+        patch["opening_cost_per_kg"] = _number(args["cost_price"])
         changed.append("cost")
     if args.get("selling_rate") not in (None, ""):
         patch["attributes"] = {**(sku.get("attributes") or {}),
-                               "selling_rate": float(args["selling_rate"])}
+                               "selling_rate": _number(args["selling_rate"])}
         changed.append("rate")
     if not changed:
         return {"updated": False, "needs": {"field": "what"},

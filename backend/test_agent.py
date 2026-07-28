@@ -414,6 +414,36 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(learned[0][0], "ppc cement")
         self.assertEqual(learned[0][1], CEMENT_PPC)
 
+    def test_spoken_numbers_are_understood(self):
+        """Speech gives "ek sau bees", not "120". float() raised on those and
+        the caller heard "kuch gadbad ho gayi"."""
+        for said, expect in [("100", 100), (100, 100), ("ek sau", 100),
+                             ("ek sau bees", 120), ("do sau", 200),
+                             ("एक सौ", 100), ("das", 10), ("1,200", 1200)]:
+            self.assertEqual(agent._number(said), float(expect), said)
+        for empty in ("", None, "kuch nahi"):
+            self.assertIsNone(agent._number(empty), empty)
+
+    def test_a_count_spoken_in_words_records(self):
+        out = self.call("stock_take", item="ppc cement", qty="ek sau bees",
+                        unit="bori")
+        self.assertTrue(out["recorded"], out)
+        self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 120)
+
+    def test_a_sale_spoken_in_words_records(self):
+        out = self.call("record_sale", item="ppc cement", qty="das",
+                        rate="char sau bees", payment="cash")
+        self.assertTrue(out["recorded"], out)
+        self.assertEqual(out["total"], 4200)
+
+    def test_a_devanagari_item_name_still_matches(self):
+        """Seeded catalogues carry Devanagari aliases; anything added by voice
+        carries only Latin, and the miss was then called off-trade."""
+        self.call("add_item", name="Asian Paints Apcolite", cost_price=3200,
+                  unit="bucket")
+        out = self.call("check_stock", item="एशियन पेंट्स एपकोलाइट")
+        self.assertTrue(out.get("found") or out.get("needs"), out)
+
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
                                              "rate": 390}])

@@ -31,6 +31,9 @@ from sarvam_conv_ai_sdk.messages.config import UserIdentifierType as UIT
 RATE = 16000
 FRAME = int(RATE * 0.02) * 2          # 20ms of 16-bit mono
 LINES = sys.argv[1:] or ["cement kitna hai"]
+# Which shop the agent should open. Override so write tests can run against a
+# throwaway tenant instead of a real shop's ledger.
+CALLER = os.environ.get("CHHOTU_PROBE_CALLER", "917006322772")
 
 
 def transcribe(pcm: bytes) -> str:
@@ -168,11 +171,11 @@ async def main():
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
         version=4,                                   # newest committed snapshot
-        user_identifier="917006322772",              # this is the shop's identity
+        user_identifier=CALLER,                      # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
         sample_rate=RATE,
-        agent_variables={"caller_number": "917006322772"},
+        agent_variables={"caller_number": CALLER},
     )
     async def on_transcript(m):
         try:
