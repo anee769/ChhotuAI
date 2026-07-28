@@ -709,6 +709,22 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
                                       if etype == "sale" else None),
                       "payment_deadline": args.get("payment_deadline"),
                       "spoken": row.get("item", "")})
+    if unknown and not args.get("add_unknown"):
+        # Recording the rest and quietly dropping this one leaves the owner
+        # with a sale that does not match what went out of the door.
+        first = unknown[0]
+        miss = _not_stocked(repo, user, first)
+        if miss["stocks_this_kind"]:
+            ask = (f"{first} inventory mein nahi hai. Naya item add kar doon?")
+        else:
+            # Far more often a misheard word than a real new product.
+            ask = (f"{first} na inventory mein hai na humare line mein. Ye "
+                   "sach mein naya item hai ya galti se bol diya?")
+        return {"recorded": False, "unavailable": unknown,
+                "needs": {"field": "confirm_add", "said": first,
+                          "stocks_this_kind": miss["stocks_this_kind"],
+                          "shop_kind": miss["shop_kind"]},
+                "speak": ask}
     if not items:
         return {"recorded": False, "unavailable": unknown,
                 "speak": "Saamaan samajh nahi aaya. Naam aur quantity dobara bataiye."}
@@ -888,9 +904,15 @@ def add_item(repo, user, args):
         "aliases": [name.lower()] + ([args["brand"].lower()]
                                      if args.get("brand") else []),
     })
+    # A new SKU has no stock until something counts it, and an uncounted item
+    # answers "abhi tak gina nahi gaya" to every later question. Asking now is
+    # the difference between a usable item and a dead row.
     return {"added": True, "sku_id": sku_id, "name": name, "unit": unit,
             "cost_price": cost, "selling_rate": rate,
-            "speak": f"{name} list mein add kar diya."}
+            "next_step": {"tool": "stock_take", "why": "opening count",
+                          "item": name, "unit": unit},
+            "speak": f"{name} list mein add kar diya. Abhi kitna stock hai, "
+                     f"{unit} mein bata dijiye?"}
 
 
 # ---------------------------------------------------------------------------
@@ -1016,7 +1038,9 @@ TOOLS = {
     "record_sale": (record_sale,
                     "Sale record karo. args: items[{item, qty, unit, rate}], "
                     "payment (cash ya credit), customer (naam, credit ke liye "
-                    "zaroori), customer_phone, payment_deadline."),
+                    "zaroori), customer_phone, payment_deadline. Agar item "
+                    "inventory mein na ho to poochhega; add_item ke baad "
+                    "add_unknown true bhej kar dobara chalao."),
     "record_purchase": (record_purchase,
                         "Supplier se aaya stock record karo. args: items[{item, "
                         "qty, unit, rate}] jahan rate cost price hai."),
@@ -1031,7 +1055,8 @@ TOOLS = {
                             "material'). Yehi bill ke letterhead par chhapta hai."),
     "add_item": (add_item,
                  "Nayi item list mein daalo. args: name, cost_price (zaroori), "
-                 "selling_rate, unit, brand."),
+                 "selling_rate, unit, brand. Add hone ke baad stock_take se "
+                 "opening ginti likhwana zaroori hai."),
 
     "send_bill": (send_bill,
                   "Customer ko WhatsApp par bill PDF bhejo. args: customer "
@@ -1061,8 +1086,16 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
     if not user:
         # Never fall back to "some" shop: a wrong guess reads another
         # business's books aloud to a stranger.
-        return {"speak": "Yeh number humare system mein registered nahi hai.",
-                "authorised": False}
+        # Spell the failure out in every field an agent might look at. A
+        # refusal that only says authorised=false got narrated back to the
+        # owner as "likh diya hai" for a write that never happened, which is
+        # the worst failure this system has: a confident lie about the ledger.
+        refusal = {"ok": False, "authorised": False, "error": "not_authorised",
+                   "recorded": False, "added": False, "updated": False,
+                   "sent": False, "found": False,
+                   "speak": "Yeh number humare system mein registered nahi "
+                            "hai, isliye koi entry nahi hui."}
+        return {**refusal, "facts": _facts(refusal)}
     # Bind the shop so main._write_events — and anything else that reaches for
     # the request-scoped `repo` proxy — sees this user instead of raising 401.
     import main
@@ -1088,7 +1121,7 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
               f"{type(e).__name__}: {e}", flush=True)
         return {"speak": "Isme kuch gadbad ho gayi, dobara boliye.",
                 "error": type(e).__name__, "authorised": True}
-    out = {**out, "tool": name, "authorised": True,
+    out = {"ok": True, **out, "tool": name, "authorised": True,
            "shop": user.get("shop_name") or ""}
     return {**out, "facts": _facts(out)}
 

@@ -326,6 +326,45 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("top_items", order="margin")
         self.assertIn("margin", out["items"][0])
 
+    def test_adding_an_item_asks_for_its_opening_count(self):
+        """A new SKU is uncounted, so every later question answers "gina nahi
+        gaya" until somebody counts it."""
+        out = self.call("add_item", name="Asian Paints Apcolite 20L",
+                        cost_price=3200, unit="bucket")
+        self.assertEqual(out["next_step"]["tool"], "stock_take")
+        self.assertIn("kitna stock", out["speak"])
+
+    def test_selling_something_unstocked_asks_before_recording(self):
+        out = self.call("record_sale", item="Asian Paints Apcolite",
+                        qty=2, payment="cash")
+        self.assertFalse(out["recorded"])
+        self.assertEqual(out["needs"]["field"], "confirm_add")
+        self.assertTrue(out["needs"]["stocks_this_kind"])
+        self.assertEqual(self.repo.events, self.repo.events[:2])
+
+    def test_something_outside_the_trade_is_questioned_harder(self):
+        out = self.call("record_sale", item="biryani", qty=2, payment="cash")
+        self.assertFalse(out["needs"]["stocks_this_kind"])
+        self.assertIn("galti se", out["speak"])
+
+    def test_a_known_item_alongside_an_unknown_one_still_asks(self):
+        """Recording the rest and dropping one leaves a sale that does not
+        match what left the shop."""
+        out = self.call("record_sale", items=[
+            {"item": "ppc cement", "qty": 10, "rate": 420},
+            {"item": "Apcolite paint", "qty": 2}], payment="cash")
+        self.assertFalse(out["recorded"])
+        self.assertEqual(len(self.repo.events), 2)
+
+    def test_add_unknown_lets_the_sale_through_once_confirmed(self):
+        out = self.call("record_sale", items=[{"item": "ppc cement", "qty": 10,
+                                               "rate": 420},
+                                              {"item": "Apcolite paint",
+                                               "qty": 2}],
+                        payment="cash", add_unknown=True)
+        self.assertTrue(out["recorded"])
+        self.assertEqual(out["unavailable"], ["Apcolite paint"])
+
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
                                              "rate": 390}])
@@ -424,6 +463,15 @@ class DispatchTests(unittest.TestCase):
                 {"user_id": "u_other", "phone": "+918888888888"}]):
             out = agent.handle("shop_profile", "", {}, key="0" * 32)
         self.assertFalse(out["authorised"])
+
+    def test_a_refusal_says_failure_in_every_field(self):
+        """authorised=false alone was narrated back as "likh diya hai" for a
+        write that never happened."""
+        with patch.object(agent.auth, "all_users", return_value=[]):
+            out = agent.handle("add_item", "917006322772", {"name": "x"})
+        for key in ("ok", "authorised", "recorded", "added", "updated", "sent"):
+            self.assertFalse(out[key], key)
+        self.assertEqual(json.loads(out["facts"])["error"], "not_authorised")
 
     def test_blank_identity_is_not_a_wildcard(self):
         self.assertFalse(agent.handle("shop_profile", "", {})["authorised"])
