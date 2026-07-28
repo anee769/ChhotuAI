@@ -370,6 +370,26 @@ class DispatchTests(unittest.TestCase):
         self.assertTrue(agent.verify_secret("test-agent-secret"))
         self.assertFalse(agent.verify_secret("nope"))
 
+    def test_an_unknown_tool_does_not_leak_the_catalogue(self):
+        shop = {"user_id": "u_1", "phone": "+917006322772", "shop_name": "S"}
+        with patch.object(agent.auth, "all_users", return_value=[shop]), \
+                patch.object(main, "bind_user"):
+            out = agent.handle("list_all_secrets", "917006322772", {})
+        self.assertEqual(out["error"], "unknown_tool")
+        self.assertNotIn("known_tools", out)
+        self.assertNotIn("record_sale", json.dumps(out))
+
+    def test_a_crash_returns_the_type_not_the_message(self):
+        shop = {"user_id": "u_1", "phone": "+917006322772", "shop_name": "S"}
+        boom = lambda *a: (_ for _ in ()).throw(
+            RuntimeError("password=hunter2 at /var/task/db.py"))
+        with patch.object(agent.auth, "all_users", return_value=[shop]), \
+                patch.object(main, "bind_user"), \
+                patch.dict(agent.TOOLS, {"dues": (boom, "")}):
+            out = agent.handle("dues", "917006322772", {})
+        self.assertEqual(out["error"], "RuntimeError")
+        self.assertNotIn("hunter2", json.dumps(out))
+
     def test_every_tool_is_documented_for_the_console(self):
         """A tool with no worked example ships as an empty args box, which the
         agent then fills in by guesswork."""

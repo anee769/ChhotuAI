@@ -882,13 +882,21 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
     name = _ALIASES.get(tool, tool)
     entry = TOOLS.get(name)
     if not entry:
+        # Deliberately no tool listing here. The agent already has its own
+        # catalogue, so echoing ours back adds nothing but a string of internal
+        # names that a curious caller could talk it into reading out.
         return {"speak": "Yeh kaam abhi nahi kar sakta.", "error": "unknown_tool",
-                "known_tools": sorted(TOOLS), "authorised": True}
+                "authorised": True}
     try:
         out = entry[0](repo, user, args or {})
     except Exception as e:
         # A tool crash must not become a confident wrong answer on the call.
+        # The exception type is enough to debug from the logs; the message can
+        # carry SQL, paths or column names, and anything returned here is text
+        # the agent may decide to speak.
+        print(f"[agent] {name} failed for {user['user_id']}: "
+              f"{type(e).__name__}: {e}", flush=True)
         return {"speak": "Isme kuch gadbad ho gayi, dobara boliye.",
-                "error": f"{type(e).__name__}: {str(e)[:180]}", "authorised": True}
+                "error": type(e).__name__, "authorised": True}
     return {**out, "tool": name, "authorised": True,
             "shop": user.get("shop_name") or ""}
