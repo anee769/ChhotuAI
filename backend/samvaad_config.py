@@ -106,6 +106,38 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 # args the agent fills in per tool, and a trimmed real reply. Both matter: the
 # console's Body tab needs the arg shape, and seeing the reply is what stops an
 # agent inventing a field name that never existed.
+# What the agent must fill in at runtime, per tool. These go into the Body tab
+# as {{placeholders}}, NOT as example values: a literal "ppc cement" in the
+# body makes check_stock look up ppc cement forever, whatever the caller asked.
+# Empty tuple means the tool needs no arguments.
+PARAMS = {
+    "shop_profile": (),
+    "list_inventory": (),
+    "list_customers": (),
+    "stock_value": (),
+    "check_stock": ("item",),
+    "item_details": ("item",),
+    "search_items": ("query",),
+    "low_stock": ("limit",),
+    "business_summary": ("period", "days", "start", "end"),
+    "top_items": ("days", "limit", "order"),
+    "customer_account": ("name",),
+    "dues": ("days_before",),
+    "recent_activity": ("limit",),
+    "price_quote": ("item", "qty", "unit"),
+    "record_sale": ("item", "qty", "unit", "rate", "payment", "customer",
+                    "customer_phone", "payment_deadline", "request_id"),
+    "record_purchase": ("item", "qty", "unit", "rate", "request_id"),
+    "stock_take": ("item", "qty", "unit", "request_id"),
+    "record_payment": ("customer", "amount", "request_id"),
+    "add_item": ("name", "cost_price", "selling_rate", "unit", "brand"),
+    "update_shop_profile": ("shop_name", "owner", "shop_type", "gstin",
+                            "address"),
+    "send_bill": ("customer", "item", "qty", "rate", "payment"),
+    "send_summary": ("period",),
+    "send_reminders": ("days_before",),
+}
+
 EXAMPLES = {
     "shop_profile": ({}, {
         "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
@@ -136,15 +168,18 @@ EXAMPLES = {
     "top_items": ({"days": 30, "limit": 3, "order": "top"}, {
         "from": "2026-06-29", "to": "2026-07-28",
         "items": [{"name": "UltraTech PPC Cement 50kg", "qty_sold": 420,
-                   "unit": "bori", "revenue": 176400.0}]}),
+                   "unit": "bori", "revenue": 176400.0,
+                   "margin": 14700.0}]}),
     "list_customers": ({}, {
         "count": 10, "owing_count": 4,
         "customers": [{"name": "Ramesh Kumar", "phone": "+919876543210",
                        "outstanding": 42000.0, "next_deadline": "2026-08-05"}]}),
     "customer_account": ({"name": "Ramesh"}, {
         "found": True, "name": "Ramesh Kumar", "outstanding": 42000.0,
+        "overdue": False,
         "open_dues": [{"amount": 42000.0, "remaining": 42000.0,
-                       "deadline": "2026-08-05"}]}),
+                       "deadline": "2026-08-05"}],
+        "recent_payments": [{"amount": 8000.0, "paid_on": "2026-07-20"}]}),
     "dues": ({"days_before": 7}, {
         "count": 1, "dues": [{"name": "Ramesh Kumar", "remaining": 42000.0,
                               "deadline": "2026-08-05",
@@ -154,6 +189,11 @@ EXAMPLES = {
                                 "item": "UltraTech PPC Cement 50kg", "qty": 10,
                                 "unit": "bori", "rate": 420,
                                 "payment": "cash"}]}),
+    "stock_value": ({}, {
+        "at_cost": 812450.0, "at_selling_price": 921300.0,
+        "potential_margin": 108850.0, "uncounted": [],
+        "items": [{"name": "UltraTech PPC Cement 50kg", "qty": 190,
+                   "unit": "bori", "value_at_cost": 73150.0}]}),
     "price_quote": ({"items": [{"item": "ppc cement", "qty": 10}]}, {
         "lines": [{"name": "UltraTech PPC Cement 50kg", "qty": 10,
                    "unit": "bori", "rate": 420, "amount": 4200.0}],
@@ -220,16 +260,23 @@ NEEDS_EXAMPLE = {
 
 
 def body(tool: str) -> str:
-    args, _ = EXAMPLES.get(tool, ({}, {}))
+    """The request body, with every argument left as a runtime placeholder.
+
+    The console parses this into its Body tab, so whatever is written here
+    becomes the tool's shape. Real values would freeze it: check_stock would
+    look up "ppc cement" no matter what the caller actually asked for.
+    """
+    args = {name: "{{%s}}" % name for name in PARAMS.get(tool, ())}
     return json.dumps({"tool": tool, "caller": "{{caller_number}}",
                        "shop_key": "{{shop_key}}", "args": args},
                       ensure_ascii=False)
 
 
 def curl(tool: str) -> str:
+    # No X-Agent-Secret here: it belongs in the Auth tab as an Api Key, and a
+    # header pasted alongside it would be a second copy to rotate and leak.
     return (f"curl -X POST {BASE}/api/agent/tool \\\n"
             f"  -H 'Content-Type: application/json' \\\n"
-            f"  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \\\n"
             f"  -d '{body(tool)}'")
 
 

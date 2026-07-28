@@ -292,6 +292,37 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(again.get("duplicate"))
         self.assertEqual(len(self.repo.payments()), 1)
 
+    def test_unfilled_placeholders_are_dropped_not_searched(self):
+        """An agent that leaves {{item}} unfilled must get a question, not a
+        confident report that {{item}} is out of stock."""
+        out = agent.TOOLS["check_stock"][0](
+            self.repo, USER, agent._scrub({"item": "{{item}}"}))
+        self.assertNotIn("{{", json.dumps(out))
+        self.assertFalse(out.get("found"))
+
+    def test_a_single_line_may_arrive_flattened(self):
+        """Nested arrays are painful to template in the console Body tab."""
+        out = self.call("record_sale", item="ppc cement", qty=10, rate=420,
+                        payment="cash")
+        self.assertTrue(out["recorded"])
+        self.assertEqual(out["total"], 4200)
+
+    def test_string_numbers_from_the_template_still_work(self):
+        out = self.call("record_sale", item="ppc cement", qty="10", rate="420",
+                        payment="cash")
+        self.assertEqual(out["total"], 4200)
+
+    def test_stock_value_reports_cost_and_selling_price(self):
+        out = self.call("stock_value")
+        self.assertGreater(out["at_cost"], 0)
+        self.assertGreaterEqual(out["at_selling_price"], out["at_cost"])
+
+    def test_top_items_can_rank_by_margin(self):
+        self.call("record_sale", items=[{"item": "ppc cement", "qty": 10,
+                                         "rate": 420}], payment="cash")
+        out = self.call("top_items", order="margin")
+        self.assertIn("margin", out["items"][0])
+
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
                                              "rate": 390}])
@@ -436,6 +467,22 @@ class DispatchTests(unittest.TestCase):
         agent then fills in by guesswork."""
         import samvaad_config
         self.assertEqual(set(samvaad_config.EXAMPLES), set(agent.TOOLS))
+        self.assertEqual(set(samvaad_config.PARAMS), set(agent.TOOLS))
+
+    def test_generated_bodies_are_templates_not_fixed_values(self):
+        """A literal in the body freezes the tool: check_stock would look up
+        the same item forever."""
+        import samvaad_config as SC
+        for name, params in SC.PARAMS.items():
+            args = json.loads(SC.body(name))["args"]
+            self.assertEqual(set(args), set(params), name)
+            for k, v in args.items():
+                self.assertEqual(v, "{{%s}}" % k, name)
+
+    def test_generated_curls_carry_no_secret(self):
+        import samvaad_config as SC
+        for name in SC.PARAMS:
+            self.assertNotIn("X-Agent-Secret", SC.curl(name))
 
     def test_manifest_describes_every_tool(self):
         names = {t["name"] for t in agent.manifest()}

@@ -94,7 +94,7 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 
 ## Auth
 
-The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 22 tools — and rotating it later becomes one edit rather than 22.
+The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 23 tools — and rotating it later becomes one edit rather than 23.
 
 The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header, so the endpoint accepts the secret two ways:
 
@@ -105,7 +105,7 @@ The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header
 
 Either is accepted; pick whichever the console lets you configure cleanly. The cURLs below keep the header in place so the console prefills the header *name* — the placeholder is not a real secret, so set the value in Auth and delete the header afterwards.
 
-## Tools (22)
+## Tools (23)
 
 All of them POST to the same endpoint and differ only in `tool` and `args`. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
 
@@ -163,8 +163,7 @@ Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit,
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "add_item", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "Asian Paints Apcolite 20L", "cost_price": 3200, "selling_rate": 3600, "unit": "bucket", "brand": "Asian Paints"}}'
+  -d '{"tool": "add_item", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "unit": "{{unit}}", "brand": "{{brand}}"}}'
 ```
 
 **Reply**
@@ -187,8 +186,7 @@ Sale, gross profit, cash aur udhaar kisi bhi period ka. args: period (day/yester
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "business_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "week"}}'
+  -d '{"tool": "business_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}", "days": "{{days}}", "start": "{{start}}", "end": "{{end}}"}}'
 ```
 
 **Reply**
@@ -214,8 +212,7 @@ Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix, 
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "check_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "ppc cement"}}'
+  -d '{"tool": "check_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
 **Reply**
@@ -239,8 +236,7 @@ Ek customer ka hisaab: kitna udhaar baaki, kab tak. args: name.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "customer_account", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "Ramesh"}}'
+  -d '{"tool": "customer_account", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}"}}'
 ```
 
 **Reply**
@@ -250,11 +246,18 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   "found": true,
   "name": "Ramesh Kumar",
   "outstanding": 42000.0,
+  "overdue": false,
   "open_dues": [
     {
       "amount": 42000.0,
       "remaining": 42000.0,
       "deadline": "2026-08-05"
+    }
+  ],
+  "recent_payments": [
+    {
+      "amount": 8000.0,
+      "paid_on": "2026-07-20"
     }
   ]
 }
@@ -269,8 +272,7 @@ Jo udhaar due ho rahe hain. args: days_before.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "dues", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": 7}}'
+  -d '{"tool": "dues", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
 **Reply**
@@ -298,8 +300,7 @@ Ek item ki poori detail: cost price, selling rate, GST, stock, aakhri sale kab h
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "item_details", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "ppc cement"}}'
+  -d '{"tool": "item_details", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
 **Reply**
@@ -324,7 +325,6 @@ Saare customer aur unka outstanding udhaar.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
   -d '{"tool": "list_customers", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -354,7 +354,6 @@ Poori inventory: har item ka naam, stock, unit, rate. 'kya kya hai', 'stock list
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
   -d '{"tool": "list_inventory", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -385,8 +384,7 @@ Woh item jo khatam ho gaye ya khatam hone waale hain. args: limit (optional).
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "low_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": 5}}'
+  -d '{"tool": "low_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
 **Reply**
@@ -413,8 +411,7 @@ Kisi saamaan ka bhaav aur GST ke saath total, bina kuch record kiye. args: items
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "price_quote", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"items": [{"item": "ppc cement", "qty": 10}]}}'
+  -d '{"tool": "price_quote", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}"}}'
 ```
 
 **Reply**
@@ -446,8 +443,7 @@ Pichhli entries: kya bika, kya aaya. args: limit.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "recent_activity", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": 5}}'
+  -d '{"tool": "recent_activity", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
 **Reply**
@@ -478,8 +474,7 @@ Customer se udhaar ka paisa mila. args: customer (naam), amount.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "record_payment", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "Ramesh", "amount": 12000, "request_id": "<unique per confirmed action>"}}'
+  -d '{"tool": "record_payment", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "amount": "{{amount}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply**
@@ -502,8 +497,7 @@ Supplier se aaya stock record karo. args: items[{item, qty, unit, rate}] jahan r
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"items": [{"item": "ppc cement", "qty": 100, "unit": "bori", "rate": 385}], "request_id": "<unique per confirmed action>"}}'
+  -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply**
@@ -528,8 +522,7 @@ Sale record karo. args: items[{item, qty, unit, rate}], payment (cash ya credit)
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"items": [{"item": "ppc cement", "qty": 10, "unit": "bori", "rate": 420}], "payment": "credit", "customer": "Ramesh", "payment_deadline": "2026-08-27", "request_id": "<unique per confirmed action>"}}'
+  -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply**
@@ -561,8 +554,7 @@ Naam ya brand se item dhoondo jab caller ka shabd exact na ho. args: query.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "search_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"query": "tiscon"}}'
+  -d '{"tool": "search_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"query": "{{query}}"}}'
 ```
 
 **Reply**
@@ -588,8 +580,7 @@ Customer ko WhatsApp par bill PDF bhejo. args: customer (naam), items[{item, qty
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "send_bill", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "Ramesh", "items": [{"item": "ppc cement", "qty": 10, "rate": 420}], "payment": "cash"}}'
+  -d '{"tool": "send_bill", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "item": "{{item}}", "qty": "{{qty}}", "rate": "{{rate}}", "payment": "{{payment}}"}}'
 ```
 
 **Reply**
@@ -612,8 +603,7 @@ Jinka udhaar due hai unhe reminder bhejo. args: days_before.
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "send_reminders", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": 2}}'
+  -d '{"tool": "send_reminders", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
 **Reply**
@@ -647,8 +637,7 @@ Owner ko day ya week ki summary PDF WhatsApp par bhejo. args: period (day ya wee
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "send_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "day"}}'
+  -d '{"tool": "send_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}"}}'
 ```
 
 **Reply**
@@ -669,7 +658,6 @@ Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udh
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
   -d '{"tool": "shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
@@ -697,8 +685,7 @@ Ginti ke baad stock theek karo. args: items[{item, qty, unit}].
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"items": [{"item": "ppc cement", "qty": 173, "unit": "bori"}], "request_id": "<unique per confirmed action>"}}'
+  -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply**
@@ -714,17 +701,47 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 }
 ```
 
-### `top_items`
+### `stock_value`
 
-Sabse zyada ya sabse kam bikne waale item. args: days, limit, order (top ya slow).
+Poore stock ki value: cost par kitna paisa phansa hai aur bikne par kitna aayega. 'maal kitne ka pada hai' ke liye.
 
 **Request**
 
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "top_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days": 30, "limit": 3, "order": "top"}}'
+  -d '{"tool": "stock_value", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
+```
+
+**Reply**
+
+```json
+{
+  "at_cost": 812450.0,
+  "at_selling_price": 921300.0,
+  "potential_margin": 108850.0,
+  "uncounted": [],
+  "items": [
+    {
+      "name": "UltraTech PPC Cement 50kg",
+      "qty": 190,
+      "unit": "bori",
+      "value_at_cost": 73150.0
+    }
+  ]
+}
+```
+
+### `top_items`
+
+Sabse zyada ya sabse kam bikne waale item, aur har ek ka revenue aur margin. args: days, limit, order (top, slow ya margin).
+
+**Request**
+
+```bash
+curl -X POST https://chhotuai.vercel.app/api/agent/tool \
+  -H 'Content-Type: application/json' \
+  -d '{"tool": "top_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days": "{{days}}", "limit": "{{limit}}", "order": "{{order}}"}}'
 ```
 
 **Reply**
@@ -738,7 +755,8 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
       "name": "UltraTech PPC Cement 50kg",
       "qty_sold": 420,
       "unit": "bori",
-      "revenue": 176400.0
+      "revenue": 176400.0,
+      "margin": 14700.0
     }
   ]
 }
@@ -753,8 +771,7 @@ Dukaan ki details badlo: shop_name, owner, gstin, address, shop_type (jaise 'har
 ```bash
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
-  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \
-  -d '{"tool": "update_shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"gstin": "27AACCD8812K1ZG", "address": "LBS Marg, Mumbai 400070"}}'
+  -d '{"tool": "update_shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"shop_name": "{{shop_name}}", "owner": "{{owner}}", "shop_type": "{{shop_type}}", "gstin": "{{gstin}}", "address": "{{address}}"}}'
 ```
 
 **Reply**

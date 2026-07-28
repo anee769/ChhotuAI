@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import json
 import os
 import secrets
 from collections import defaultdict
@@ -231,6 +232,46 @@ def _not_stocked(repo, user, phrase: str) -> dict:
                                   if s.get("family")}),
             "known_hardware_category": category,
             "stocks_this_kind": bool(category), "speak": speak}
+
+
+def _scrub(value):
+    """Drop any argument the console left as an unfilled {{template}}.
+
+    Tool bodies are templates: {"item": "{{item}}"}. When the agent has nothing
+    to put in a slot, the literal placeholder arrives instead. Treating that as
+    a real value means searching the catalogue for "{{item}}" and confidently
+    reporting it out of stock, so strip it and let the tool ask.
+    """
+    if isinstance(value, str):
+        return None if ("{{" in value and "}}" in value) else value
+    if isinstance(value, dict):
+        return {k: v for k, v in ((k, _scrub(v)) for k, v in value.items())
+                if v is not None}
+    if isinstance(value, list):
+        return [v for v in (_scrub(v) for v in value) if v not in (None, {}, [])]
+    return value
+
+
+def _lines(args: dict) -> list:
+    """Item lines, however the console managed to express them.
+
+    A nested array of objects is painful to template in the Body tab, so a
+    single-line call may arrive flattened as item/qty/unit/rate. Most phone
+    orders are one or two lines, and refusing the easy shape would push people
+    into hand-editing JSON.
+    """
+    rows = args.get("items")
+    if isinstance(rows, dict):
+        rows = [rows]
+    if isinstance(rows, str):
+        try:
+            rows = json.loads(rows)
+        except (ValueError, TypeError):
+            rows = [{"item": rows}]
+    if not rows and args.get("item"):
+        rows = [{"item": args.get("item"), "qty": args.get("qty"),
+                 "unit": args.get("unit"), "rate": args.get("rate")}]
+    return [r for r in (rows or []) if isinstance(r, dict) and r.get("item")]
 
 
 def _ask_which(question: dict) -> dict:
@@ -442,11 +483,18 @@ def top_items(repo, user, args):
                          e.get("unit") or L.base_unit(sku), sku)
         qty[e["sku_id"]] += base
         revenue[e["sku_id"]] += base * float(e.get("rate") or 0)
-    rows = [{"sku_id": k, "name": by[k]["canonical"], "qty_sold": round(v, 2),
-             "unit": L.base_unit(by[k]), "revenue": round(revenue[k], 2)}
-            for k, v in qty.items()]
-    slow = (args.get("order") or "top") == "slow"
-    rows.sort(key=lambda r: r["revenue"], reverse=not slow)
+    rows = []
+    for k, v in qty.items():
+        cost = L.landed_cost_as_of(by[k], repo.events_for_sku(k), end) or 0
+        rows.append({"sku_id": k, "name": by[k]["canonical"],
+                     "qty_sold": round(v, 2), "unit": L.base_unit(by[k]),
+                     "revenue": round(revenue[k], 2),
+                     "margin": round(revenue[k] - cost * v, 2)})
+    order = (args.get("order") or "top").lower()
+    slow = order == "slow"
+    # "sabse zyada kamai kis item se" is a margin question, not a revenue one.
+    rows.sort(key=lambda r: r["margin" if order == "margin" else "revenue"],
+              reverse=not slow)
     rows = rows[:int(args.get("limit") or 5)]
     return {"from": start.isoformat(), "to": end.isoformat(), "items": rows,
             "speak": ", ".join(f"{r['name']} {_say_number(r['revenue'])} rupaye"
@@ -476,6 +524,10 @@ def customer_account(repo, user, args):
             "next_deadline": acc.get("next_deadline"),
             "open_dues": [{"amount": d["amount"], "remaining": d["remaining"],
                            "deadline": d["deadline"]} for d in acc["open_dues"]],
+            "recent_payments": [{"amount": p["amount"], "paid_on": p.get("paid_on")}
+                                for p in (acc.get("payments") or [])[:5]],
+            "overdue": any(L._d(d["deadline"]) < clock.today()
+                           for d in acc["open_dues"]),
             "speak": (f"{acc.get('name')} ka {_say_number(acc['outstanding'])} "
                       "rupaye baaki hai." if acc["outstanding"] > 0
                       else f"{acc.get('name')} ka koi udhaar baaki nahi.")}
@@ -515,11 +567,44 @@ def recent_activity(repo, user, args):
                      or "Abhi koi entry nahi."}
 
 
+def stock_value(repo, user, args):
+    """What the shelves are worth, at cost and at selling price.
+
+    Owners ask this as "maal kitne ka pada hai". It needs both numbers: cost is
+    the money tied up, selling price is what it should come back as.
+    """
+    events = repo.all_events()
+    at_cost = at_sale = 0.0
+    rows, uncounted = [], []
+    for sku in repo.load_catalogue():
+        st = _stock_of(repo, sku, events)
+        if not st["counted"] or not st["qty"] or st["qty"] < 0:
+            if not st["counted"]:
+                uncounted.append(sku["canonical"])
+            continue
+        base = L.to_base(st["qty"], st["unit"], sku)
+        cost = L.landed_cost_as_of(sku, repo.events_for_sku(sku["sku_id"]),
+                                   clock.today()) or 0
+        rate = sku.get("selling_rate")
+        rate = L.rate_to_base(float(rate), sku.get("default_unit"), sku) \
+            if rate else cost * 1.10
+        at_cost += base * cost
+        at_sale += base * rate
+        rows.append({"name": sku["canonical"], "qty": st["qty"],
+                     "unit": st["unit"], "value_at_cost": round(base * cost, 2)})
+    rows.sort(key=lambda r: r["value_at_cost"], reverse=True)
+    return {"at_cost": round(at_cost, 2), "at_selling_price": round(at_sale, 2),
+            "potential_margin": round(at_sale - at_cost, 2),
+            "items": rows, "uncounted": uncounted,
+            "speak": f"Stock ki value {_say_number(at_cost)} rupaye cost par, "
+                     f"aur bikne par {_say_number(at_sale)} rupaye."}
+
+
 def price_quote(repo, user, args):
     """What a basket costs, GST included — before anything is recorded."""
     lines, unknown = [], []
     subtotal = gst_total = 0.0
-    for row in args.get("items") or []:
+    for row in _lines(args):
         sku, question = _find_sku(repo, row.get("item"))
         if question:
             return _ask_which(question)
@@ -579,7 +664,7 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
                                           for e in prior],
                             "affected_stock": {}}}
     items, unknown = [], []
-    for row in args.get("items") or []:
+    for row in _lines(args):
         sku, question = _find_sku(repo, row.get("item"))
         if question:
             return {"recorded": False, **_ask_which(question)}
@@ -783,11 +868,12 @@ def send_bill(repo, user, args):
             return {"sent": False, **_ask_which_customer(options)}
         return {"sent": False, "speak": "Ye customer nahi mila."}
     customer = repo.customer(acc["customer_id"]) or acc
-    if not args.get("items"):
+    rows = _lines(args)
+    if not rows:
         return {"sent": False, "needs": {"field": "items"},
                 "speak": "Bill mein kya-kya daalna hai?"}
     lines = []
-    for row in args["items"]:
+    for row in rows:
         if row.get("sku_id"):
             lines.append(row)
             continue
@@ -873,8 +959,9 @@ TOOLS = {
                          "ka. args: period (day/yesterday/week/month) ya days, "
                          "ya start aur end date."),
     "top_items": (top_items,
-                  "Sabse zyada ya sabse kam bikne waale item. args: days, "
-                  "limit, order (top ya slow)."),
+                  "Sabse zyada ya sabse kam bikne waale item, aur har ek ka "
+                  "revenue aur margin. args: days, limit, order (top, slow "
+                  "ya margin)."),
     "list_customers": (list_customers,
                        "Saare customer aur unka outstanding udhaar."),
     "customer_account": (customer_account,
@@ -883,6 +970,9 @@ TOOLS = {
     "dues": (dues, "Jo udhaar due ho rahe hain. args: days_before."),
     "recent_activity": (recent_activity,
                         "Pichhli entries: kya bika, kya aaya. args: limit."),
+    "stock_value": (stock_value,
+                    "Poore stock ki value: cost par kitna paisa phansa hai aur "
+                    "bikne par kitna aayega. 'maal kitne ka pada hai' ke liye."),
     "price_quote": (price_quote,
                     "Kisi saamaan ka bhaav aur GST ke saath total, bina kuch "
                     "record kiye. args: items[{item, qty, unit}]."),
@@ -952,7 +1042,7 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
         return {"speak": "Yeh kaam abhi nahi kar sakta.", "error": "unknown_tool",
                 "authorised": True}
     try:
-        out = entry[0](repo, user, args or {})
+        out = entry[0](repo, user, _scrub(args or {}))
     except Exception as e:
         # A tool crash must not become a confident wrong answer on the call.
         # The exception type is enough to debug from the logs; the message can
