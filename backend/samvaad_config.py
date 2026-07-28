@@ -342,6 +342,21 @@ def main() -> None:
           "database's:\n")
     print("```json\n" + json.dumps(MISS_EXAMPLE, indent=2, ensure_ascii=False)
           + "\n```\n")
+    print("### Step 3: what the agent gets back\n")
+    print("Put this in the **What the agent gets back** box. The same line for "
+          "every tool:\n")
+    print("```\n{{facts}}\n```\n")
+    print("That box templates named fields out of the reply, so anything not "
+          "named there may never reach the agent. Naming each tool's keys by "
+          "hand would be 23 different strings, every one of them a chance to "
+          "forget a field, and a written-out sentence there would put the "
+          "canned answers straight back. So every reply also carries `facts`: "
+          "the entire payload as one compact JSON string. One placeholder, no "
+          "loss, and the agent still does the phrasing.\n")
+    print("If you would rather read something human while testing, "
+          "`{{speak}}` gives the fallback sentence alone, but the agent then "
+          "sees only that sentence and cannot answer a follow-up from the "
+          "underlying numbers.\n")
     for t in tools:
         name = t["name"]
         args, reply = EXAMPLES.get(name, ({}, {}))
@@ -349,7 +364,7 @@ def main() -> None:
         print(t["description"] + "\n")
         print("**Request**\n")
         print("```bash\n" + curl(name) + "\n```\n")
-        print("**Reply**\n")
+        print("**Reply** (also delivered whole as `facts`)\n")
         print("```json\n" + json.dumps(reply, indent=2, ensure_ascii=False)
               + "\n```\n")
 

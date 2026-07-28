@@ -154,6 +154,18 @@ And an item this shop does not carry comes back with the shop's own trade attach
 }
 ```
 
+### Step 3: what the agent gets back
+
+Put this in the **What the agent gets back** box. The same line for every tool:
+
+```
+{{facts}}
+```
+
+That box templates named fields out of the reply, so anything not named there may never reach the agent. Naming each tool's keys by hand would be 23 different strings, every one of them a chance to forget a field, and a written-out sentence there would put the canned answers straight back. So every reply also carries `facts`: the entire payload as one compact JSON string. One placeholder, no loss, and the agent still does the phrasing.
+
+If you would rather read something human while testing, `{{speak}}` gives the fallback sentence alone, but the agent then sees only that sentence and cannot answer a follow-up from the underlying numbers.
+
 ### `add_item`
 
 Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit, brand.
@@ -166,7 +178,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "add_item", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "unit": "{{unit}}", "brand": "{{brand}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -189,7 +201,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "business_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}", "days": "{{days}}", "start": "{{start}}", "end": "{{end}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -215,7 +227,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "check_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -239,7 +251,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "customer_account", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"name": "{{name}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -275,7 +287,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "dues", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -303,7 +315,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "item_details", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -328,7 +340,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "list_customers", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -357,7 +369,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "list_inventory", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -387,7 +399,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "low_stock", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -414,7 +426,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "price_quote", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -446,7 +458,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "recent_activity", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"limit": "{{limit}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -477,7 +489,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "record_payment", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "amount": "{{amount}}", "request_id": "{{request_id}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -500,7 +512,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -525,7 +537,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -557,7 +569,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "search_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"query": "{{query}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -583,7 +595,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "send_bill", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"customer": "{{customer}}", "item": "{{item}}", "qty": "{{qty}}", "rate": "{{rate}}", "payment": "{{payment}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -606,7 +618,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "send_reminders", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days_before": "{{days_before}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -640,7 +652,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "send_summary", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"period": "{{period}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -661,7 +673,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -688,7 +700,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "request_id": "{{request_id}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -713,7 +725,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "stock_value", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -744,7 +756,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "top_items", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"days": "{{days}}", "limit": "{{limit}}", "order": "{{order}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {
@@ -774,7 +786,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -d '{"tool": "update_shop_profile", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "args": {"shop_name": "{{shop_name}}", "owner": "{{owner}}", "shop_type": "{{shop_type}}", "gstin": "{{gstin}}", "address": "{{address}}"}}'
 ```
 
-**Reply**
+**Reply** (also delivered whole as `facts`)
 
 ```json
 {

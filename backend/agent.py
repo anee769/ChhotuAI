@@ -1063,5 +1063,33 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
               f"{type(e).__name__}: {e}", flush=True)
         return {"speak": "Isme kuch gadbad ho gayi, dobara boliye.",
                 "error": type(e).__name__, "authorised": True}
-    return {**out, "tool": name, "authorised": True,
-            "shop": user.get("shop_name") or ""}
+    out = {**out, "tool": name, "authorised": True,
+           "shop": user.get("shop_name") or ""}
+    return {**out, "facts": _facts(out)}
+
+
+# The console's "What the agent gets back" step templates named fields out of
+# the reply. Anything it does not name is at best uncertain to arrive, and a
+# per-tool sentence written there would put the canned answers straight back.
+# So every reply also carries `facts`: the whole payload as one compact string.
+# One placeholder, {{facts}}, works for all 23 tools and loses nothing.
+FACTS_LIMIT = 3000
+
+
+def _facts(payload: dict) -> str:
+    body = {k: v for k, v in payload.items()
+            if k not in ("facts", "authorised", "shop")}
+    text = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+    if len(text) <= FACTS_LIMIT:
+        return text
+    # Long lists are the only thing that gets near the limit. Trim the rows
+    # rather than truncating the JSON into something unparseable.
+    for key in ("items", "customers", "events", "dues", "lines"):
+        rows = body.get(key)
+        if isinstance(rows, list) and len(rows) > 12:
+            body[key] = rows[:12]
+            body[f"{key}_truncated_from"] = len(rows)
+            text = json.dumps(body, ensure_ascii=False, separators=(",", ":"))
+            if len(text) <= FACTS_LIMIT:
+                break
+    return text[:FACTS_LIMIT]

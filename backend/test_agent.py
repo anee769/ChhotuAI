@@ -487,6 +487,30 @@ class DispatchTests(unittest.TestCase):
         for name in SC.PARAMS:
             self.assertNotIn("X-Agent-Secret", SC.curl(name))
 
+    def test_every_reply_carries_the_whole_payload_as_facts(self):
+        """The console templates named fields out of the reply, so one field
+        must hold everything, or configuring 23 tools means naming every key
+        of every one and losing whatever was forgotten."""
+        shop = {"user_id": "u_1", "phone": "+917006322772", "shop_name": "S"}
+        with patch.object(agent.auth, "all_users", return_value=[shop]), \
+                patch.object(main, "bind_user"), \
+                patch.dict(agent.TOOLS,
+                           {"dues": (lambda r, u, a: {"count": 2, "speak": "do"},
+                                     "")}):
+            out = agent.handle("dues", "917006322772", {})
+        facts = json.loads(out["facts"])
+        self.assertEqual(facts["count"], 2)
+        self.assertEqual(facts["speak"], "do")
+        self.assertNotIn("facts", facts)
+
+    def test_facts_stays_parseable_when_the_list_is_long(self):
+        rows = [{"name": f"item {i}", "qty": i} for i in range(400)]
+        text = agent._facts({"count": 400, "items": rows, "speak": "bahut"})
+        self.assertLessEqual(len(text), agent.FACTS_LIMIT)
+        parsed = json.loads(text)
+        self.assertEqual(parsed["items_truncated_from"], 400)
+        self.assertEqual(parsed["count"], 400)
+
     def test_manifest_describes_every_tool(self):
         names = {t["name"] for t in agent.manifest()}
         self.assertEqual(names, set(agent.TOOLS))
