@@ -376,9 +376,24 @@ def agent_tool(payload: dict = Body(...),
     except agent.AgentError as e:
         raise HTTPException(503, str(e))
     args = payload.get("args")
+    if isinstance(args, str):
+        # The console's Body tab types `args` as JSON but can send it as a
+        # string. Parsing it here is the difference between a working tool and
+        # one that silently receives nothing.
+        try:
+            args = json.loads(args)
+        except (ValueError, TypeError):
+            args = None
     if not isinstance(args, dict):
         args = {k: v for k, v in payload.items()
                 if k not in ("tool", "caller", "From", "shop_key", "args")}
+    # Log the SHAPE of every agent call, never the values: debugging a voice
+    # agent from the outside is guesswork without knowing what actually
+    # arrived, and "it errored" is all the caller ever hears.
+    print(f"[agent] tool={payload.get('tool')!r} "
+          f"caller={'set' if (payload.get('caller') or '').strip() else 'EMPTY'} "
+          f"shop_key={'set' if (payload.get('shop_key') or '').strip() else 'EMPTY'} "
+          f"arg_keys={sorted(args)}", flush=True)
     return agent.handle(payload.get("tool") or "",
                         payload.get("caller") or payload.get("From") or "",
                         args, key=payload.get("shop_key") or "")

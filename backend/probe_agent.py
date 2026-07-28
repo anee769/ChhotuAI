@@ -85,7 +85,11 @@ class ScriptedLine(AsyncAudioInterface):
     MAX_WAIT = 20.0      # a tool call plus a reply should never take longer
     GREETING = 2.5       # do not wait for it, just let it start
 
-    def __init__(self):
+    def __init__(self, clips):
+        # Rendered before the call. A TTS round trip mid-conversation is 1-3s
+        # of extra silence, and the agent nudges a quiet caller after 10s and
+        # then hangs up, so the reply has to be ready to play instantly.
+        self.clips = clips
         self.turns: list[bytearray] = []
         self.current = bytearray()
         self._last_out = 0.0
@@ -123,10 +127,9 @@ class ScriptedLine(AsyncAudioInterface):
     async def _run(self):
         try:
             await asyncio.sleep(self.GREETING)  # let the greeting start
-            for line in LINES:
+            for line, pcm in zip(LINES, self.clips):
                 self.turns.append(self.current)
                 self.current = bytearray()
-                pcm = tts(line)
                 print(f"CALLER> {line}", flush=True)
                 await self._send(pcm)
                 await self._silence(0.5)       # a real pause means "your turn"
@@ -156,11 +159,11 @@ async def main():
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
         version=1,                                   # the agent is still a draft
-        user_identifier="917021356939",              # this is the shop's identity
+        user_identifier="917006322772",              # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
         sample_rate=RATE,
-        agent_variables={"caller_number": "917021356939"},
+        agent_variables={"caller_number": "917006322772"},
     )
     async def on_transcript(m):
         print(f"[{getattr(m,'role','?')}] {getattr(m,'text','')}", flush=True)
@@ -175,7 +178,9 @@ async def main():
             detail = str(e)
         print(f"EVENT> {type(e).__name__} {detail}", flush=True)
 
-    line = ScriptedLine()
+    print("rendering speech...", flush=True)
+    clips = [tts(t) for t in LINES]
+    line = ScriptedLine(clips)
     agent = AsyncSamvaadAgent(api_key=SecretStr(os.environ["SAMVAAD_API_KEY"]),
                               config=cfg, audio_interface=line,
                               text_callback=on_text,
