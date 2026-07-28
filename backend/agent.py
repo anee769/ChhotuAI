@@ -146,6 +146,7 @@ def record_order(repo, user: dict, args: dict) -> dict:
 
 
 def day_summary(repo, user: dict, args: dict) -> dict:
+    import main
     end = clock.today()
     weekly = (args.get("period") or "day") == "week"
     start = end - timedelta(days=6) if weekly else end
@@ -157,10 +158,20 @@ def day_summary(repo, user: dict, args: dict) -> dict:
         sale += m["total"]; margin += m["margin"]
         cash += m["cash"]; credit += m["credit"]
     when = "Pichhle saat din mein" if weekly else "Aaj"
-    return {"speak": f"{when} sale {_say_number(sale)} rupaye, "
-                     f"gross profit {_say_number(margin)} rupaye, "
-                     f"cash {_say_number(cash)} aur udhaar {_say_number(credit)} rupaye.",
-            "sale": round(sale, 2), "margin": round(margin, 2)}
+    speak = (f"{when} sale {_say_number(sale)} rupaye, "
+             f"gross profit {_say_number(margin)} rupaye, "
+             f"cash {_say_number(cash)} aur udhaar {_say_number(credit)} rupaye.")
+    low_stock = main._low_stock_items(repo) if not weekly else []
+    if low_stock:
+        warnings = [
+            (f"{row['canonical']} khatam ho gaya"
+             if row["out_of_stock"]
+             else f"{row['canonical']} sirf {row['stock']} bacha hai")
+            for row in low_stock[:3]
+        ]
+        speak += f" Stock alert: {', '.join(warnings)}."
+    return {"speak": speak, "sale": round(sale, 2), "margin": round(margin, 2),
+            "low_stock": low_stock}
 
 
 def dues(repo, user: dict, args: dict) -> dict:

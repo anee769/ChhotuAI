@@ -1807,6 +1807,20 @@ def _business_summary(metric, repo, state):
         say += _L(state, f" Sabse zyada {top['canonical']} gaya.",
                   f" {top['canonical']} moved the most.")
 
+    if not weekly:
+        low_stock = main._low_stock_items(repo)
+        if low_stock:
+            warnings = [
+                (_L(state, f"{row['canonical']} khatam ho gaya",
+                    f"{row['canonical']} is out of stock")
+                 if row["out_of_stock"] else
+                 _L(state, f"{row['canonical']} sirf {row['stock']} bacha hai",
+                    f"{row['canonical']} has only {row['stock']} left"))
+                for row in low_stock[:3]
+            ]
+            say += _L(state, f" Stock alert: {_oxford(warnings, state)}.",
+                      f" Stock alert: {_oxford(warnings, state)}.")
+
     if weekly:
         frozen = d.get("frozen_capital") or []
         if frozen:

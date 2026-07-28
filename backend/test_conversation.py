@@ -117,6 +117,30 @@ class ConversationStateTests(unittest.TestCase):
                             for row in out["state"]["history"]))
         self.assertEqual(committed["customer"]["name"], "Ravi Builder")
 
+    def test_low_stock_uses_recent_sales_velocity_not_product_hardcoding(self):
+        today = clock.today().isoformat()
+        self.repo.events = [
+            {"event_id": "open", "type": "opening_balance",
+             "sku_id": "CEM_ULTRATECH_PPC", "qty": 20, "unit": "bori",
+             "occurred_on": today},
+            {"event_id": "sale", "type": "sale",
+             "sku_id": "CEM_ULTRATECH_PPC", "qty": 18, "unit": "bori",
+             "occurred_on": today, "rate": 400, "payment": "cash"},
+        ]
+
+        rows = main._low_stock_items(self.repo, lookback_days=30, cover_days=7)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["sku_id"], "CEM_ULTRATECH_PPC")
+        self.assertEqual(rows[0]["stock"], "2 bori")
+        self.assertAlmostEqual(rows[0]["days_left"], 3.3)
+
+        spoken = __import__("agent").day_summary(
+            self.repo, {}, {"period": "day"},
+        )
+        self.assertIn("Stock alert", spoken["speak"])
+        self.assertIn("2 bori", spoken["speak"])
+
     def test_finished_sale_asks_before_sending_the_bill(self):
         item = dict(self.extracted["items"][0], rate=450, payment="cash")
         state = {

@@ -14,7 +14,7 @@ import os
 import re
 import secrets
 import sys
-from datetime import date, datetime
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 from fastapi import (FastAPI, UploadFile, File, Form, Body, Header,
@@ -715,6 +715,55 @@ def _stock_view(sku: dict, det: dict) -> dict:
             "unit": unit}
 
 
+def _low_stock_items(target_repo=None, *, lookback_days: int = 30,
+                     cover_days: int = 7, limit: int = 4) -> list:
+    """Return counted products likely to run out within ``cover_days``.
+
+    "Low" is based on this shop's own recent sales velocity, rather than a
+    hard-coded quantity for cement, steel, or any other product. This keeps the
+    rule useful for every tenant and for products added later. Products with no
+    recent sales are omitted because the ledger has no evidence for estimating
+    when they will run out.
+    """
+    source = target_repo or repo
+    today = clock.today()
+    start = today - timedelta(days=max(1, lookback_days) - 1)
+    events = source.all_events()
+    rows = []
+    for sku in source.load_catalogue():
+        detail = L._stock_detail(sku, events, today)
+        if detail["qty"] == L.UNCOUNTED:
+            continue
+        sold_base = 0.0
+        for event in events:
+            if event.get("type") != "sale" or event.get("sku_id") != sku["sku_id"]:
+                continue
+            occurred = L._d(event["occurred_on"])
+            if start <= occurred <= today:
+                sold_base += max(
+                    0.0,
+                    L.to_base(float(event.get("qty") or 0),
+                              event.get("unit") or L.base_unit(sku), sku),
+                )
+        if sold_base <= 0:
+            continue
+        daily_velocity = sold_base / max(1, lookback_days)
+        remaining_base = max(0.0, float(detail.get("base") or 0))
+        days_left = remaining_base / daily_velocity
+        if days_left > cover_days:
+            continue
+        view = _stock_view(sku, detail)
+        rows.append({
+            "sku_id": sku["sku_id"],
+            "canonical": sku["canonical"],
+            "stock": view["display"],
+            "days_left": round(days_left, 1),
+            "out_of_stock": remaining_base <= 0,
+        })
+    rows.sort(key=lambda row: (row["days_left"], row["canonical"]))
+    return rows[:max(0, limit)]
+
+
 # ---------------------------------------------------------------------------
 # Stock listing + reconciliation
 # ---------------------------------------------------------------------------
@@ -785,6 +834,15 @@ def today_tts():
             f"Margin abhi tak {int(m['margin'])} rupaye. "
             f"Cash aaya {int(m['cash'])} rupaye. "
             f"Udhaar gaya {int(m['credit'])} rupaye.")
+    low_stock = _low_stock_items(repo)
+    if low_stock:
+        warnings = [
+            (f"{row['canonical']} khatam ho gaya"
+             if row["out_of_stock"]
+             else f"{row['canonical']} sirf {row['stock']} bacha hai")
+            for row in low_stock[:3]
+        ]
+        text += f" Stock alert: {', '.join(warnings)}."
     if m["provisional_extra"]:
         text += f" Plus {m['provisional_extra']} purani entries baaki hain."
     if not sarvam_client.has_key():
