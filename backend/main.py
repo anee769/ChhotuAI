@@ -719,11 +719,10 @@ def _low_stock_items(target_repo=None, *, lookback_days: int = 30,
                      cover_days: int = 7, limit: int = 4) -> list:
     """Return counted products likely to run out within ``cover_days``.
 
-    "Low" is based on this shop's own recent sales velocity, rather than a
-    hard-coded quantity for cement, steel, or any other product. This keeps the
-    rule useful for every tenant and for products added later. Products with no
-    recent sales are omitted because the ledger has no evidence for estimating
-    when they will run out.
+    A product is low when fewer than five default units remain, or when this
+    shop's own recent sales velocity suggests it will run out within the cover
+    window. The quantity floor catches visibly low stock even when there is not
+    enough sales history for a time-based estimate.
     """
     source = target_repo or repo
     today = clock.today()
@@ -734,6 +733,7 @@ def _low_stock_items(target_repo=None, *, lookback_days: int = 30,
         detail = L._stock_detail(sku, events, today)
         if detail["qty"] == L.UNCOUNTED:
             continue
+        below_quantity_floor = float(detail["qty"]) < 5
         sold_base = 0.0
         for event in events:
             if event.get("type") != "sale" or event.get("sku_id") != sku["sku_id"]:
@@ -745,22 +745,29 @@ def _low_stock_items(target_repo=None, *, lookback_days: int = 30,
                     L.to_base(float(event.get("qty") or 0),
                               event.get("unit") or L.base_unit(sku), sku),
                 )
-        if sold_base <= 0:
-            continue
-        daily_velocity = sold_base / max(1, lookback_days)
         remaining_base = max(0.0, float(detail.get("base") or 0))
-        days_left = remaining_base / daily_velocity
-        if days_left > cover_days:
+        days_left = None
+        if sold_base > 0:
+            daily_velocity = sold_base / max(1, lookback_days)
+            days_left = remaining_base / daily_velocity
+        running_out_soon = days_left is not None and days_left <= cover_days
+        if not below_quantity_floor and not running_out_soon:
             continue
         view = _stock_view(sku, detail)
         rows.append({
             "sku_id": sku["sku_id"],
             "canonical": sku["canonical"],
             "stock": view["display"],
-            "days_left": round(days_left, 1),
+            "days_left": round(days_left, 1) if days_left is not None else None,
             "out_of_stock": remaining_base <= 0,
+            "reason": ("below_5" if below_quantity_floor
+                       else "seven_day_cover"),
         })
-    rows.sort(key=lambda row: (row["days_left"], row["canonical"]))
+    rows.sort(key=lambda row: (
+        not row["out_of_stock"],
+        row["days_left"] if row["days_left"] is not None else float("inf"),
+        row["canonical"],
+    ))
     return rows[:max(0, limit)]
 
 

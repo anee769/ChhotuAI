@@ -141,6 +141,21 @@ class ConversationStateTests(unittest.TestCase):
         self.assertIn("Stock alert", spoken["speak"])
         self.assertIn("2 bori", spoken["speak"])
 
+    def test_stock_below_five_is_low_without_sales_history(self):
+        self.repo.events = [
+            {"event_id": "open", "type": "opening_balance",
+             "sku_id": "TMT_20_FE500D_TATA", "qty": 4, "unit": "tonne",
+             "occurred_on": clock.today().isoformat()},
+        ]
+
+        rows = main._low_stock_items(self.repo)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["sku_id"], "TMT_20_FE500D_TATA")
+        self.assertEqual(rows[0]["stock"], "4 tonne")
+        self.assertEqual(rows[0]["reason"], "below_5")
+        self.assertIsNone(rows[0]["days_left"])
+
     def test_finished_sale_asks_before_sending_the_bill(self):
         item = dict(self.extracted["items"][0], rate=450, payment="cash")
         state = {
