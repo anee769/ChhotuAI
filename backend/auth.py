@@ -1,38 +1,41 @@
-"""Phone-number OTP login, sessions, and user records.
+"""Phone/password authentication, sessions, and multi-tenant user records.
 
-The delivery channel is deliberately pluggable. WhatsApp authentication
-templates are the intended production channel — cheapest per message in India
-and, unlike SMS, exempt from TRAI's DLT registration — but templates need Meta
-approval and a verified number. Until then send_otp() falls back to a dev
-sender, and swapping it out later touches one function.
-
-Codes and session tokens are stored HASHED. A database leak must not hand
-anyone a working login, and these rows sit in the same database as the ledger.
+Passwords and session tokens are stored only as salted hashes. Password hashes
+do not use CHHOTU_SECRET: rotating the session secret should sign everyone out,
+not invalidate every user's password.
 """
 from __future__ import annotations
 
 import hashlib
 import hmac
 import os
-import re
 import secrets
+import threading
 from datetime import datetime, timedelta, timezone
 
 import db
 
-OTP_TTL_MINUTES = 10
-OTP_MAX_ATTEMPTS = 5
-OTP_RESEND_SECONDS = 30
 SESSION_DAYS = 30
+PASSWORD_ITERATIONS = 600_000
+LEGACY_DEFAULT_PASSWORD = "admin123"
+_PASSWORD_SCHEMA_READY = False
+_PASSWORD_SCHEMA_LOCK = threading.Lock()
 
-# Dev mode returns the code in the API response so the whole flow is testable
-# with no delivery channel. It is a login bypass, so it must be explicit and
-# must never be the default on a deployment.
-DEV_OTP_ENV = "CHHOTU_DEV_OTP"
+
+class UserNotFound(ValueError):
+    pass
 
 
-def dev_mode() -> bool:
-    return (os.environ.get(DEV_OTP_ENV) or "").strip() == "1"
+class PasswordSetupRequired(ValueError):
+    pass
+
+
+class InvalidCredentials(ValueError):
+    pass
+
+
+class AccountExists(ValueError):
+    pass
 
 
 def _pepper() -> str:
@@ -63,104 +66,124 @@ def _now():
 
 
 # ---------------------------------------------------------------------------
-# OTP
+# Passwords
 # ---------------------------------------------------------------------------
-def send_otp(phone: str) -> dict:
-    """Issue a code for this number. Returns {sent, dev_code?, retry_after?}."""
+def _ensure_password_schema() -> None:
+    """Upgrade existing databases lazily, without deleting user data."""
+    global _PASSWORD_SCHEMA_READY
+    if _PASSWORD_SCHEMA_READY:
+        return
+    with _PASSWORD_SCHEMA_LOCK:
+        if _PASSWORD_SCHEMA_READY:
+            return
+        with db.connect() as conn:
+            conn.execute(
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT")
+            # Accounts created by the removed OTP flow have no password. Give
+            # only those legacy rows the requested demo password; never
+            # overwrite a password created through signup.
+            rows = conn.execute(
+                "SELECT user_id FROM users WHERE password_hash IS NULL"
+                " FOR UPDATE").fetchall()
+            for (user_id,) in rows:
+                conn.execute(
+                    "UPDATE users SET password_hash = %s WHERE user_id = %s"
+                    " AND password_hash IS NULL",
+                    (hash_password(LEGACY_DEFAULT_PASSWORD), user_id))
+        _PASSWORD_SCHEMA_READY = True
+
+
+def validate_password(password: str) -> str:
+    password = str(password or "")
+    if len(password) < 8:
+        raise ValueError("Password must be at least 8 characters.")
+    if len(password) > 128:
+        raise ValueError("Password is too long.")
+    return password
+
+
+def hash_password(password: str) -> str:
+    password = validate_password(password)
+    salt = secrets.token_bytes(16)
+    digest = hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt, PASSWORD_ITERATIONS)
+    return f"pbkdf2_sha256${PASSWORD_ITERATIONS}${salt.hex()}${digest.hex()}"
+
+
+def verify_password(password: str, encoded: str) -> bool:
+    try:
+        algorithm, rounds, salt_hex, digest_hex = (encoded or "").split("$", 3)
+        if algorithm != "pbkdf2_sha256":
+            return False
+        expected = bytes.fromhex(digest_hex)
+        actual = hashlib.pbkdf2_hmac(
+            "sha256", str(password or "").encode("utf-8"),
+            bytes.fromhex(salt_hex), int(rounds))
+        return hmac.compare_digest(actual, expected)
+    except (TypeError, ValueError):
+        return False
+
+
+def authenticate(phone: str, password: str) -> dict:
     norm = normalize_phone(phone)
     if not norm:
-        raise ValueError("A valid 10-digit phone number is required.")
-
+        raise InvalidCredentials("Enter a valid 10-digit mobile number.")
+    _ensure_password_schema()
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT sent_at FROM otp_codes WHERE phone = %s FOR UPDATE",
-            (norm,)).fetchone()
-        if row and row[0]:
-            since = (_now() - row[0]).total_seconds()
-            if since < OTP_RESEND_SECONDS:
-                # Rate-limit resends: without this the endpoint is a free
-                # SMS/WhatsApp cannon pointed at any number someone types.
-                return {"sent": False,
-                        "retry_after": int(OTP_RESEND_SECONDS - since)}
-
-        code = f"{secrets.randbelow(10**6):06d}"
-        conn.execute(
-            "INSERT INTO otp_codes (phone, code_hash, expires_at, attempts,"
-            " sent_at) VALUES (%s,%s,%s,0,now())"
-            " ON CONFLICT (phone) DO UPDATE SET code_hash = EXCLUDED.code_hash,"
-            " expires_at = EXCLUDED.expires_at, attempts = 0, sent_at = now()",
-            (norm, _hash(code), _now() + timedelta(minutes=OTP_TTL_MINUTES)))
-
-    delivered = _deliver(norm, code)
-    out = {"sent": True, "delivered": delivered}
-    if dev_mode():
-        out["dev_code"] = code
-    return out
+            "SELECT user_id, phone, name, shop_name, onboarded_at, password_hash"
+            " FROM users WHERE phone = %s", (norm,)).fetchone()
+    if not row:
+        raise UserNotFound("No account exists for this number.")
+    if not row[5]:
+        raise PasswordSetupRequired("This existing account needs a password.")
+    if not verify_password(password, row[5]):
+        raise InvalidCredentials("Mobile number or password is incorrect.")
+    return {"user_id": row[0], "phone": row[1], "name": row[2],
+            "shop_name": row[3], "onboarded": row[4] is not None}
 
 
-def _deliver(phone: str, code: str) -> str:
-    """Hand the code to whatever channel is configured.
-
-    Returns the channel name. WhatsApp goes here once an authentication
-    template is approved; the signature does not change.
-    """
-    body = (f"{code} is your Chhotu.ai login code. It expires in "
-            f"{OTP_TTL_MINUTES} minutes.\nDo not share this code with anyone.")
-    try:
-        import whatsapp
-        if whatsapp.is_configured():
-            # SMS first for login: it reaches any handset, whereas WhatsApp
-            # needs the recipient to have opted in to the sandbox — which a
-            # brand-new user signing up obviously has not.
-            try:
-                whatsapp.send_sms(phone, body)
-                return "sms"
-            except Exception:
-                whatsapp.send_whatsapp(phone, body)
-                return "whatsapp"
-    except Exception:
-        # A delivery failure must not lose the code that was just stored —
-        # dev mode still returns it, and the user can retry.
-        pass
-    if dev_mode():
-        return "dev"
-    return "none"
-
-
-def verify_otp(phone: str, code: str) -> str:
-    """Return the phone number on success. Raises ValueError otherwise."""
+def signup(phone: str, name: str, password: str) -> dict:
     norm = normalize_phone(phone)
-    code = re.sub(r"\D", "", code or "")
-    if not norm or not code:
-        raise ValueError("Enter the 6-digit code.")
-
+    name = (name or "").strip()
+    if not norm:
+        raise ValueError("Enter a valid 10-digit mobile number.")
+    if len(name) < 2:
+        raise ValueError("Enter the owner's name.")
+    encoded = hash_password(password)
+    _ensure_password_schema()
     with db.connect() as conn:
         row = conn.execute(
-            "SELECT code_hash, expires_at, attempts FROM otp_codes"
-            " WHERE phone = %s FOR UPDATE", (norm,)).fetchone()
-        if not row:
-            raise ValueError("Ask for a code first.")
-        code_hash, expires_at, attempts = row
-        if _now() > expires_at:
-            conn.execute("DELETE FROM otp_codes WHERE phone = %s", (norm,))
-            raise ValueError("That code expired. Ask for a new one.")
-        if attempts >= OTP_MAX_ATTEMPTS:
-            conn.execute("DELETE FROM otp_codes WHERE phone = %s", (norm,))
-            raise ValueError("Too many wrong attempts. Ask for a new code.")
-        # compare_digest so a wrong code can't be found by timing
-        if not hmac.compare_digest(code_hash, _hash(code)):
+            "SELECT user_id, phone, name, shop_name, onboarded_at, password_hash"
+            " FROM users WHERE phone = %s FOR UPDATE", (norm,)).fetchone()
+        if row and row[5]:
+            raise AccountExists("An account already exists for this number.")
+        if row:
+            # Legacy OTP accounts have no password. Requiring the exact stored
+            # owner name prevents a bare phone number from claiming an account.
+            if row[2] and row[2].strip().casefold() != name.casefold():
+                raise InvalidCredentials(
+                    "Owner name does not match the existing account.")
             conn.execute(
-                "UPDATE otp_codes SET attempts = attempts + 1 WHERE phone = %s",
-                (norm,))
-            raise ValueError("That code isn't right.")
-        conn.execute("DELETE FROM otp_codes WHERE phone = %s", (norm,))
-    return norm
+                "UPDATE users SET name = %s, password_hash = %s WHERE user_id = %s",
+                (name, encoded, row[0]))
+            user_id, shop_name, onboarded = row[0], row[3], row[4]
+        else:
+            user_id = "usr_" + secrets.token_hex(8)
+            conn.execute(
+                "INSERT INTO users (user_id, phone, password_hash, name)"
+                " VALUES (%s,%s,%s,%s)",
+                (user_id, norm, encoded, name))
+            shop_name, onboarded = "", None
+    return {"user_id": user_id, "phone": norm, "name": name,
+            "shop_name": shop_name, "onboarded": onboarded is not None}
 
 
 # ---------------------------------------------------------------------------
 # Users and sessions
 # ---------------------------------------------------------------------------
 def get_or_create_user(phone: str) -> dict:
+    """Compatibility helper for the one-time data migration script."""
     norm = normalize_phone(phone)
     with db.connect() as conn:
         row = conn.execute(
@@ -222,8 +245,7 @@ def revoke_session(token: str) -> None:
 
 
 def all_users() -> list:
-    """Every registered shop — used by the nightly reminder run, which has no
-    logged-in user to act as."""
+    """Every registered shop — used by jobs that have no logged-in user."""
     with db.connect() as conn:
         rows = conn.execute(
             "SELECT user_id, phone, name, shop_name FROM users"

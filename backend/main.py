@@ -175,36 +175,53 @@ def _devanagari_for_tts(text: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Auth — phone OTP
+# Auth — phone and password
 # ---------------------------------------------------------------------------
 @app.get("/api/health")
 def health():
     return {"ok": True, "today": clock.today().isoformat()}
 
 
-@app.post("/api/auth/otp")
-def auth_otp(payload: dict = Body(...)):
-    try:
-        return auth.send_otp(payload.get("phone", ""))
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-
-
-@app.post("/api/auth/verify")
-def auth_verify(payload: dict = Body(...)):
-    try:
-        phone = auth.verify_otp(payload.get("phone", ""), payload.get("code", ""))
-    except ValueError as e:
-        raise HTTPException(400, str(e))
-    user = auth.get_or_create_user(phone)
+def _auth_response(user: dict):
+    """Issue the same durable session for login and signup."""
     token = auth.issue_session(user["user_id"])
     out = JSONResponse({"token": token, "user": user})
-    # Cookie as well as the token, so a reload keeps the session without the
-    # frontend having to re-attach a header on every request.
     out.set_cookie("chhotu_session", token, max_age=auth.SESSION_DAYS * 86400,
                    httponly=True, samesite="lax",
                    secure=bool(os.environ.get("VERCEL")))
     return out
+
+
+@app.post("/api/auth/login")
+def auth_login(payload: dict = Body(...)):
+    try:
+        return _auth_response(auth.authenticate(
+            payload.get("phone", ""), payload.get("password", "")))
+    except auth.UserNotFound as e:
+        return JSONResponse({"detail": str(e), "code": "signup_required"},
+                            status_code=404)
+    except auth.PasswordSetupRequired as e:
+        return JSONResponse({"detail": str(e), "code": "password_setup_required"},
+                            status_code=409)
+    except auth.InvalidCredentials as e:
+        return JSONResponse({"detail": str(e), "code": "invalid_credentials"},
+                            status_code=401)
+
+
+@app.post("/api/auth/signup")
+def auth_signup(payload: dict = Body(...)):
+    try:
+        return _auth_response(auth.signup(
+            payload.get("phone", ""), payload.get("name", ""),
+            payload.get("password", "")))
+    except auth.AccountExists as e:
+        return JSONResponse({"detail": str(e), "code": "sign_in_required"},
+                            status_code=409)
+    except auth.InvalidCredentials as e:
+        return JSONResponse({"detail": str(e), "code": "invalid_credentials"},
+                            status_code=401)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
 
 
 @app.post("/api/auth/logout")
@@ -225,57 +242,24 @@ def me():
 
 @app.post("/api/onboarding")
 def onboarding(payload: dict = Body(...)):
-    """Finish registration: owner name, shop name, and the first stock line."""
+    """Finish registration with company details; owner identity came at signup."""
     user = current_user()
-    name = (payload.get("name") or "").strip()
     shop = (payload.get("shop_name") or "").strip()
-    auth.complete_onboarding(user["user_id"], name=name, shop_name=shop)
-    if shop:
-        repo.save_config({"shop_name": shop})
-
-    created = []
-    for item in payload.get("items") or []:
-        canonical = (item.get("canonical") or "").strip()
-        if not canonical:
-            continue
-        unit = (item.get("unit") or "piece").strip()
-        brand = (item.get("brand") or "").strip()
-        variant = (item.get("type") or "").strip()
-        # Inventory shows Product, Family, Brand, Type/Size — collect all four
-        # at signup so a new shop's table isn't full of blanks it cannot fill
-        # in later without re-adding the product.
-        attributes = {}
-        if brand:
-            attributes["brand"] = brand
-        if variant:
-            attributes["type"] = variant
-        label = " ".join(x for x in (brand, canonical, variant) if x)
-        sku_id = re.sub(r"[^A-Z0-9]+", "_", label.upper()).strip("_")[:48] or "ITEM"
-        cost = float(item.get("cost") or 0)
-        aliases = {label.lower(), canonical.lower()}
-        if brand:
-            aliases.add(brand.lower())
-        repo.upsert_sku({
-            "sku_id": sku_id, "canonical": label,
-            "family": (item.get("family") or "other").strip().lower(),
-            "attributes": attributes, "default_unit": unit, "units": {unit: 1},
-            "gst_rate": float(item.get("gst_rate") or 18),
-            # Cost price is the whole basis of margin: without it every sale of
-            # this item reports profit as unknown.
-            "opening_cost_per_kg": cost,
-            "landed_cost_per_kg": cost or None,
-            "aliases": sorted(a for a in aliases if a),
-        })
-        # An opening_balance counts immediately; a bare delivery would leave the
-        # shop's very first item showing as "never counted".
-        qty = item.get("qty")
-        if qty:
-            _write_events("opening_balance",
-                          [{"sku_id": sku_id, "qty": float(qty), "unit": unit,
-                            "rate": cost or None, "rate_unit": unit}],
-                          clock.today().isoformat(), "exact", "onboarding")
-        created.append(sku_id)
-    return {"ok": True, "skus": created}
+    if not shop:
+        raise HTTPException(400, "Company name is required.")
+    gstin = (payload.get("gstin") or "").strip().upper()
+    address = (payload.get("address") or "").strip()
+    if gstin and not re.fullmatch(
+            r"[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]", gstin):
+        raise HTTPException(400, "Enter a valid GSTIN or leave it blank.")
+    auth.complete_onboarding(user["user_id"], shop_name=shop)
+    repo.save_config({
+        "shop_name": shop,
+        "gstin": gstin,
+        "address": address,
+        "phone": user.get("phone") or "",
+    })
+    return {"ok": True}
 
 
 # ---------------------------------------------------------------------------

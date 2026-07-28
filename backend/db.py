@@ -21,21 +21,16 @@ SCHEMA = """
 CREATE TABLE IF NOT EXISTS users (
     user_id      TEXT PRIMARY KEY,
     phone        TEXT UNIQUE NOT NULL,
+    password_hash TEXT,
     name         TEXT NOT NULL DEFAULT '',
     shop_name    TEXT NOT NULL DEFAULT '',
     created_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
     onboarded_at TIMESTAMPTZ
 );
 
--- OTP codes are stored hashed: a leaked database row must not be a working
--- login. Rows are short-lived and replaced on resend.
-CREATE TABLE IF NOT EXISTS otp_codes (
-    phone      TEXT PRIMARY KEY,
-    code_hash  TEXT NOT NULL,
-    expires_at TIMESTAMPTZ NOT NULL,
-    attempts   INT NOT NULL DEFAULT 0,
-    sent_at    TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+-- Live deployments created before password authentication are upgraded in
+-- place. This remains safe to run for every fresh schema as well.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash TEXT;
 
 CREATE TABLE IF NOT EXISTS sessions (
     token_hash TEXT PRIMARY KEY,

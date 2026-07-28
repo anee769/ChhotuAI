@@ -506,6 +506,7 @@
   }
   .auth-input { border:1px solid #dde0e4; outline:0; width:100%;
     font-size:15px; padding:11px 13px; background:#fff; }
+  textarea.auth-input { min-height:82px; resize:vertical; font-family:inherit; }
   .auth-phone:focus-within, .auth-input:focus-within { border-color:#006c49; }
   .auth-code {
     width:100%; margin-top:2px; padding:13px; border:1px solid #dde0e4;
@@ -522,6 +523,8 @@
   .auth-link { border:0; background:none; color:#006c49; font-size:12.5px;
     font-weight:700; cursor:pointer; padding:4px 0; }
   .auth-link:disabled { color:#969aa1; cursor:default; }
+  .auth-switch { margin-top:16px; color:#747980; font-size:12.5px; text-align:center; }
+  .auth-switch .auth-link { margin-left:4px; }
   .auth-divide { margin:22px 0 4px; padding-top:16px; border-top:1px solid #eceef0;
     color:#30343a; font-size:11px; font-weight:800; letter-spacing:.1em;
     text-transform:uppercase; }
@@ -728,45 +731,62 @@
   <div class="auth-card">
     <div class="auth-brand"><span class="auth-dot"></span>Chhotu<span class="auth-ai">.ai</span></div>
 
-    <div id="authStepPhone">
-      <h1 class="auth-title">Apne number se login karein</h1>
-      <p class="auth-sub">Hum ek 6-digit code SMS karenge.</p>
+    <div id="authStepLogin">
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-sub">Mobile number aur password se sign in karein.</p>
       <label class="auth-label" for="authPhone">Mobile number</label>
       <div class="auth-phone">
         <span>+91</span>
         <input id="authPhone" type="tel" inputmode="numeric" maxlength="10"
                placeholder="98765 43210" autocomplete="tel"
-               onkeydown="if(event.key==='Enter')requestOtp()">
+               onkeydown="if(event.key==='Enter')document.getElementById('authPassword').focus()">
       </div>
-      <button class="auth-primary" onclick="requestOtp()" id="authSendBtn">Code bhejein</button>
+      <label class="auth-label" for="authPassword">Password</label>
+      <input id="authPassword" class="auth-input" type="password"
+             placeholder="Your password" autocomplete="current-password"
+             onkeydown="if(event.key==='Enter')submitLogin()">
+      <button class="auth-primary" onclick="submitLogin()" id="authLoginBtn">Sign in</button>
+      <div class="auth-switch">Naya account?
+        <button class="auth-link" onclick="showSignup()">Sign up</button>
+      </div>
     </div>
 
-    <div id="authStepCode" class="hidden">
-      <h1 class="auth-title">Code daaliye</h1>
-      <p class="auth-sub" id="authSentTo"></p>
-      <label class="auth-label" for="authCode">6-digit code</label>
-      <input id="authCode" class="auth-code" type="text" inputmode="numeric"
-             maxlength="6" placeholder="000000" autocomplete="one-time-code"
-             onkeydown="if(event.key==='Enter')submitOtp()">
-      <button class="auth-primary" onclick="submitOtp()" id="authVerifyBtn">Login</button>
-      <div class="auth-row">
-        <button class="auth-link" onclick="authBack()">Number badlein</button>
-        <button class="auth-link" id="authResend" onclick="requestOtp(true)">Dobara bhejein</button>
+    <div id="authStepSignup" class="hidden">
+      <h1 class="auth-title" id="signupTitle">Create your account</h1>
+      <p class="auth-sub" id="signupSub">Owner details abhi; company details agle step mein.</p>
+      <label class="auth-label" for="signupPhone">Mobile number</label>
+      <div class="auth-phone">
+        <span>+91</span>
+        <input id="signupPhone" type="tel" inputmode="numeric" maxlength="10"
+               placeholder="98765 43210" autocomplete="tel">
+      </div>
+      <label class="auth-label" for="signupName">Owner's name</label>
+      <input id="signupName" class="auth-input" placeholder="Aneesh Gupta"
+             autocomplete="name">
+      <label class="auth-label" for="signupPassword">Password</label>
+      <input id="signupPassword" class="auth-input" type="password"
+             placeholder="At least 8 characters" autocomplete="new-password">
+      <label class="auth-label" for="signupConfirm">Confirm password</label>
+      <input id="signupConfirm" class="auth-input" type="password"
+             placeholder="Repeat password" autocomplete="new-password"
+             onkeydown="if(event.key==='Enter')submitSignup()">
+      <button class="auth-primary" onclick="submitSignup()" id="authSignupBtn">Create account</button>
+      <div class="auth-switch">Account hai?
+        <button class="auth-link" onclick="authBack()">Sign in</button>
       </div>
     </div>
 
     <div id="authStepOnboard" class="hidden">
-      <h1 class="auth-title">Dukaan set karein</h1>
-      <p class="auth-sub">Ye naam aapke bill aur report par chhpega.</p>
-      <label class="auth-label" for="obShop">Dukaan ka naam</label>
+      <h1 class="auth-title">Company details</h1>
+      <p class="auth-sub">Ye details bills aur reports par dikhengi.</p>
+      <label class="auth-label" for="obShop">Company / shop name</label>
       <input id="obShop" class="auth-input" placeholder="Sharma Building Materials">
-      <label class="auth-label" for="obOwner">Aapka naam</label>
-      <input id="obOwner" class="auth-input" placeholder="Aneesh Gupta">
-      <div class="auth-divide">Pehla saamaan</div>
-      <p class="auth-sub">Cost price zaroori hai — usi se munafa nikalta hai.
-        Baaki saamaan aap baad mein bol kar jodte rahiye.</p>
-      <div id="obItems"></div>
-      <button class="auth-link" onclick="addOnboardRow()">+ Aur item</button>
+      <label class="auth-label" for="obGstin">GSTIN <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
+      <input id="obGstin" class="auth-input" maxlength="15"
+             placeholder="27ABCDE1234F1Z5" autocomplete="off">
+      <label class="auth-label" for="obAddress">Business address <span style="font-weight:500;letter-spacing:0;text-transform:none">(optional)</span></label>
+      <textarea id="obAddress" class="auth-input"
+                placeholder="Shop address for bills"></textarea>
       <button class="auth-primary" onclick="submitOnboarding()" id="obBtn">Shuru karein</button>
     </div>
 
@@ -2082,12 +2102,12 @@ async function commitInvoice(){
 }
 
 // ================= AUTH =================
-let AUTH = {phone:'', resendAt:0};
+let AUTH = {phone:'', legacySetup:false};
 
 function showAuth(step){
   document.getElementById('authScreen').classList.remove('hidden');
-  ['authStepPhone','authStepCode','authStepOnboard'].forEach(id=>
-    document.getElementById(id).classList.toggle('hidden', id!== (step||'authStepPhone')));
+  ['authStepLogin','authStepSignup','authStepOnboard'].forEach(id=>
+    document.getElementById(id).classList.toggle('hidden', id!== (step||'authStepLogin')));
   authError('');
 }
 function hideAuth(){ document.getElementById('authScreen').classList.add('hidden'); }
@@ -2095,41 +2115,71 @@ function authError(msg){
   const el=document.getElementById('authError');
   el.textContent=msg||''; el.classList.toggle('hidden', !msg);
 }
-function authBack(){ showAuth('authStepPhone'); }
+function authBack(){
+  AUTH.legacySetup=false;
+  showAuth('authStepLogin');
+}
+function showSignup(phone, legacySetup){
+  const raw=(phone||document.getElementById('authPhone').value||'').replace(/\D/g,'').slice(-10);
+  AUTH.phone=raw;
+  AUTH.legacySetup=!!legacySetup;
+  document.getElementById('signupPhone').value=raw;
+  document.getElementById('signupPhone').readOnly=!!legacySetup;
+  document.getElementById('signupTitle').textContent=legacySetup?'Set your password':'Create your account';
+  document.getElementById('signupSub').textContent=legacySetup
+    ? 'Purane account ke owner ka naam confirm karke password set karein.'
+    : 'Owner details abhi; company details agle step mein.';
+  showAuth('authStepSignup');
+  document.getElementById('signupName').focus();
+}
 
-async function requestOtp(isResend){
+async function submitLogin(){
   const raw=(document.getElementById('authPhone').value||'').replace(/\D/g,'');
   if(raw.length<10){ authError('10 digit number daaliye.'); return; }
+  const password=document.getElementById('authPassword').value||'';
+  if(!password){ authError('Password daaliye.'); return; }
   AUTH.phone=raw;
-  const btn=document.getElementById(isResend?'authResend':'authSendBtn');
+  const btn=document.getElementById('authLoginBtn');
   btn.disabled=true;
   try{
-    const r=await fetch('/api/auth/otp',{method:'POST',
-      headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:raw})});
+    const r=await fetch('/api/auth/login',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({phone:raw,password})});
     const d=await r.json();
-    if(!r.ok) throw new Error(d.detail||'Code bhej nahi paye');
-    if(d.sent===false){ authError(`Thoda rukiye — ${d.retry_after}s baad dobara.`); return; }
-    document.getElementById('authSentTo').textContent=
-      `+91 ${raw.slice(0,5)} ${raw.slice(5)} par code bheja gaya.`;
-    showAuth('authStepCode');
-    // Dev mode returns the code so the flow is testable with no SMS.
-    if(d.dev_code){ document.getElementById('authCode').value=d.dev_code;
-      authError('Dev mode: code '+d.dev_code); }
-    document.getElementById('authCode').focus();
+    if(!r.ok && (d.code==='signup_required'||d.code==='password_setup_required')){
+      showSignup(raw,d.code==='password_setup_required');
+      return;
+    }
+    if(!r.ok) throw new Error(d.detail||'Sign in nahi hua');
+    setToken(d.token);
+    if(d.user && d.user.onboarded===false){ startOnboarding(); return; }
+    hideAuth(); await boot();
   }catch(e){ authError(String(e.message||e).slice(0,140)); }
   finally{ btn.disabled=false; }
 }
 
-async function submitOtp(){
-  const code=(document.getElementById('authCode').value||'').replace(/\D/g,'');
-  if(code.length<4){ authError('6 digit code daaliye.'); return; }
-  const btn=document.getElementById('authVerifyBtn'); btn.disabled=true;
+async function submitSignup(){
+  const raw=(document.getElementById('signupPhone').value||'').replace(/\D/g,'');
+  const name=document.getElementById('signupName').value.trim();
+  const password=document.getElementById('signupPassword').value||'';
+  const confirm=document.getElementById('signupConfirm').value||'';
+  if(raw.length<10){ authError('10 digit number daaliye.'); return; }
+  if(name.length<2){ authError("Owner ka naam daaliye."); return; }
+  if(password.length<8){ authError('Password kam se kam 8 characters ka rakhiye.'); return; }
+  if(password!==confirm){ authError('Dono passwords match nahi karte.'); return; }
+  const btn=document.getElementById('authSignupBtn'); btn.disabled=true;
   try{
-    const r=await fetch('/api/auth/verify',{method:'POST',
+    const r=await fetch('/api/auth/signup',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({phone:AUTH.phone, code})});
+      body:JSON.stringify({phone:raw,name,password})});
     const d=await r.json();
-    if(!r.ok) throw new Error(d.detail||'Code sahi nahi hai');
+    if(!r.ok && d.code==='sign_in_required'){
+      document.getElementById('authPhone').value=raw.slice(-10);
+      authBack();
+      authError('Is number ka account pehle se hai. Password se sign in karein.');
+      return;
+    }
+    if(!r.ok) throw new Error(d.detail||'Account nahi bana');
     setToken(d.token);
     if(d.user && d.user.onboarded===false){ startOnboarding(); return; }
     hideAuth(); await boot();
@@ -2144,65 +2194,27 @@ async function logout(){
   // Clear in-memory shop data so the next login can't see the last one's.
   STATE={catalogue:[], byId:{}, today:'', learning_state:'day1'}; CONV={};
   document.getElementById('authPhone').value='';
-  document.getElementById('authCode').value='';
-  showAuth('authStepPhone');
+  document.getElementById('authPassword').value='';
+  document.getElementById('signupPassword').value='';
+  document.getElementById('signupConfirm').value='';
+  showAuth('authStepLogin');
 }
 
 // ---- onboarding ----
 function startOnboarding(){
-  document.getElementById('obItems').innerHTML='';
-  addOnboardRow();
   showAuth('authStepOnboard');
-}
-function addOnboardRow(){
-  const wrap=document.getElementById('obItems');
-  const row=document.createElement('div');
-  row.className='ob-row';
-  // Every column the Inventory table shows, plus cost price. Collected now
-  // because a blank brand/type can't be filled in later without re-adding the
-  // product, and without a cost price every sale reports margin as unknown.
-  row.innerHTML=`
-    <input placeholder="Item ka naam *" class="ob-name">
-    <input placeholder="Brand" class="ob-brand">
-    <input placeholder="Type / size" class="ob-type">
-    <select class="ob-family">
-      <option value="">Category…</option>
-      <option value="tmt">Sariya / TMT</option>
-      <option value="cement">Cement</option>
-      <option value="tiles">Tiles</option>
-      <option value="pipe">Pipe</option>
-      <option value="paint">Paint</option>
-      <option value="fitting">Fitting</option>
-      <option value="fastener">Fastener</option>
-      <option value="other">Other</option>
-    </select>
-    <input placeholder="Stock qty" class="ob-qty" inputmode="decimal">
-    <input placeholder="Unit" class="ob-unit" value="piece">
-    <input placeholder="Cost / unit *" class="ob-cost" inputmode="decimal">
-    <input placeholder="GST %" class="ob-gst" inputmode="decimal" value="18">`;
-  wrap.appendChild(row);
+  setTimeout(()=>document.getElementById('obShop').focus(),0);
 }
 async function submitOnboarding(){
   const shop=document.getElementById('obShop').value.trim();
-  const owner=document.getElementById('obOwner').value.trim();
-  if(!shop){ authError('Dukaan ka naam daaliye.'); return; }
-  const items=[...document.querySelectorAll('#obItems .ob-row')].map(r=>({
-    canonical:r.querySelector('.ob-name').value.trim(),
-    brand:r.querySelector('.ob-brand').value.trim(),
-    type:r.querySelector('.ob-type').value.trim(),
-    family:r.querySelector('.ob-family').value,
-    qty:parseFloat(r.querySelector('.ob-qty').value)||0,
-    unit:r.querySelector('.ob-unit').value.trim()||'piece',
-    cost:parseFloat(r.querySelector('.ob-cost').value)||0,
-    gst_rate:parseFloat(r.querySelector('.ob-gst').value)||18,
-  })).filter(x=>x.canonical);
-  const missingCost=items.find(x=>!x.cost);
-  if(missingCost){ authError(`"${missingCost.canonical}" ka cost price daaliye — usi se munafa nikalta hai.`); return; }
+  const gstin=document.getElementById('obGstin').value.trim().toUpperCase();
+  const address=document.getElementById('obAddress').value.trim();
+  if(!shop){ authError('Company ka naam daaliye.'); return; }
   const btn=document.getElementById('obBtn'); btn.disabled=true;
   try{
     await api('/api/onboarding',{method:'POST',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({shop_name:shop, name:owner, items})});
+      body:JSON.stringify({shop_name:shop,gstin,address})});
     hideAuth(); await boot();
   }catch(e){ authError(String(e.message||e).slice(0,140)); }
   finally{ btn.disabled=false; }
@@ -2211,12 +2223,12 @@ async function submitOnboarding(){
 // Decide on load: a stored token means straight into the app, so the
 // shopkeeper stays signed in across reloads until they press Logout.
 async function start(){
-  if(!getToken()){ showAuth('authStepPhone'); return; }
+  if(!getToken()){ showAuth('authStepLogin'); return; }
   try{
     const me=await api('/api/me');
     if(me.onboarded===false){ startOnboarding(); return; }
     hideAuth(); await boot();
-  }catch(e){ showAuth('authStepPhone'); }
+  }catch(e){ showAuth('authStepLogin'); }
 }
 start();
 

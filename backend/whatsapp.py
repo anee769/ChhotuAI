@@ -1,17 +1,16 @@
-"""Outbound messaging over Twilio — WhatsApp first, SMS as a fallback.
+"""Outbound business messaging over Twilio.
 
 Twilio's WhatsApp Sandbox is what makes this usable today: it needs no Meta
-template approval and no verified business number, so OTP and all three
-business messages work on trial credit. The tradeoff is that a recipient must
+template approval and no verified business number, so demo business messages
+work on trial credit. The tradeoff is that a recipient must
 opt in once by WhatsApp-ing the join code to the sandbox number, and the
 sandbox only talks to numbers that have done so.
 
 Production later means swapping TWILIO_WHATSAPP_FROM for an approved sender
 and registering templates; the call sites below do not change.
 
-SMS is kept as a fallback for OTP only. It costs more than WhatsApp in India
-and, unlike WhatsApp, real Indian A2P SMS needs DLT registration — so it is
-off unless TWILIO_SMS_FROM is set.
+The low-level SMS helper remains available for explicit messaging integrations;
+authentication no longer sends either SMS or WhatsApp codes.
 """
 from __future__ import annotations
 
@@ -101,22 +100,6 @@ def send_sms(phone: str, body: str) -> dict:
     if not _sms_from():
         raise MessagingError("TWILIO_SMS_FROM not set")
     return _post(phone, body, _sms_from())
-
-
-# ---------------------------------------------------------------------------
-# The four messages the app actually sends
-# ---------------------------------------------------------------------------
-def send_otp(phone: str, code: str) -> dict:
-    body = (f"{code} is your Chhotu.ai login code. It expires in 10 minutes.\n"
-            "Do not share this code with anyone.")
-    try:
-        return send_whatsapp(phone, body)
-    except MessagingError:
-        # WhatsApp needs a one-time sandbox opt-in; SMS does not. Fall back
-        # only if an SMS sender is configured.
-        if _sms_from():
-            return send_sms(phone, body)
-        raise
 
 
 def send_bill(phone: str, customer_name: str, total: float, shop: str,

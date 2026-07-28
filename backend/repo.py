@@ -227,7 +227,8 @@ class JsonRepo(Repo):
 
     # Settings the Settings page may write. Anything not listed is ignored, so
     # a stray key in a request body can't quietly become persisted config.
-    _SETTING_KEYS = ("shop_name", "reply_language", "silence_timeout_s",
+    _SETTING_KEYS = ("shop_name", "gstin", "address", "phone",
+                     "reply_language", "silence_timeout_s",
                      "confirm_new_items")
 
     def save_config(self, patch: dict) -> None:

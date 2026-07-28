@@ -16,6 +16,8 @@ Digitization.
 
 - Clean reference-style interface with six focused workspaces: Voice Entry,
   Invoice, Inventory, Customers, Today, and Dashboard.
+- Phone-and-password authentication with a separate signup screen. Signup
+  captures the owner's name; first-time onboarding captures company details.
 - Stateful voice conversations that retain the complete turn history and ask
   only for information that is still missing.
 - Multi-item sale capture from one sentence. All items are kept together in a
@@ -46,11 +48,19 @@ python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
-Add the Sarvam key to a `.env` file:
+Add the database, session secret, and Sarvam key to a `.env` file:
 
 ```dotenv
+DATABASE_URL=postgresql://...
+CHHOTU_SECRET=replace-with-a-long-random-value
 SARVAM_API_KEY=sk_...
 ```
+
+Generate `CHHOTU_SECRET` with `openssl rand -hex 32`. Passwords are stored as
+salted PBKDF2 hashes and are never written to `.env`.
+
+Accounts created before password authentication receive the temporary demo
+password `admin123` during migration. New signups keep the password they chose.
 
 The application loads `.env` automatically. Start it with:
 
