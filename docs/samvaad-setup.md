@@ -535,7 +535,7 @@ Supplier se aaya stock record karo. args: items[{item, qty, unit, rate}] jahan r
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}}'
+  -d '{"tool": "record_purchase", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -561,7 +561,7 @@ Sale record karo. args: items[{item, qty, unit, rate}], payment (cash ya credit)
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}}'
+  -d '{"tool": "record_sale", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -753,7 +753,7 @@ Ginti ke baad stock theek karo. args: items[{item, qty, unit}].
 curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "request_id": "{{request_id}}"}}'
+  -d '{"tool": "stock_take", "caller": "{{caller_number}}", "shop_key": "{{shop_key}}", "secret": "{{agent_secret}}", "args": {"item": "{{item}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "request_id": "{{request_id}}"}}'
 ```
 
 **Reply** (also delivered whole as `facts`)

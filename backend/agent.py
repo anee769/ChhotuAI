@@ -271,6 +271,29 @@ def _scrub(value):
     return value
 
 
+def _when(args: dict) -> str:
+    """The day an entry belongs to, not the day it was spoken.
+
+    "Kal becha tha" is ordinary: shopkeepers catch up on the ledger after the
+    shop is shut. Recording it as today quietly moves money between days and
+    breaks every summary that follows.
+    """
+    raw = str(args.get("occurred_on") or args.get("when") or "").strip().lower()
+    today = clock.today()
+    if not raw:
+        return today.isoformat()
+    if raw in ("aaj", "today"):
+        return today.isoformat()
+    if raw in ("kal", "yesterday", "kal ka", "beeta kal"):
+        return (today - timedelta(days=1)).isoformat()
+    if raw in ("parso", "day before yesterday"):
+        return (today - timedelta(days=2)).isoformat()
+    try:
+        return L._d(raw).isoformat()
+    except Exception:
+        return today.isoformat()
+
+
 def _lines(args: dict) -> list:
     """Item lines, however the console managed to express them.
 
@@ -483,14 +506,38 @@ def business_summary(repo, user, args):
     speak = (f"{label} sale {_say_number(t['sale'])} rupaye, gross profit "
              f"{_say_number(t['margin'])} rupaye, cash {_say_number(t['cash'])} "
              f"aur udhaar {_say_number(t['credit'])} rupaye.")
+    frozen, frozen_total = [], 0.0
+    if (end - start).days >= 6:
+        # Only worth saying on a week or longer. "Nothing moved today" is
+        # noise; "sixty days and nothing moved" is a decision.
+        events = repo.all_events()
+        for sku in repo.load_catalogue():
+            det = L._stock_detail(sku, events, end)
+            if det["qty"] == L.UNCOUNTED or not (det.get("base") or 0) > 0:
+                continue
+            moved = any(e["sku_id"] == sku["sku_id"]
+                        and e["type"] in ("sale", "delivery")
+                        and 0 <= (end - L._d(e["occurred_on"])).days <= 60
+                        for e in events)
+            if not moved:
+                value = (L.landed_cost_as_of(sku, events, end) or 0) * det["base"]
+                frozen.append({"sku_id": sku["sku_id"],
+                               "name": sku["canonical"],
+                               "value": round(value, 2)})
+                frozen_total += value
+        frozen.sort(key=lambda f: -f["value"])
     alerts = main._low_stock_items(repo) if single_day else []
     if alerts:
         speak += " Stock alert: " + ", ".join(
             f"{r['canonical']} khatam ho gaya" if r.get("out_of_stock")
             else f"{r['canonical']} sirf {r['stock']} bacha hai"
             for r in alerts[:3]) + "."
+    if frozen:
+        speak += (f" {_say_number(frozen_total)} rupaye ka maal do mahine se "
+                  f"nahi bika, jaise {frozen[0]['name']}.")
     return {"start": start.isoformat(), "end": end.isoformat(), **t,
-            "low_stock": alerts, "speak": speak}
+            "low_stock": alerts, "frozen_capital": frozen[:8],
+            "frozen_total": round(frozen_total, 2), "speak": speak}
 
 
 def top_items(repo, user, args):
@@ -728,10 +775,21 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
     if not items:
         return {"recorded": False, "unavailable": unknown,
                 "speak": "Saamaan samajh nahi aaya. Naam aur quantity dobara bataiye."}
-    result = main._write_events(etype, items,
-                                args.get("occurred_on") or clock.today().isoformat(),
+    result = main._write_events(etype, items, _when(args),
                                 args.get("precision", "exact"), source,
                                 request_id=request_id)
+    # The tap flow learns from every confirmation (main.commit does this); the
+    # agent did not, so a shop that says "mota sariya" on ten calls taught the
+    # matcher nothing. Learn the same way, from what the caller actually said.
+    import learning as LEARN
+    for it in items:
+        if it.get("spoken") and it.get("sku_id"):
+            try:
+                LEARN.record_confirmation(repo, it["spoken"], it["sku_id"],
+                                          unit=it.get("unit"))
+            except Exception:
+                # Learning is an optimisation. Losing it must never lose a sale.
+                pass
     return {"recorded": True, "unavailable": unknown,
             "_items": items, "_result": result}
 
@@ -797,13 +855,40 @@ def record_purchase(repo, user, args):
 
 
 def stock_take(repo, user, args):
-    """A physical count. Overwrites the derived figure for that item."""
+    """A physical count. Overwrites the derived figure for that item.
+
+    Also reports how far the books were out. The count is the easy half; the
+    gap between counted and recorded is the half that tells the owner whether
+    something is walking out of the shop.
+    """
+    before = {}
+    for row in _lines(args):
+        sku, _ = _find_sku(repo, row.get("item"))
+        if sku:
+            before[sku["sku_id"]] = _stock_of(repo, sku)
     out = _commit(repo, user, "stock_take", args)
     if not out.get("recorded"):
         return out
     res, items = out.pop("_result"), out.pop("_items")
+    deltas = []
+    for it in items:
+        was = before.get(it["sku_id"], {})
+        if was.get("counted") and was.get("qty") is not None:
+            gap = round(float(it["qty"]) - float(was["qty"]), 3)
+            if gap:
+                sku = repo.sku(it["sku_id"]) or {}
+                deltas.append({"sku_id": it["sku_id"],
+                               "name": sku.get("canonical"),
+                               "recorded": was["qty"], "counted": it["qty"],
+                               "difference": gap, "unit": it["unit"]})
+    speak = f"Ginti update kar di: {_said(repo, items)}."
+    if deltas:
+        d = deltas[0]
+        direction = "kam" if d["difference"] < 0 else "zyada"
+        speak += (f" Hisaab se {_g(abs(d['difference']))} {d['unit']} "
+                  f"{direction} nikla.")
     return {**out, "stock_after": res["affected_stock"],
-            "speak": f"Ginti update kar di: {_said(repo, items)}."}
+            "differences": deltas, "speak": speak}
 
 
 def record_payment(repo, user, args):

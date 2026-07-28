@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import sys
 import unittest
+from datetime import timedelta
 from pathlib import Path
 from unittest.mock import patch
 
@@ -370,6 +371,48 @@ class AgentToolTests(unittest.TestCase):
                         payment="cash", add_unknown=True)
         self.assertTrue(out["recorded"])
         self.assertEqual(out["unavailable"], ["Apcolite paint"])
+
+    def test_yesterdays_sale_is_dated_yesterday(self):
+        """Shopkeepers catch up on the ledger after closing. Recording "kal
+        becha" as today moves money between days."""
+        self.call("record_sale", item="ppc cement", qty=5, rate=420,
+                  payment="cash", occurred_on="kal")
+        sale = [e for e in self.repo.events if e["type"] == "sale"][-1]
+        self.assertEqual(sale["occurred_on"],
+                         (clock.today() - timedelta(days=1)).isoformat())
+        self.assertEqual(self.call("business_summary", period="day")["sale"], 0)
+        self.assertGreater(
+            self.call("business_summary", period="yesterday")["sale"], 0)
+
+    def test_an_explicit_date_is_honoured(self):
+        self.call("record_sale", item="ppc cement", qty=1, rate=420,
+                  payment="cash", occurred_on="2026-07-20")
+        self.assertEqual(
+            [e for e in self.repo.events if e["type"] == "sale"][-1]["occurred_on"],
+            "2026-07-20")
+
+    def test_a_count_reports_how_far_the_books_were_out(self):
+        self.call("stock_take", item="ppc cement", qty=200)
+        out = self.call("stock_take", item="ppc cement", qty=173)
+        self.assertEqual(out["differences"][0]["difference"], -27)
+        self.assertIn("kam nikla", out["speak"])
+
+    def test_a_matching_count_reports_no_discrepancy(self):
+        out = self.call("stock_take", item="ppc cement", qty=200)
+        self.assertEqual(out["differences"], [])
+
+    def test_the_agent_learns_the_words_the_caller_used(self):
+        """The tap flow learns from every confirmation; the agent did not, so
+        a shop saying "mota sariya" on ten calls taught the matcher nothing."""
+        learned = []
+        import learning
+        with patch.object(learning, "record_confirmation",
+                          side_effect=lambda r, spoken, sku, **k:
+                          learned.append((spoken, sku))):
+            self.call("record_sale", item="ppc cement", qty=1, rate=420,
+                      payment="cash")
+        self.assertEqual(learned[0][0], "ppc cement")
+        self.assertEqual(learned[0][1], CEMENT_PPC)
 
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
