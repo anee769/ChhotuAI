@@ -1,7 +1,7 @@
 """Emit the Samvaad console configuration for every agent tool.
 
-The console wants each tool added by hand — name, description, cURL. Typing 21
-of those invites drift between what the agent believes a tool does and what it
+The console wants each tool added by hand — name, description, cURL. Typing
+them out by hand invites drift between what the agent believes a tool does and what it
 actually does, so this generates them straight from agent.TOOLS. Re-run it
 after changing a tool and paste the result back into the console:
 
@@ -35,9 +35,9 @@ Har tool ka jawab do hisse mein aata hai: structured data aur ek chhota
 `speak`. `speak` sirf ek fallback hai. Tum data padh kar apne shabdon mein,
 caller ki tarah baat karo.
 
-Jab koi cheez nahi milti, tool `shop_sells` mein bata dega ki ye dukaan kis
-tarah ka saamaan rakhti hai, aur `stocks_this_kind` mein ki wo cheez humare
-line ki hai ya nahi. Uske hisaab se jawab do:
+Jab koi cheez nahi milti, tool `shop_kind` mein bata dega ki ye kis tarah ki
+dukaan hai, aur `stocks_this_kind` mein ki wo cheez humare line ki hai ya
+nahi. Uske hisaab se jawab do:
 - Humare line ka saamaan hai par stock mein nahi: "Pipe hum abhi nahi rakhte."
 - Bilkul alag cheez hai: `shop_kind` use karke bolo, jaise "Hum hardware aur
   building material ki dukaan hain, wo cheez hum nahi rakhte."
@@ -109,8 +109,9 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 EXAMPLES = {
     "shop_profile": ({}, {
         "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
-        "gstin": "01AABCS4521M1ZM", "today": "2026-07-28",
-        "item_count": 7, "customer_count": 10, "total_outstanding": 141400.0}),
+        "gstin": "01AABCS4521M1ZM", "shop_kind": "building material",
+        "today": "2026-07-28", "item_count": 7, "customer_count": 10,
+        "total_outstanding": 141400.0}),
     "list_inventory": ({}, {
         "count": 2, "items": [
             {"sku_id": "CEM_ULTRATECH_PPC", "name": "UltraTech PPC Cement 50kg",
@@ -194,7 +195,10 @@ EXAMPLES = {
         "sent": True, "sent_to": "+919876543210", "total": 5376.0,
         "bill_no": "20260728-5376"}),
     "send_summary": ({"period": "day"}, {"sent": True, "sent_to": "+91…"}),
-    "send_reminders": ({"days_before": 2}, {"sent": True, "count": 3}),
+    "send_reminders": ({"days_before": 2}, {
+        "sent": True, "count": 2, "as_of": "2026-07-28",
+        "delivered": [{"customer": "Ramesh Kumar", "amount": 42000.0}],
+        "skipped": [{"customer": "Manoj Sutar", "why": "no phone number"}]}),
 }
 
 # What a miss looks like. Worth showing, because "not found" is the answer the
@@ -210,7 +214,7 @@ MISS_EXAMPLE = {
 NEEDS_EXAMPLE = {
     "needs": {"said": "cement", "options": ["UltraTech OPC 53 Cement 50kg",
                                             "UltraTech PPC Cement 50kg"]},
-    "speak": "cement mein se kaunsa — UltraTech OPC 53 Cement 50kg ya "
+    "speak": "cement mein se kaunsa, UltraTech OPC 53 Cement 50kg ya "
              "UltraTech PPC Cement 50kg?",
 }
 

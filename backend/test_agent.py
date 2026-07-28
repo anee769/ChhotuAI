@@ -419,6 +419,18 @@ class DispatchTests(unittest.TestCase):
         self.assertEqual(out["error"], "RuntimeError")
         self.assertNotIn("hunter2", json.dumps(out))
 
+    def test_nothing_the_agent_reads_contains_an_em_dash(self):
+        """A voice model echoes the punctuation it is fed. This caught a stale
+        hand-written example that survived the original sweep."""
+        import samvaad_config as SC
+        speakable = [SC.INSTRUCTIONS, json.dumps(SC.NEEDS_EXAMPLE),
+                     json.dumps(SC.MISS_EXAMPLE)]
+        speakable += [d for _, d in agent.TOOLS.values()]
+        speakable += [json.dumps(v, ensure_ascii=False)
+                      for v in SC.EXAMPLES.values()]
+        for text in speakable:
+            self.assertNotIn("\u2014", text, text[:80])
+
     def test_every_tool_is_documented_for_the_console(self):
         """A tool with no worked example ships as an empty args box, which the
         agent then fills in by guesswork."""

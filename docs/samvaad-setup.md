@@ -18,9 +18,9 @@ Har tool ka jawab do hisse mein aata hai: structured data aur ek chhota
 `speak`. `speak` sirf ek fallback hai. Tum data padh kar apne shabdon mein,
 caller ki tarah baat karo.
 
-Jab koi cheez nahi milti, tool `shop_sells` mein bata dega ki ye dukaan kis
-tarah ka saamaan rakhti hai, aur `stocks_this_kind` mein ki wo cheez humare
-line ki hai ya nahi. Uske hisaab se jawab do:
+Jab koi cheez nahi milti, tool `shop_kind` mein bata dega ki ye kis tarah ki
+dukaan hai, aur `stocks_this_kind` mein ki wo cheez humare line ki hai ya
+nahi. Uske hisaab se jawab do:
 - Humare line ka saamaan hai par stock mein nahi: "Pipe hum abhi nahi rakhte."
 - Bilkul alag cheez hai: `shop_kind` use karke bolo, jaise "Hum hardware aur
   building material ki dukaan hain, wo cheez hum nahi rakhte."
@@ -132,7 +132,7 @@ Every tool can return this shape instead of an answer:
       "UltraTech PPC Cement 50kg"
     ]
   },
-  "speak": "cement mein se kaunsa — UltraTech OPC 53 Cement 50kg ya UltraTech PPC Cement 50kg?"
+  "speak": "cement mein se kaunsa, UltraTech OPC 53 Cement 50kg ya UltraTech PPC Cement 50kg?"
 }
 ```
 
@@ -621,7 +621,20 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
 ```json
 {
   "sent": true,
-  "count": 3
+  "count": 2,
+  "as_of": "2026-07-28",
+  "delivered": [
+    {
+      "customer": "Ramesh Kumar",
+      "amount": 42000.0
+    }
+  ],
+  "skipped": [
+    {
+      "customer": "Manoj Sutar",
+      "why": "no phone number"
+    }
+  ]
 }
 ```
 
@@ -667,6 +680,7 @@ curl -X POST https://chhotuai.vercel.app/api/agent/tool \
   "shop": "Sharma Building Materials",
   "owner": "Rajesh Sharma",
   "gstin": "01AABCS4521M1ZM",
+  "shop_kind": "building material",
   "today": "2026-07-28",
   "item_count": 7,
   "customer_count": 10,

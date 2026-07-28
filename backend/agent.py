@@ -833,9 +833,13 @@ def send_reminders(repo, user, args):
     except Exception as e:
         return {"sent": False, "error": str(e)[:200],
                 "speak": "Reminder nahi bhej saka."}
-    sent = out.get("sent")
-    n = sent if isinstance(sent, int) else len(sent or [])
-    return {"sent": True, **out,
+    # send_due_reminders returns its own "sent" key holding the LIST of
+    # deliveries. Splatting it over ours turned the boolean every other tool
+    # returns into an array, so name the two things differently.
+    delivered = out.get("sent") or []
+    n = delivered if isinstance(delivered, int) else len(delivered)
+    return {"sent": True, "count": n, "delivered": delivered,
+            "skipped": out.get("skipped") or [], "as_of": out.get("as_of"),
             "speak": f"{n} customer ko reminder bhej diya."}
 
 
