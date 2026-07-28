@@ -493,9 +493,33 @@ def price_quote(repo, user, args):
 # ---------------------------------------------------------------------------
 # Write tools
 # ---------------------------------------------------------------------------
+def _already_written(repo, request_id: str) -> list:
+    """Events from an earlier attempt carrying this exact request_id.
+
+    Deliberately keyed on an id the agent supplies rather than on "an identical
+    sale in the last two minutes" — two customers really can buy ten bags of
+    the same cement minutes apart, and silently dropping the second sale would
+    be worse than the duplicate it was meant to prevent.
+    """
+    if not request_id:
+        return []
+    return [e for e in repo.all_events()
+            if (e.get("evidence") or {}).get("request_id") == request_id]
+
+
 def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> dict:
     """Resolve spoken items to SKUs and append events. Asks before guessing."""
     import main
+    request_id = str(args.get("request_id") or "").strip()[:64]
+    prior = _already_written(repo, request_id)
+    if prior:
+        return {"recorded": True, "duplicate": True, "unavailable": [],
+                "_items": [{"sku_id": e["sku_id"], "qty": e.get("qty"),
+                            "unit": e.get("unit")} for e in prior],
+                "_result": {"committed": [{"event_id": e.get("event_id"),
+                                           "sku_id": e["sku_id"], "amount": 0}
+                                          for e in prior],
+                            "affected_stock": {}}}
     items, unknown = [], []
     for row in args.get("items") or []:
         sku, question = _find_sku(repo, row.get("item"))
@@ -522,7 +546,8 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
                 "speak": "Saamaan samajh nahi aaya. Naam aur quantity dobara bataiye."}
     result = main._write_events(etype, items,
                                 args.get("occurred_on") or clock.today().isoformat(),
-                                args.get("precision", "exact"), source)
+                                args.get("precision", "exact"), source,
+                                request_id=request_id)
     return {"recorded": True, "unavailable": unknown,
             "_items": items, "_result": result}
 
@@ -556,6 +581,11 @@ def record_sale(repo, user, args):
     if not out.get("recorded"):
         return out
     res, items = out.pop("_result"), out.pop("_items")
+    if out.get("duplicate"):
+        # Already written, receivable included. Re-running either would double
+        # the customer's debt, which is the expensive half of this mistake.
+        return {**out, "lines": res["committed"],
+                "speak": "Ye entry pehle hi ho chuki hai."}
     total = round(sum(c["amount"] for c in res["committed"]), 2)
     receivable = None
     if payment == "credit" and customer:
@@ -611,9 +641,17 @@ def record_payment(repo, user, args):
         return {"recorded": False, "outstanding": acc["outstanding"],
                 "speak": f"{acc.get('name')} ka sirf "
                          f"{_say_number(acc['outstanding'])} rupaye baaki hai."}
+    request_id = str(args.get("request_id") or "").strip()[:64]
+    note = args.get("note") or "voice agent"
+    if request_id:
+        note = f"{note} [{request_id}]"
+        if any(f"[{request_id}]" in (p.get("note") or "")
+               for p in repo.payments()):
+            return {"recorded": True, "duplicate": True,
+                    "customer": acc.get("name"), "outstanding": acc["outstanding"],
+                    "speak": "Ye payment pehle hi jama ho chuki hai."}
     repo.add_payment(acc["customer_id"], amount,
-                     args.get("paid_on") or clock.today().isoformat(),
-                     args.get("note") or "voice agent")
+                     args.get("paid_on") or clock.today().isoformat(), note)
     after = crm.account(repo, acc["customer_id"])
     return {"recorded": True, "amount": amount, "customer": acc.get("name"),
             "outstanding": after["outstanding"],

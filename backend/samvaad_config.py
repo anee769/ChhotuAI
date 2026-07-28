@@ -9,6 +9,7 @@ after changing a tool and paste the result back into the console:
 """
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -39,7 +40,10 @@ chalao. Do cement ho to "kaunsa" poochhna sahi hai, apne aap chunna galat.
 Kaam karne se pehle:
 - Sale, purchase, payment ya stock badalne se pehle ek baar dohra kar confirm
   karo: "10 bori PPC, 420 rupaye — likh doon?"
-- WhatsApp par kuch bhejne se pehle hamesha ijaazat lo.
+- Jab caller haan kahe, ek naya `request_id` banao aur wahi us kaam ke saath
+  bhejo. Agar dobara koshish karni pade to wahi purana id bhejo — system samajh
+  jayega ki ye wahi entry hai aur do baar nahi likhega. Naya sauda, naya id.
+- WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
 Call shuru hote hi `shop_profile` chalao taaki dukaan ka context mil jaaye.
@@ -47,12 +51,121 @@ Aaj ki date bhi wahin se lo, apne se mat socho.
 """
 
 
+# args the agent fills in per tool, and a trimmed real reply. Both matter: the
+# console's Body tab needs the arg shape, and seeing the reply is what stops an
+# agent inventing a field name that never existed.
+EXAMPLES = {
+    "shop_profile": ({}, {
+        "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
+        "gstin": "01AABCS4521M1ZM", "today": "2026-07-28",
+        "item_count": 7, "customer_count": 10, "total_outstanding": 141400.0}),
+    "list_inventory": ({}, {
+        "count": 2, "items": [
+            {"sku_id": "CEM_ULTRATECH_PPC", "name": "UltraTech PPC Cement 50kg",
+             "unit": "bori", "stock": 190, "low": False, "selling_rate": 420}]}),
+    "check_stock": ({"item": "ppc cement"}, {
+        "found": True, "name": "UltraTech PPC Cement 50kg", "qty": 190,
+        "unit": "bori", "low": False}),
+    "item_details": ({"item": "ppc cement"}, {
+        "found": True, "name": "UltraTech PPC Cement 50kg",
+        "selling_rate": 420, "landed_cost": 385, "gst_rate": 28,
+        "last_sold_on": "2026-07-27"}),
+    "search_items": ({"query": "tiscon"}, {
+        "count": 1, "items": [{"name": "Tata Tiscon TMT Bar 12mm Fe500D",
+                               "stock": "3 tonne"}]}),
+    "low_stock": ({"limit": 5}, {
+        "count": 1, "items": [{"canonical": "Kajaria Ceramic Floor Tile 2x2ft",
+                               "stock": "4 box", "out_of_stock": False}]}),
+    "business_summary": ({"period": "week"}, {
+        "start": "2026-07-22", "end": "2026-07-28", "sale": 560000.0,
+        "margin": 48200.0, "cash": 410000.0, "credit": 150000.0,
+        "low_stock": []}),
+    "top_items": ({"days": 30, "limit": 3, "order": "top"}, {
+        "from": "2026-06-29", "to": "2026-07-28",
+        "items": [{"name": "UltraTech PPC Cement 50kg", "qty_sold": 420,
+                   "unit": "bori", "revenue": 176400.0}]}),
+    "list_customers": ({}, {
+        "count": 10, "owing_count": 4,
+        "customers": [{"name": "Ramesh Kumar", "phone": "+919876543210",
+                       "outstanding": 42000.0, "next_deadline": "2026-08-05"}]}),
+    "customer_account": ({"name": "Ramesh"}, {
+        "found": True, "name": "Ramesh Kumar", "outstanding": 42000.0,
+        "open_dues": [{"amount": 42000.0, "remaining": 42000.0,
+                       "deadline": "2026-08-05"}]}),
+    "dues": ({"days_before": 7}, {
+        "count": 1, "dues": [{"name": "Ramesh Kumar", "remaining": 42000.0,
+                              "deadline": "2026-08-05",
+                              "days_until_deadline": 8}]}),
+    "recent_activity": ({"limit": 5}, {
+        "count": 1, "events": [{"date": "2026-07-28", "type": "sale",
+                                "item": "UltraTech PPC Cement 50kg", "qty": 10,
+                                "unit": "bori", "rate": 420,
+                                "payment": "cash"}]}),
+    "price_quote": ({"items": [{"item": "ppc cement", "qty": 10}]}, {
+        "lines": [{"name": "UltraTech PPC Cement 50kg", "qty": 10,
+                   "unit": "bori", "rate": 420, "amount": 4200.0}],
+        "subtotal": 4200.0, "gst": 1176.0, "total": 5376.0, "unavailable": []}),
+    "record_sale": ({"items": [{"item": "ppc cement", "qty": 10, "unit": "bori",
+                                "rate": 420}],
+                     "payment": "credit", "customer": "Ramesh",
+                     "payment_deadline": "2026-08-27",
+                     "request_id": "<unique per confirmed action>"}, {
+        "recorded": True, "total": 4200.0, "payment": "credit",
+        "customer": "Ramesh Kumar",
+        "stock_after": {"CEM_ULTRATECH_PPC": {"display": "190 bori"}},
+        "receivable": {"amount": 4200.0, "deadline": "2026-08-27"}}),
+    "record_purchase": ({"items": [{"item": "ppc cement", "qty": 100,
+                                    "unit": "bori", "rate": 385}],
+                         "request_id": "<unique per confirmed action>"}, {
+        "recorded": True,
+        "stock_after": {"CEM_ULTRATECH_PPC": {"display": "290 bori"}}}),
+    "stock_take": ({"items": [{"item": "ppc cement", "qty": 173,
+                               "unit": "bori"}],
+                    "request_id": "<unique per confirmed action>"}, {
+        "recorded": True,
+        "stock_after": {"CEM_ULTRATECH_PPC": {"display": "173 bori"}}}),
+    "record_payment": ({"customer": "Ramesh", "amount": 12000,
+                        "request_id": "<unique per confirmed action>"}, {
+        "recorded": True, "amount": 12000.0, "customer": "Ramesh Kumar",
+        "outstanding": 30000.0}),
+    "add_item": ({"name": "Asian Paints Apcolite 20L", "cost_price": 3200,
+                  "selling_rate": 3600, "unit": "bucket",
+                  "brand": "Asian Paints"}, {
+        "added": True, "sku_id": "sku_1a2b3c4d",
+        "name": "Asian Paints Apcolite 20L", "unit": "bucket"}),
+    "update_shop_profile": ({"gstin": "27AACCD8812K1ZG",
+                             "address": "LBS Marg, Mumbai 400070"}, {
+        "updated": True, "changed": ["address", "gstin"]}),
+    "send_bill": ({"customer": "Ramesh",
+                   "items": [{"item": "ppc cement", "qty": 10, "rate": 420}],
+                   "payment": "cash"}, {
+        "sent": True, "sent_to": "+919876543210", "total": 5376.0,
+        "bill_no": "20260728-5376"}),
+    "send_summary": ({"period": "day"}, {"sent": True, "sent_to": "+91…"}),
+    "send_reminders": ({"days_before": 2}, {"sent": True, "count": 3}),
+}
+
+# Every tool can also return this instead of an answer.
+NEEDS_EXAMPLE = {
+    "needs": {"said": "cement", "options": ["UltraTech OPC 53 Cement 50kg",
+                                            "UltraTech PPC Cement 50kg"]},
+    "speak": "cement mein se kaunsa — UltraTech OPC 53 Cement 50kg ya "
+             "UltraTech PPC Cement 50kg?",
+}
+
+
+def body(tool: str) -> str:
+    args, _ = EXAMPLES.get(tool, ({}, {}))
+    return json.dumps({"tool": tool, "caller": "{{caller_number}}",
+                       "shop_key": "{{shop_key}}", "args": args},
+                      ensure_ascii=False)
+
+
 def curl(tool: str) -> str:
     return (f"curl -X POST {BASE}/api/agent/tool \\\n"
             f"  -H 'Content-Type: application/json' \\\n"
             f"  -H 'X-Agent-Secret: <SAMVAAD_WEBHOOK_SECRET>' \\\n"
-            f"  -d '{{\"tool\": \"{tool}\", \"caller\": \"{{{{caller_number}}}}\","
-            f" \"shop_key\": \"{{{{shop_key}}}}\", \"args\": {{}}}}'")
+            f"  -d '{body(tool)}'")
 
 
 def main() -> None:
@@ -90,10 +203,38 @@ def main() -> None:
     print("All of them POST to the same endpoint and differ only in `tool` and "
           "`args`. Every one runs **During conversation**, except "
           "`shop_profile`, which runs **On start**.\n")
+    print("### Chaining rules\n")
+    print("These matter more than any single tool's shape, because the agent "
+          "will call tools back-to-back.\n")
+    print("1. **`needs` means stop.** Any tool can answer with `needs` instead "
+          "of a result — an ambiguous item, a missing quantity, an unnamed "
+          "credit customer. Nothing was written. Ask the caller that one "
+          "question, then call the *same* tool again with the answer filled "
+          "in. Never call a different tool to work around it.\n")
+    print("2. **Read before you write.** `check_stock` or `price_quote` first, "
+          "confirm the number out loud, then `record_sale`. The read tools "
+          "change nothing, so calling them freely is safe.\n")
+    print("3. **One `request_id` per confirmed action.** Generate it when the "
+          "caller says yes, and reuse that same value if the call has to be "
+          "retried. Writes carrying an id that already landed are recognised "
+          "and skipped instead of doubling a sale or a customer's debt. A "
+          "genuine second identical sale gets a *new* id and is recorded "
+          "normally.\n")
+    print("4. **Never re-run a send.** `send_bill`, `send_summary` and "
+          "`send_reminders` reach a real person. Ask first, call once.\n")
+    print("Every tool can return this shape instead of an answer:\n")
+    print("```json\n" + json.dumps(NEEDS_EXAMPLE, indent=2, ensure_ascii=False)
+          + "\n```\n")
     for t in tools:
-        print(f"### `{t['name']}`\n")
+        name = t["name"]
+        args, reply = EXAMPLES.get(name, ({}, {}))
+        print(f"### `{name}`\n")
         print(t["description"] + "\n")
-        print("```bash\n" + curl(t["name"]) + "\n```\n")
+        print("**Request**\n")
+        print("```bash\n" + curl(name) + "\n```\n")
+        print("**Reply**\n")
+        print("```json\n" + json.dumps(reply, indent=2, ensure_ascii=False)
+              + "\n```\n")
 
 
 if __name__ == "__main__":

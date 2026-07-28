@@ -646,7 +646,7 @@ def commit(payload: dict = Body(...)):
 
 
 def _write_events(etype: str, items: list, occurred_on: str, precision: str,
-                  source: str) -> dict:
+                  source: str, request_id: str = "") -> dict:
     """Append events (never mutates stock) and return recomputed affected stock."""
     catalogue_by = by_id()
     committed = []
@@ -683,7 +683,10 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
             "occurred_on": occurred_on, "precision": precision,
             "count_precision": it.get("count_precision"),
             "occurred_at": None, "confidence": conf, "source": source,
-            "evidence": {"transcript": it.get("spoken", "")},
+            # request_id rides along so a retried write can be recognised as
+            # the same write rather than appended a second time.
+            "evidence": {"transcript": it.get("spoken", ""),
+                         **({"request_id": request_id} if request_id else {})},
         }
         eid = repo.append_event(ev)
         amount = (L.line_amount(

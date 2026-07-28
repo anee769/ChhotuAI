@@ -224,6 +224,45 @@ class AgentToolTests(unittest.TestCase):
         self.assertFalse(out["recorded"])
         self.assertEqual(out["needs"]["field"], "qty")
 
+    def test_a_retried_sale_is_not_written_twice(self):
+        args = dict(items=[{"item": "ppc cement", "qty": 10, "rate": 420}],
+                    payment="cash", request_id="req-abc")
+        first = self.call("record_sale", **args)
+        again = self.call("record_sale", **args)
+        self.assertTrue(first["recorded"])
+        self.assertTrue(again.get("duplicate"))
+        self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 190)
+
+    def test_a_retried_credit_sale_does_not_double_the_debt(self):
+        self.repo.upsert_customer("9876543210", "Ramesh")
+        args = dict(items=[{"item": "ppc cement", "qty": 10, "rate": 420}],
+                    payment="credit", customer="Ramesh", request_id="req-xyz")
+        self.call("record_sale", **args)
+        self.call("record_sale", **args)
+        self.assertEqual(len(self.repo.receivables()), 1)
+        self.assertEqual(self.call("customer_account", name="Ramesh")["outstanding"],
+                         4200)
+
+    def test_two_genuine_identical_sales_both_land(self):
+        """Without a request_id, an identical basket is a second customer —
+        not a retry. Dropping it would be silent data loss."""
+        args = dict(items=[{"item": "ppc cement", "qty": 10, "rate": 420}],
+                    payment="cash")
+        self.call("record_sale", **args)
+        self.call("record_sale", **args)
+        self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 180)
+
+    def test_a_retried_payment_is_not_credited_twice(self):
+        self.repo.upsert_customer("9876543210", "Ramesh")
+        self.call("record_sale", items=[{"item": "ppc cement", "qty": 10,
+                                         "rate": 420}],
+                  payment="credit", customer="Ramesh")
+        args = dict(customer="Ramesh", amount=1200, request_id="pay-1")
+        self.call("record_payment", **args)
+        again = self.call("record_payment", **args)
+        self.assertTrue(again.get("duplicate"))
+        self.assertEqual(len(self.repo.payments()), 1)
+
     def test_purchase_increases_stock(self):
         self.call("record_purchase", items=[{"item": "ppc cement", "qty": 50,
                                              "rate": 390}])
@@ -330,6 +369,12 @@ class DispatchTests(unittest.TestCase):
     def test_secret_comparison_rejects_a_wrong_value(self):
         self.assertTrue(agent.verify_secret("test-agent-secret"))
         self.assertFalse(agent.verify_secret("nope"))
+
+    def test_every_tool_is_documented_for_the_console(self):
+        """A tool with no worked example ships as an empty args box, which the
+        agent then fills in by guesswork."""
+        import samvaad_config
+        self.assertEqual(set(samvaad_config.EXAMPLES), set(agent.TOOLS))
 
     def test_manifest_describes_every_tool(self):
         names = {t["name"] for t in agent.manifest()}
