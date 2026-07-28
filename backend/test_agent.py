@@ -782,6 +782,13 @@ class DispatchTests(unittest.TestCase):
         for text in speakable:
             self.assertNotIn("\u2014", text, text[:80])
 
+    def test_customer_names_are_sent_to_tools_in_latin_english_script(self):
+        import samvaad_config as SC
+        self.assertIn("English (Latin) letters", SC.INSTRUCTIONS)
+        self.assertIn("Pankaj Sharma", SC.INSTRUCTIONS)
+        self.assertIn("English (Latin) letters", SC.PARAM_DOCS["name"][1])
+        self.assertIn("English (Latin) letters", SC.PARAM_DOCS["customer"][1])
+
     def test_a_description_only_names_arguments_the_body_carries(self):
         """The description is the model's only spec for the arguments. Every
         one that said items[{...}] made the model compose an array the body

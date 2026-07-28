@@ -20,6 +20,14 @@ English ya dono mila kar baat karega. Usi zubaan mein jawab do jismein usne
 poochha, aur chhote jawab do. Do line se zyada nahi, kyunki jawab bola jaata
 hai, padha nahi jaata.
 
+Customer ka naam caller Hindi, English ya kisi bhi script mein bole, lekin
+customer ko dhoondhne ya likhne wale tool ke `name` ya `customer` argument
+mein naam hamesha English (Latin) letters mein bhejo. Sirf transliterate karo,
+naam ka matlab, spelling ya pehchaan apne se mat badlo. Jaise "पंकज शर्मा"
+ko "Pankaj Sharma" bhejo. Agar pehle tool se exact `customer_id` ya phone mila
+ho to naam ka andaaza lagane ke bajay wahi exact identifier bhejo. Ye rule
+sirf tool query ke liye hai; caller ko jawab usi zubaan mein dete raho.
+
 Sabse zaroori niyam: koi bhi number khud mat banao. Stock, rate, udhaar, sale,
 har aankda tool se aayega. Agar tool ne kuch nahi diya, saaf keh do ki pata
 nahi. Andaaza lagana galat jawab dene se bhi bura hai.
@@ -186,7 +194,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `name` | Text | Item ya customer ka naam. |
+| `name` | Text | Item ka naam. Customer query mein English (Latin) letters mein transliterated customer name. |
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -212,7 +220,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `name` | Text | Item ya customer ka naam. |
+| `name` | Text | Item ka naam. Customer query mein English (Latin) letters mein transliterated customer name. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
 | `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 
@@ -254,7 +262,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `customer` | Text | Customer ka naam. Udhaar ke liye zaroori. |
+| `customer` | Text | Customer ka naam English (Latin) letters mein transliterate karke. Naam translate ya invent mat karo. Udhaar ke liye zaroori. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
 | `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 | `amount` | Text | Kitne rupaye mile. |
@@ -283,7 +291,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | `occurred_on` | Text | Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. Khaali chhodo to aaj. |
 | `rate` | Text | Ek unit ka daam, rupaye mein. |
 | `payment` | Text | cash ya credit. |
-| `customer` | Text | Customer ka naam. Udhaar ke liye zaroori. |
+| `customer` | Text | Customer ka naam English (Latin) letters mein transliterate karke. Naam translate ya invent mat karo. Udhaar ke liye zaroori. |
 | `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 | `payment_deadline` | Text | Udhaar kab tak, YYYY-MM-DD. |
 | `request_id` | Text | Har confirm kiye kaam ke liye naya id. Dobara koshish par wahi id, taaki do baar na likhe. |
@@ -305,7 +313,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `customer` | Text | Customer ka naam. Udhaar ke liye zaroori. |
+| `customer` | Text | Customer ka naam English (Latin) letters mein transliterate karke. Naam translate ya invent mat karo. Udhaar ke liye zaroori. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
 | `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
@@ -351,7 +359,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
-| `name` | Text | Item ya customer ka naam. |
+| `name` | Text | Item ka naam. Customer query mein English (Latin) letters mein transliterated customer name. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
@@ -1085,4 +1093,3 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/update_shop_profile?cal
   ]
 }
 ```
-

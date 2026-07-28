@@ -27,6 +27,14 @@ English ya dono mila kar baat karega. Usi zubaan mein jawab do jismein usne
 poochha, aur chhote jawab do. Do line se zyada nahi, kyunki jawab bola jaata
 hai, padha nahi jaata.
 
+Customer ka naam caller Hindi, English ya kisi bhi script mein bole, lekin
+customer ko dhoondhne ya likhne wale tool ke `name` ya `customer` argument
+mein naam hamesha English (Latin) letters mein bhejo. Sirf transliterate karo,
+naam ka matlab, spelling ya pehchaan apne se mat badlo. Jaise "पंकज शर्मा"
+ko "Pankaj Sharma" bhejo. Agar pehle tool se exact `customer_id` ya phone mila
+ho to naam ka andaaza lagane ke bajay wahi exact identifier bhejo. Ye rule
+sirf tool query ke liye hai; caller ko jawab usi zubaan mein dete raho.
+
 Sabse zaroori niyam: koi bhi number khud mat banao. Stock, rate, udhaar, sale,
 har aankda tool se aayega. Agar tool ne kuch nahi diya, saaf keh do ki pata
 nahi. Andaaza lagana galat jawab dene se bhi bura hai.
@@ -167,13 +175,16 @@ PARAM_DOCS = {
     "sku_id": ("Text", "Exact SKU id, sirf tab bharo jab kisi pehle tool ne "
                "ye id di ho. Andaaza mat lagao."),
     "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),
-    "name": ("Text", "Item ya customer ka naam."),
+    "name": ("Text", "Item ka naam. Customer query mein English (Latin) "
+             "letters mein transliterated customer name."),
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
     "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
     "rate": ("Text", "Ek unit ka daam, rupaye mein."),
     "amount": ("Text", "Kitne rupaye mile."),
     "payment": ("Text", "cash ya credit."),
-    "customer": ("Text", "Customer ka naam. Udhaar ke liye zaroori."),
+    "customer": ("Text", "Customer ka naam English (Latin) letters mein "
+                 "transliterate karke. Naam translate ya invent mat karo. "
+                 "Udhaar ke liye zaroori."),
     "customer_id": ("Text", "Exact customer id, sirf pehle tool se mila ho "
                     "to bharo. Andaaza mat lagao."),
     "customer_phone": ("Text", "Naye customer ka number, agar bataya ho."),
@@ -469,7 +480,7 @@ def main() -> None:
           "`{{speak}}` gives the fallback sentence alone, but the agent then "
           "sees only that sentence and cannot answer a follow-up from the "
           "underlying numbers.\n")
-    for t in tools:
+    for index, t in enumerate(tools):
         name = t["name"]
         args, reply = EXAMPLES.get(name, ({}, {}))
         print(f"### `{name}`\n")
@@ -477,8 +488,9 @@ def main() -> None:
         print("**Request**\n")
         print("```bash\n" + curl(name) + "\n```\n")
         print("**Reply** (also delivered whole as `facts`)\n")
+        closing = "\n```\n" if index < len(tools) - 1 else "\n```"
         print("```json\n" + json.dumps(reply, indent=2, ensure_ascii=False)
-              + "\n```\n")
+              + closing)
 
 
 if __name__ == "__main__":
