@@ -297,6 +297,56 @@
   .stock-status.stable { background:#d9fbea; color:#006c49; }
   .stock-status.attention { background:#ffe2de; color:#ae160d; }
   .stock-status.uncounted { background:#e6e8eb; color:#555a62; }
+  .inventory-delete {
+    display:inline-flex; align-items:center; justify-content:center; gap:5px;
+    padding:6px 9px; border:1px solid #e2e4e7; border-radius:8px;
+    background:#fff; color:#6b7078; font-size:12px; font-weight:700;
+  }
+  .inventory-delete:hover {
+    border-color:#efb7b1; background:#fff5f4; color:#ae160d;
+  }
+  .inventory-modal {
+    position:fixed; inset:0; z-index:80; display:grid; place-items:center;
+    padding:24px; background:rgba(15,23,42,.42); backdrop-filter:blur(2px);
+  }
+  .inventory-modal-card {
+    width:min(440px,100%); overflow:hidden; border:1px solid #d5d9de;
+    border-radius:16px; background:#fff;
+    box-shadow:0 24px 70px rgba(15,23,42,.22);
+  }
+  .inventory-modal-body { padding:24px 24px 20px; }
+  .inventory-modal-icon {
+    width:42px; height:42px; display:grid; place-items:center;
+    margin-bottom:17px; border-radius:11px; background:#fff0ee; color:#ae160d;
+  }
+  .inventory-modal-card h3 {
+    margin-top:5px; color:#111827; font-size:21px; line-height:1.25;
+    font-weight:800; letter-spacing:-.025em;
+  }
+  .inventory-modal-card p {
+    margin-top:9px; color:#626770; font-size:13px; line-height:1.55;
+  }
+  .inventory-modal-error {
+    margin-top:14px; padding:10px 12px; border:1px solid #f2c6c1;
+    border-radius:9px; background:#fff4f2; color:#981b13;
+    font-size:12px; line-height:1.45;
+  }
+  .inventory-modal-actions {
+    display:flex; justify-content:flex-end; gap:9px; padding:15px 20px;
+    border-top:1px solid #e1e4e7; background:#f8f9fa;
+  }
+  .inventory-modal-actions button {
+    min-width:104px; height:40px; border-radius:9px;
+    font-size:13px; font-weight:750;
+  }
+  .inventory-modal-cancel {
+    border:1px solid #d5d9de; background:#fff; color:#343941;
+  }
+  .inventory-modal-confirm {
+    border:1px solid #b42318; background:#b42318; color:#fff;
+  }
+  .inventory-modal-confirm:hover { background:#981b13; }
+  .inventory-modal-actions button:disabled { cursor:not-allowed; opacity:.58; }
   .customer-metrics {
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px;
   }
@@ -1107,6 +1157,28 @@
 
 <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-emerald-700 px-5 py-3 rounded-xl font-semibold hidden z-50"></div>
 
+<div id="inventoryDeleteModal" class="inventory-modal hidden" aria-hidden="true"
+  onclick="if(event.target===this) closeInventoryDeleteModal()">
+  <section class="inventory-modal-card" role="dialog" aria-modal="true"
+    aria-labelledby="inventoryDeleteTitle" aria-describedby="inventoryDeleteMessage">
+    <div class="inventory-modal-body">
+      <div class="inventory-modal-icon">
+        <span class="material-symbols-outlined">delete</span>
+      </div>
+      <div class="eyebrow">Inventory item</div>
+      <h3 id="inventoryDeleteTitle">Delete this product?</h3>
+      <p id="inventoryDeleteMessage"></p>
+      <div id="inventoryDeleteError" class="inventory-modal-error hidden" role="alert"></div>
+    </div>
+    <div class="inventory-modal-actions">
+      <button id="inventoryDeleteCancel" type="button" class="inventory-modal-cancel"
+        onclick="closeInventoryDeleteModal()">Cancel</button>
+      <button id="inventoryDeleteConfirm" type="button" class="inventory-modal-confirm"
+        onclick="confirmInventoryDelete()">Delete product</button>
+    </div>
+  </section>
+</div>
+
 <script>
 const GATES = {live_sale:0.80, delivery:0.92, recall:0.88, count:0.92, stock_take:0.92};
 let STATE = {catalogue:[], byId:{}, today:'2026-07-26', learning_state:'day1'};
@@ -1816,13 +1888,69 @@ async function loadStock(){
       <td>${x.type||'—'}</td>
       <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}</td>
       <td><span class="stock-status ${status}">${label}</span></td>
+      <td><button type="button" class="inventory-delete"
+        data-sku="${escHtml(x.sku_id)}" data-name="${escHtml(x.canonical)}"
+        onclick="deleteInventoryItem(this.dataset.sku,this.dataset.name)"
+        title="Delete ${escHtml(x.canonical)}">
+        <span class="material-symbols-outlined text-[16px]">delete</span>Delete
+      </button></td>
     </tr>`;
   }).join('');
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
-    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th></tr></thead>
+    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th><th>Action</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
   filterStockRows(document.getElementById('stockSearch')?.value);
 }
+let INVENTORY_DELETE_TARGET=null;
+async function deleteInventoryItem(skuId,name){
+  INVENTORY_DELETE_TARGET={skuId,name};
+  document.getElementById('inventoryDeleteMessage').textContent=
+    `"${name}" will be removed from your inventory catalogue. This action cannot be undone.`;
+  document.getElementById('inventoryDeleteError').classList.add('hidden');
+  const modal=document.getElementById('inventoryDeleteModal');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>document.getElementById('inventoryDeleteCancel').focus());
+}
+function closeInventoryDeleteModal(){
+  const confirmButton=document.getElementById('inventoryDeleteConfirm');
+  if(confirmButton.disabled) return;
+  const modal=document.getElementById('inventoryDeleteModal');
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden','true');
+  INVENTORY_DELETE_TARGET=null;
+}
+async function confirmInventoryDelete(){
+  if(!INVENTORY_DELETE_TARGET) return;
+  const {skuId,name}=INVENTORY_DELETE_TARGET;
+  const confirmButton=document.getElementById('inventoryDeleteConfirm');
+  const cancelButton=document.getElementById('inventoryDeleteCancel');
+  const errorBox=document.getElementById('inventoryDeleteError');
+  confirmButton.disabled=true; cancelButton.disabled=true;
+  confirmButton.textContent='Deleting…';
+  errorBox.classList.add('hidden');
+  try{
+    await api('/api/stock/'+encodeURIComponent(skuId),{method:'DELETE'});
+    STATE.catalogue=STATE.catalogue.filter(x=>x.sku_id!==skuId);
+    delete STATE.byId[skuId];
+    confirmButton.disabled=false; cancelButton.disabled=false;
+    confirmButton.textContent='Delete product';
+    closeInventoryDeleteModal();
+    toast(`${name} deleted`);
+    await loadStock();
+  }catch(err){
+    errorBox.textContent=err.message||'Product delete nahi ho saka.';
+    errorBox.classList.remove('hidden');
+    confirmButton.disabled=false; cancelButton.disabled=false;
+    confirmButton.textContent='Try again';
+  }
+}
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape' &&
+     !document.getElementById('inventoryDeleteModal').classList.contains('hidden')){
+    closeInventoryDeleteModal();
+  }
+});
 function filterStockRows(q){
   q=(q||'').trim().toLowerCase();
   document.querySelectorAll('#stockList tbody tr').forEach(row=>{

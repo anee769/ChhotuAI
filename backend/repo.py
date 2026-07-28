@@ -64,6 +64,7 @@ class Repo:
     def events_in_range(self, start: date, end: date) -> list: ...
     def load_catalogue(self) -> list: ...
     def sku(self, sku_id: str) -> Optional[dict]: ...
+    def delete_sku(self, sku_id: str) -> bool: ...
     def load_learning(self) -> dict: ...
     def upsert_learning(self, patch: dict) -> None: ...
     def set_learning_state(self, which: str) -> None: ...
@@ -188,6 +189,22 @@ class JsonRepo(Repo):
         with self._lock:
             self._catalogue, _ = self._store.mutate("catalogue.json", [], _upsert)
             self._by_sku = {s["sku_id"]: s for s in self._catalogue}
+
+    def delete_sku(self, sku_id: str) -> bool:
+        """Delete an unused product without rewriting ledger history."""
+        if self.events_for_sku(sku_id):
+            return False
+
+        def _delete(catalogue):
+            before = len(catalogue)
+            catalogue[:] = [s for s in catalogue if s.get("sku_id") != sku_id]
+            return len(catalogue) != before
+
+        with self._lock:
+            self._catalogue, deleted = self._store.mutate(
+                "catalogue.json", [], _delete)
+            self._by_sku = {s["sku_id"]: s for s in self._catalogue}
+        return bool(deleted)
 
     # ---- learning ----
     def load_learning(self) -> dict:

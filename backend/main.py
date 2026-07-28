@@ -923,6 +923,21 @@ def stock(as_of: str = None):
     return {"as_of": (as_of or clock.today().isoformat()), "rows": rows}
 
 
+@app.delete("/api/stock/{sku_id}")
+def delete_stock_item(sku_id: str):
+    sku = repo.sku(sku_id)
+    if not sku:
+        raise HTTPException(404, "Product inventory mein nahi mila.")
+    if repo.events_for_sku(sku_id):
+        raise HTTPException(
+            409,
+            "Is product ka ledger history hai, isliye ise delete nahi kar sakte.",
+        )
+    if not repo.delete_sku(sku_id):
+        raise HTTPException(409, "Product delete nahi ho saka. Dobara try karein.")
+    return {"deleted": True, "sku_id": sku_id, "name": sku["canonical"]}
+
+
 @app.get("/api/reconciliations")
 def reconciliations():
     events = repo.all_events()

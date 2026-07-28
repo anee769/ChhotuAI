@@ -178,6 +178,21 @@ class ConcurrentInstanceTests(unittest.TestCase):
         a.refresh()
         self.assertEqual(len(a.all_events()), 1)
 
+    def test_unused_catalogue_item_can_be_deleted(self):
+        a, _ = self._two()
+        a.upsert_sku({"sku_id": "X", "canonical": "Unused item"})
+
+        self.assertTrue(a.delete_sku("X"))
+        self.assertIsNone(self.R.JsonRepo(self.dir).sku("X"))
+
+    def test_catalogue_item_with_ledger_history_cannot_be_deleted(self):
+        a, _ = self._two()
+        a.upsert_sku({"sku_id": "X", "canonical": "Used item"})
+        a.append_event(self._sale("sold"))
+
+        self.assertFalse(a.delete_sku("X"))
+        self.assertIsNotNone(self.R.JsonRepo(self.dir).sku("X"))
+
     def test_ids_are_not_reused_after_a_deletion(self):
         a, _ = self._two()
         a.upsert_customer("9000000001", "One")
