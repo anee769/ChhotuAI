@@ -413,9 +413,14 @@ def agent_tool(request: Request,
     # Log the SHAPE of every agent call, never the values: debugging a voice
     # agent from the outside is guesswork without knowing what actually
     # arrived, and "it errored" is all the caller ever hears.
+    # Argument NAMES were not enough: a stock take arrived with item, qty and
+    # unit all present and still refused, and nothing recorded which of them
+    # the tool could not use. Values here are quantities and product names the
+    # caller said out loud, not credentials.
+    shown = {k: v for k, v in args.items() if k not in ("request_id",)}
     print(f"[agent] accepted tool={payload.get('tool')!r} "
           f"shop_key={'set' if str(payload.get('shop_key') or '').strip() else 'EMPTY'} "
-          f"arg_keys={sorted(args)}", flush=True)
+          f"args={json.dumps(shown, ensure_ascii=False)[:300]}", flush=True)
     return agent.handle(payload.get("tool") or "",
                         payload.get("caller") or payload.get("From") or "",
                         args, key=payload.get("shop_key") or "")
