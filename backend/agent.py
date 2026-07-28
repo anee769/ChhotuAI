@@ -126,6 +126,20 @@ def _say_number(n) -> str:
     return str(int(n))
 
 
+def _selling_rate(sku: dict):
+    """The shop's own asking price.
+
+    There is no selling_rate column on skus: the schema stores cost
+    (opening_cost_per_kg / landed_cost_per_kg) and nothing else about price.
+    Rather than migrate, keep it in the attributes jsonb, which upsert_sku
+    already persists. Read both so a SKU seeded either way still answers.
+    """
+    rate = sku.get("selling_rate")
+    if rate is None:
+        rate = (sku.get("attributes") or {}).get("selling_rate")
+    return float(rate) if rate not in (None, "") else None
+
+
 def _g(n) -> str:
     return f"{float(n or 0):g}"
 
@@ -375,8 +389,8 @@ def list_inventory(repo, user, args):
                       "family": sku.get("family"), "brand": sku.get("brand"),
                       "unit": st["unit"], "stock": st["qty"],
                       "counted": st["counted"], "low": st.get("low", False),
-                      "selling_rate": sku.get("selling_rate"),
-                      "cost_price": sku.get("cost_price")})
+                      "selling_rate": _selling_rate(sku),
+                      "cost_price": sku.get("opening_cost_per_kg")})
     items.sort(key=lambda i: i["name"])
     names = ", ".join(i["name"] for i in items[:6])
     return {"count": len(items), "items": items,
@@ -394,7 +408,7 @@ def check_stock(repo, user, args):
         return _not_stocked(repo, user, args.get("item"))
     st = _stock_of(repo, sku)
     return {"found": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
-            **st, "selling_rate": sku.get("selling_rate"),
+            **st, "selling_rate": _selling_rate(sku),
             "speak": f"{sku['canonical']} ka stock {st['text']} hai."}
 
 
@@ -414,7 +428,7 @@ def item_details(repo, user, args):
     return {"found": True, "sku_id": sku["sku_id"], "name": sku["canonical"],
             "brand": sku.get("brand"), "family": sku.get("family"),
             "unit": sku.get("default_unit"), "attributes": sku.get("attributes"),
-            "selling_rate": sku.get("selling_rate"), "landed_cost": cost,
+            "selling_rate": _selling_rate(sku), "landed_cost": cost,
             "gst_rate": repo.gst_rate_for(sku), "stock": st,
             "last_sold_on": sales[-1]["occurred_on"] if sales else None,
             "speak": f"{sku['canonical']}: stock {st['text']}, cost "
@@ -439,7 +453,7 @@ def search_items(repo, user, args):
     events = repo.all_events()
     rows = [{"sku_id": s["sku_id"], "name": s["canonical"],
              "stock": _stock_of(repo, s, events)["text"],
-             "selling_rate": s.get("selling_rate")} for s in hits]
+             "selling_rate": _selling_rate(s)} for s in hits]
     return {"count": len(rows), "items": rows,
             "speak": ", ".join(r["name"] for r in rows[:5]) or "Kuch nahi mila."}
 
@@ -596,7 +610,7 @@ def stock_value(repo, user, args):
         base = L.to_base(st["qty"], st["unit"], sku)
         cost = L.landed_cost_as_of(sku, repo.events_for_sku(sku["sku_id"]),
                                    clock.today()) or 0
-        rate = sku.get("selling_rate")
+        rate = _selling_rate(sku)
         rate = L.rate_to_base(float(rate), sku.get("default_unit"), sku) \
             if rate else cost * 1.10
         at_cost += base * cost
@@ -626,7 +640,7 @@ def price_quote(repo, user, args):
         unit = row.get("unit") or sku.get("default_unit")
         rate = row.get("rate")
         if rate is None:
-            rate = sku.get("selling_rate")
+            rate = _selling_rate(sku)
         if rate is None:
             cost = L.landed_cost_as_of(sku, repo.events_for_sku(sku["sku_id"]),
                                        clock.today())
@@ -853,18 +867,29 @@ def add_item(repo, user, args):
         return {"added": False, "sku_id": existing["sku_id"],
                 "speak": f"{existing['canonical']} pehle se list mein hai."}
     unit = args.get("unit") or "piece"
+    cost = float(args["cost_price"])
+    rate = float(args["selling_rate"]) if args.get("selling_rate") else None
+    attrs = dict(args.get("attributes") or {})
+    if args.get("brand"):
+        attrs["brand"] = args["brand"]
+    if rate is not None:
+        # No selling_rate column exists, so it rides in attributes rather than
+        # being silently dropped, which is what happened before: every item the
+        # agent added came back with no cost and no price at all.
+        attrs["selling_rate"] = rate
     sku_id = "sku_" + hashlib.sha1(name.lower().encode()).hexdigest()[:8]
     repo.upsert_sku({
         "sku_id": sku_id, "canonical": name,
-        "brand": args.get("brand") or "",
         "family": args.get("family") or name,
         "default_unit": unit, "units": {unit: 1},
-        "cost_price": float(args["cost_price"]),
-        "selling_rate": (float(args["selling_rate"])
-                         if args.get("selling_rate") else None),
-        "attributes": args.get("attributes") or {},
+        "opening_cost_per_kg": cost,     # the ledger's cost-per-base-unit field
+        "gst_rate": args.get("gst_rate"),
+        "attributes": attrs,
+        "aliases": [name.lower()] + ([args["brand"].lower()]
+                                     if args.get("brand") else []),
     })
     return {"added": True, "sku_id": sku_id, "name": name, "unit": unit,
+            "cost_price": cost, "selling_rate": rate,
             "speak": f"{name} list mein add kar diya."}
 
 
@@ -896,7 +921,7 @@ def send_bill(repo, user, args):
                     "speak": f"{row.get('item')} nahi mila, bill nahi bhej saka."}
         lines.append({"sku_id": sku["sku_id"], "qty": row.get("qty"),
                       "unit": row.get("unit") or sku.get("default_unit"),
-                      "rate": row.get("rate") or sku.get("selling_rate") or 0})
+                      "rate": row.get("rate") or _selling_rate(sku) or 0})
     try:
         out = notify.send_bill(repo, user, customer, lines,
                                payment=args.get("payment") or "cash",

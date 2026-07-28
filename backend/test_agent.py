@@ -371,6 +371,24 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(out["added"])
         self.assertTrue(self.call("check_stock", item="Apcolite")["found"])
 
+    def test_a_new_item_keeps_its_cost_and_price(self):
+        """upsert_sku has no cost_price or selling_rate column, so writing
+        those keys dropped both silently: every item the agent added came back
+        with no cost, which breaks margin and quotes."""
+        self.call("add_item", name="Asian Paints Apcolite 20L",
+                  cost_price=3200, selling_rate=3600, unit="bucket",
+                  brand="Asian Paints")
+        detail = self.call("item_details", item="Apcolite")
+        self.assertEqual(detail["landed_cost"], 3200)
+        self.assertEqual(detail["selling_rate"], 3600)
+
+    def test_a_new_item_quotes_at_its_own_price(self):
+        self.call("add_item", name="Asian Paints Apcolite 20L",
+                  cost_price=3200, selling_rate=3600, unit="bucket")
+        out = self.call("price_quote", item="Apcolite", qty=2)
+        self.assertEqual(out["lines"][0]["rate"], 3600)
+        self.assertGreater(out["total"], 7200)
+
     def test_shop_profile_update_writes_config_and_owner(self):
         saved = {}
         self.repo.save_config = saved.update

@@ -33,6 +33,19 @@ FRAME = int(RATE * 0.02) * 2          # 20ms of 16-bit mono
 LINES = sys.argv[1:] or ["cement kitna hai"]
 
 
+def transcribe(pcm: bytes) -> str:
+    buf = io.BytesIO()
+    with wave.open(buf, "wb") as w:
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE)
+        w.writeframes(pcm)
+    r = httpx.post("https://api.sarvam.ai/speech-to-text",
+                   headers={"api-subscription-key": os.environ["SARVAM_API_KEY"]},
+                   files={"file": ("t.wav", buf.getvalue(), "audio/wav")},
+                   data={"model": "saaras:v3"}, timeout=120)
+    return r.json().get("transcript", "") if r.status_code == 200 else \
+        f"[stt {r.status_code}]"
+
+
 def tts(text: str) -> bytes:
     """Sarvam TTS, then ffmpeg to exactly 16k mono s16le.
 
@@ -56,40 +69,78 @@ def tts(text: str) -> bytes:
 
 
 class ScriptedLine(AsyncAudioInterface):
-    """A caller who says one thing, then listens."""
+    """A caller who says one thing, waits for the reply, then says the next.
+
+    The first version slept a fixed 14s per line and talked straight over the
+    agent, which showed up as ServerUserInterruptEvent and a transcript with
+    two answers mashed together. Wait for the agent's audio to actually stop
+    instead, and keep each turn in its own buffer so it can be read back
+    separately.
+    """
+
+    QUIET = 2.5          # seconds of silence that means "it has finished"
+    MAX_WAIT = 45.0      # a tool call plus a reply should never take longer
 
     def __init__(self):
-        self.heard = bytearray()
+        self.turns: list[bytearray] = []
+        self.current = bytearray()
+        self._last_out = 0.0
         self._cb = None
         self._task = None
 
     async def start(self, input_callback):
         self._cb = input_callback
-        self._task = asyncio.create_task(self._speak())
+        self._task = asyncio.create_task(self._run())
 
-    async def _speak(self):
-      try:
-        await asyncio.sleep(2.0)                     # let the greeting land
-        for line in LINES:
-            pcm = tts(line)
-            print(f"CALLER> {line}  ({len(pcm)/2/RATE:.1f}s)", flush=True)
-            for i in range(0, len(pcm), FRAME):
-                await self._cb(pcm[i:i + FRAME], FRAME // 2)
-                await asyncio.sleep(0.02)            # real time, or VAD trips
-            # trailing silence tells the agent the caller has stopped
-            for _ in range(60):
-                await self._cb(b"\x00" * FRAME, FRAME // 2)
-                await asyncio.sleep(0.02)
-            await asyncio.sleep(14)                  # let it answer + use tools
-      except Exception as e:
-        import traceback; traceback.print_exc()
+    async def _send(self, pcm: bytes):
+        for i in range(0, len(pcm), FRAME):
+            await self._cb(pcm[i:i + FRAME], FRAME // 2)
+            await asyncio.sleep(0.02)          # real time, or the VAD never trips
+
+    async def _silence(self, seconds: float):
+        for _ in range(int(seconds / 0.02)):
+            await self._cb(b"\x00" * FRAME, FRAME // 2)
+            await asyncio.sleep(0.02)
+
+    async def _wait_for_quiet(self):
+        """Listen without transmitting.
+
+        Streaming silence here closed the connection every time: a stream of
+        empty frames is not the same as an open line with nobody talking.
+        """
+        start = asyncio.get_event_loop().time()
+        while asyncio.get_event_loop().time() - start < self.MAX_WAIT:
+            await asyncio.sleep(0.3)
+            quiet = asyncio.get_event_loop().time() - self._last_out
+            if self._last_out and quiet > self.QUIET:
+                return
+        print("[timed out waiting for the agent]", flush=True)
+
+    async def _run(self):
+        try:
+            await self._wait_for_quiet()       # let the greeting finish
+            for line in LINES:
+                self.turns.append(self.current)
+                self.current = bytearray()
+                pcm = tts(line)
+                print(f"CALLER> {line}", flush=True)
+                await self._send(pcm)
+                await self._silence(0.5)       # a real pause means "your turn"
+                await self._wait_for_quiet()
+            self.turns.append(self.current)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            import traceback
+            traceback.print_exc()
 
     async def stop(self):
         if self._task:
             self._task.cancel()
 
     async def output(self, audio: bytes, sample_rate=None):
-        self.heard.extend(audio)
+        self.current.extend(audio)
+        self._last_out = asyncio.get_event_loop().time()
 
     def interrupt(self):
         pass
@@ -101,11 +152,11 @@ async def main():
         workspace_id="019f9945-ebfb-76ac-9855-2f2c5985abbb",
         app_id="Voice-Assis-9018c9fb-e7c8",
         version=1,                                   # the agent is still a draft
-        user_identifier="917006322772",              # this is the shop's identity
+        user_identifier="919156142204",              # this is the shop's identity
         user_identifier_type=UIT.PHONE_NUMBER,
         interaction_type=InteractionType.CALL,
         sample_rate=RATE,
-        agent_variables={"caller_number": "917006322772"},
+        agent_variables={"caller_number": "919156142204"},
     )
     async def on_transcript(m):
         print(f"[{getattr(m,'role','?')}] {getattr(m,'text','')}", flush=True)
@@ -124,23 +175,14 @@ async def main():
                               event_callback=on_event)
     await agent.start()
     await agent.wait_for_connect()
-    print("CONNECTED", agent.get_interaction_id(), flush=True)
-    await asyncio.sleep(6 + 20 * len(LINES))
+    print("CONNECTED", flush=True)
+    while line._task and not line._task.done():
+        await asyncio.sleep(0.5)
+    await asyncio.sleep(1.0)
     await agent.stop()
-    print(f"[agent audio: {len(line.heard)/2/RATE:.1f}s]", flush=True)
-    if line.heard:
-        buf = io.BytesIO()
-        with wave.open(buf, "wb") as w:
-            w.setnchannels(1); w.setsampwidth(2); w.setframerate(RATE)
-            w.writeframes(bytes(line.heard))
-        r = httpx.post("https://api.sarvam.ai/speech-to-text",
-                       headers={"api-subscription-key":
-                                os.environ["SARVAM_API_KEY"]},
-                       files={"file": ("agent.wav", buf.getvalue(), "audio/wav")},
-                       data={"model": "saaras:v3"}, timeout=120)
-        if r.status_code == 200:
-            print("AGENT>", r.json().get("transcript"), flush=True)
-        else:
-            print("[stt failed]", r.status_code, flush=True)
+    for n, turn in enumerate(line.turns):
+        if len(turn) < RATE:          # under a second is not speech
+            continue
+        print(f"AGENT[{n}]> {transcribe(bytes(turn))}", flush=True)
 
 asyncio.run(main())
