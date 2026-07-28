@@ -177,7 +177,7 @@ def _find_sku(repo, phrase: str):
 
 def _ask_which(question: dict) -> dict:
     return {"needs": question,
-            "speak": f"{question['said']} mein se kaunsa — "
+            "speak": f"{question['said']} mein se kaunsa, "
                      f"{' ya '.join(question['options'][:3])}?"}
 
 
@@ -199,7 +199,7 @@ def _customer_by_name(repo, name: str):
 
 def _ask_which_customer(options: list) -> dict:
     return {"needs": {"options": options},
-            "speak": "Kaunse — " + " ya ".join(o["name"] for o in options[:3]) + "?"}
+            "speak": "Kaunse, " + " ya ".join(o["name"] for o in options[:3]) + "?"}
 
 
 def _period_range(args: dict):
@@ -255,7 +255,7 @@ def shop_profile(repo, user, args):
         "item_count": len(catalogue),
         "customer_count": len(accounts),
         "total_outstanding": outstanding,
-        "speak": f"{cfg.get('shop_name') or 'Dukaan'} — {len(catalogue)} item, "
+        "speak": f"{cfg.get('shop_name') or 'Dukaan'} mein {len(catalogue)} item, "
                  f"{len(accounts)} customer, {_say_number(outstanding)} rupaye "
                  "udhaar baaki.",
     }
@@ -275,7 +275,7 @@ def list_inventory(repo, user, args):
     items.sort(key=lambda i: i["name"])
     names = ", ".join(i["name"] for i in items[:6])
     return {"count": len(items), "items": items,
-            "speak": f"{len(items)} item hain — {names}"
+            "speak": f"{len(items)} item hain: {names}"
                      + (" aur bhi." if len(items) > 6 else ".")}
 
 
@@ -345,7 +345,7 @@ def low_stock(repo, user, args):
                      else f"{r['canonical']} sirf {r['stock']} bacha hai"
                      for r in rows[:4])
     return {"count": len(rows), "items": rows,
-            "speak": f"{len(rows)} item kam hain — {said}."}
+            "speak": f"{len(rows)} item kam hain: {said}."}
 
 
 def business_summary(repo, user, args):
@@ -434,7 +434,7 @@ def dues(repo, user, args):
     said = ", ".join(f"{r['name']} ka {_say_number(r['remaining'])} rupaye"
                      for r in out[:4])
     return {"count": len(out), "dues": out,
-            "speak": f"{len(out)} udhaar due hain — {said}."}
+            "speak": f"{len(out)} udhaar due hain: {said}."}
 
 
 def recent_activity(repo, user, args):
@@ -597,7 +597,7 @@ def record_sale(repo, user, args):
             "customer": (customer or {}).get("name"),
             "lines": res["committed"], "stock_after": res["affected_stock"],
             "receivable": receivable,
-            "speak": f"{_said(repo, items)} likh liya — "
+            "speak": f"{_said(repo, items)} likh liya, "
                      f"{_say_number(total)} rupaye, {payment}."}
 
 
@@ -619,7 +619,7 @@ def stock_take(repo, user, args):
         return out
     res, items = out.pop("_result"), out.pop("_items")
     return {**out, "stock_after": res["affected_stock"],
-            "speak": f"Ginti update kar di — {_said(repo, items)}."}
+            "speak": f"Ginti update kar di: {_said(repo, items)}."}
 
 
 def record_payment(repo, user, args):
@@ -671,7 +671,7 @@ def update_shop_profile(repo, user, args):
     owner = str(args.get("owner") or args.get("name") or "").strip()
     if not fields and not owner:
         return {"updated": False,
-                "speak": "Kya badalna hai — dukaan ka naam, GSTIN ya address?"}
+                "speak": "Kya badalna hai: dukaan ka naam, GSTIN ya address?"}
     if fields:
         repo.save_config(fields)
     if owner or fields.get("shop_name"):
@@ -749,7 +749,7 @@ def send_bill(repo, user, args):
         return {"sent": False, "error": str(e)[:200],
                 "speak": "Bill nahi bhej saka."}
     return {"sent": True, **out,
-            "speak": f"{customer.get('name')} ko bill bhej diya — "
+            "speak": f"{customer.get('name')} ko bill bhej diya, "
                      f"{_say_number(out['total'])} rupaye."}
 
 
@@ -794,7 +794,7 @@ TOOLS = {
                        "Poori inventory: har item ka naam, stock, unit, rate. "
                        "'kya kya hai', 'stock list' jaise sawaal ke liye."),
     "check_stock": (check_stock,
-                    "Ek item ka current stock. args: item (jo caller ne bola — "
+                    "Ek item ka current stock. args: item (jo caller ne bola, "
                     "Hindi, English ya mix, kuch bhi chalega)."),
     "item_details": (item_details,
                      "Ek item ki poori detail: cost price, selling rate, GST, "
@@ -819,14 +819,14 @@ TOOLS = {
                          "args: name."),
     "dues": (dues, "Jo udhaar due ho rahe hain. args: days_before."),
     "recent_activity": (recent_activity,
-                        "Pichhli entries — kya bika, kya aaya. args: limit."),
+                        "Pichhli entries: kya bika, kya aaya. args: limit."),
     "price_quote": (price_quote,
                     "Kisi saamaan ka bhaav aur GST ke saath total, bina kuch "
                     "record kiye. args: items[{item, qty, unit}]."),
 
     "record_sale": (record_sale,
                     "Sale record karo. args: items[{item, qty, unit, rate}], "
-                    "payment (cash ya credit), customer (naam — credit ke liye "
+                    "payment (cash ya credit), customer (naam, credit ke liye "
                     "zaroori), customer_phone, payment_deadline."),
     "record_purchase": (record_purchase,
                         "Supplier se aaya stock record karo. args: items[{item, "
@@ -837,7 +837,7 @@ TOOLS = {
                        "Customer se udhaar ka paisa mila. args: customer (naam), "
                        "amount."),
     "update_shop_profile": (update_shop_profile,
-                            "Dukaan ki details badlo — shop_name, owner, gstin, "
+                            "Dukaan ki details badlo: shop_name, owner, gstin, "
                             "address. Yehi bill ke letterhead par chhapta hai."),
     "add_item": (add_item,
                  "Nayi item list mein daalo. args: name, cost_price (zaroori), "
