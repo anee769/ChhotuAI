@@ -349,7 +349,8 @@ def cron_reminders(request: Request):
 # ---------------------------------------------------------------------------
 @app.post("/api/agent/tool")
 def agent_tool(payload: dict = Body(...),
-               x_agent_secret: str = Header(default="")):
+               x_agent_secret: str = Header(default=""),
+               authorization: str = Header(default="")):
     """Called by the Samvaad agent mid-conversation to touch the ledger.
 
     A phone call carries no session, so this authenticates twice over: a shared
@@ -363,8 +364,14 @@ def agent_tool(payload: dict = Body(...),
     accepts both.
     """
     import agent
+    # The Samvaad console's Auth section offers Bearer / Api Key / Basic, not a
+    # free-form header, so the same secret may arrive either way. Accept both
+    # rather than forcing the credential to live in a plain header field, which
+    # is where the console warns against putting it.
+    supplied = (x_agent_secret
+                or (authorization or "").removeprefix("Bearer ").strip())
     try:
-        if not agent.verify_secret(x_agent_secret):
+        if not agent.verify_secret(supplied):
             raise HTTPException(403, "Bad agent secret.")
     except agent.AgentError as e:
         raise HTTPException(503, str(e))

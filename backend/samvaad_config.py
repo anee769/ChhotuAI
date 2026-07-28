@@ -75,9 +75,17 @@ def main() -> None:
           "and reused, instead of being pasted in clear text into all "
           f"{len(tools)} tools — and rotating it later becomes one edit "
           "rather than {0}.\n".format(len(tools)))
-    print("The cURLs below keep the header in place so the console prefills "
-          "the header *name*; the placeholder is not a real secret, so replace "
-          "it in Auth rather than in the command.\n")
+    print("The Auth dropdown offers Bearer / Api Key / Basic rather than a "
+          "free-form header, so the endpoint accepts the secret two ways:\n")
+    print("| Auth Type | What to set |")
+    print("| --- | --- |")
+    print("| **Api Key** | header name `X-Agent-Secret`, value = the secret |")
+    print("| **Bearer** | token = the same secret (sent as "
+          "`Authorization: Bearer …`) |\n")
+    print("Either is accepted; pick whichever the console lets you configure "
+          "cleanly. The cURLs below keep the header in place so the console "
+          "prefills the header *name* — the placeholder is not a real secret, "
+          "so set the value in Auth and delete the header afterwards.\n")
     print(f"## Tools ({len(tools)})\n")
     print("All of them POST to the same endpoint and differ only in `tool` and "
           "`args`. Every one runs **During conversation**, except "

@@ -43,7 +43,14 @@ Aaj ki date bhi wahin se lo, apne se mat socho.
 
 The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 22 tools — and rotating it later becomes one edit rather than 22.
 
-The cURLs below keep the header in place so the console prefills the header *name*; the placeholder is not a real secret, so replace it in Auth rather than in the command.
+The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header, so the endpoint accepts the secret two ways:
+
+| Auth Type | What to set |
+| --- | --- |
+| **Api Key** | header name `X-Agent-Secret`, value = the secret |
+| **Bearer** | token = the same secret (sent as `Authorization: Bearer …`) |
+
+Either is accepted; pick whichever the console lets you configure cleanly. The cURLs below keep the header in place so the console prefills the header *name* — the placeholder is not a real secret, so set the value in Auth and delete the header afterwards.
 
 ## Tools (22)
 
