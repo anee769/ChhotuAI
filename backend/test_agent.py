@@ -308,6 +308,21 @@ class DispatchTests(unittest.TestCase):
     def test_blank_identity_is_not_a_wildcard(self):
         self.assertFalse(agent.handle("shop_profile", "", {})["authorised"])
 
+    def test_unresolved_template_does_not_shadow_the_caller(self):
+        """A phone call has no shop_key, so the console sends "{{shop_key}}"
+        literally. That must not be mistaken for a credential."""
+        shop = {"user_id": "u_1", "phone": "+917006322772", "shop_name": "S"}
+        with patch.object(agent.auth, "all_users", return_value=[shop]), \
+                patch.object(agent.sqlrepo, "SqlRepo", return_value=object()):
+            user, repo = agent.shop_for_caller("917006322772", "{{shop_key}}")
+        self.assertEqual(user, shop)
+
+    def test_an_unresolved_template_alone_authorises_nobody(self):
+        shop = {"user_id": "u_1", "phone": "+917006322772"}
+        with patch.object(agent.auth, "all_users", return_value=[shop]):
+            self.assertEqual(agent.shop_for_caller("{{caller}}", "{{shop_key}}"),
+                             (None, None))
+
     def test_shop_key_is_stable_and_per_shop(self):
         self.assertEqual(agent.shop_key("u_1"), agent.shop_key("u_1"))
         self.assertNotEqual(agent.shop_key("u_1"), agent.shop_key("u_2"))

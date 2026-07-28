@@ -78,21 +78,34 @@ def shop_key(user_id: str) -> str:
                     hashlib.sha256).hexdigest()[:32]
 
 
+def _resolved(value: str) -> str:
+    """Drop a template variable the channel never filled in.
+
+    A telephony session has no shop_key, so the console sends the literal
+    "{{shop_key}}". That is a non-empty string, and treating it as a real
+    credential would shadow the caller's number and lock out every phone call.
+    """
+    value = (value or "").strip()
+    return "" if ("{{" in value or "}}" in value) else value
+
+
 def shop_for_caller(phone: str = "", key: str = ""):
-    """Resolve the shop from either identity. Never guesses."""
-    norm = "" if key else auth.normalize_phone(phone or "")
+    """Resolve the shop from either identity. Never guesses.
+
+    Both are credentials that must match exactly, so trying one and then the
+    other is no weaker than trying only one — and it means a session that
+    carries both, or a channel that fills in only one, still works.
+    """
+    key = _resolved(key)
+    norm = auth.normalize_phone(_resolved(phone))
     if not key and not norm:
         # Nothing to match on. Bail before touching the database, so a stream
         # of junk caller IDs cannot turn into a stream of queries.
         return None, None
-    users = auth.all_users()
-    if key:
-        for u in users:
-            if secrets.compare_digest(shop_key(u["user_id"]), key):
-                return u, sqlrepo.SqlRepo(u["user_id"])
-        return None, None
-    for u in users:
-        if u["phone"] == norm:
+    for u in auth.all_users():
+        if key and secrets.compare_digest(shop_key(u["user_id"]), key):
+            return u, sqlrepo.SqlRepo(u["user_id"])
+        if norm and u["phone"] == norm:
             return u, sqlrepo.SqlRepo(u["user_id"])
     return None, None
 
