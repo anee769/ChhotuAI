@@ -860,10 +860,251 @@
   .section-card-head h2 { font-size:16px; font-weight:750; }
   .section-card-head p { margin-top:3px; color:#6b7078; font-size:11px; }
 
+  /* Dashboard command centre */
+  .dashboard-page {
+    --dash-ink:#0b1513;
+    --dash-green:#00a870;
+    --dash-mint:#83f2c3;
+    --dash-line:rgba(11,21,19,.1);
+    position:relative;
+  }
+  .dashboard-page::before {
+    content:""; position:fixed; inset:72px 0 0 268px; z-index:-1;
+    pointer-events:none; opacity:.42;
+    background-image:
+      linear-gradient(rgba(15,23,42,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(15,23,42,.025) 1px,transparent 1px);
+    background-size:32px 32px;
+    mask-image:linear-gradient(to bottom,#000,transparent 68%);
+  }
+  .dashboard-heading {
+    position:relative; overflow:hidden; align-items:center; margin-bottom:18px;
+    padding:25px 27px; border:1px solid #17231f; border-radius:20px;
+    background:
+      radial-gradient(circle at 82% 20%,rgba(77,255,180,.13),transparent 28%),
+      linear-gradient(135deg,#0a1210 0%,#101c18 68%,#132720 100%);
+    box-shadow:0 24px 54px -34px rgba(5,20,15,.72);
+  }
+  .dashboard-heading::after {
+    content:""; position:absolute; top:0; right:0; width:260px; height:8px;
+    background:repeating-linear-gradient(135deg,var(--dash-mint) 0 12px,
+      transparent 12px 22px);
+    opacity:.78;
+  }
+  .dashboard-heading .eyebrow { color:#83f2c3; }
+  .dashboard-heading h1 { color:#fff; font-size:35px; }
+  .dashboard-heading p { color:#aebbb6; }
+  .dashboard-heading-actions {
+    position:relative; z-index:1; display:flex; align-items:center; gap:11px;
+  }
+  .dashboard-live {
+    display:inline-flex; align-items:center; gap:8px; min-height:39px;
+    padding:0 13px; border:1px solid rgba(131,242,195,.23);
+    border-radius:999px; background:rgba(131,242,195,.07);
+    color:#d8f9ea; font-size:11px; font-weight:750;
+    letter-spacing:.05em; text-transform:uppercase;
+  }
+  .dashboard-live::before {
+    content:""; width:7px; height:7px; border-radius:50%;
+    background:#61e6ad; box-shadow:0 0 0 5px rgba(97,230,173,.1);
+    animation:dashboardPulse 2.2s ease-in-out infinite;
+  }
+  .dashboard-voice-cta {
+    display:inline-flex; align-items:center; gap:8px; min-height:42px;
+    padding:0 16px; border-radius:10px; background:#fff;
+    color:#0b1513; font-size:12px; font-weight:800;
+    box-shadow:0 12px 28px -18px rgba(255,255,255,.55);
+    transition:transform .2s ease,box-shadow .2s ease;
+  }
+  .dashboard-voice-cta:hover {
+    transform:translateY(-2px); box-shadow:0 16px 32px -18px rgba(255,255,255,.75);
+  }
+  .dashboard-voice-cta .material-symbols-outlined { font-size:18px; }
+  @keyframes dashboardPulse {
+    0%,100% { transform:scale(1); opacity:1; }
+    50% { transform:scale(.78); opacity:.65; }
+  }
+  .dashboard-metrics {
+    grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:14px;
+  }
+  .dashboard-customer-metrics {
+    grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px; margin-bottom:16px;
+  }
+  .dashboard-page .metric-tile {
+    position:relative; min-height:142px; overflow:hidden; padding:18px 19px 17px;
+    border:1px solid #d9dfdc; border-radius:16px;
+    background:linear-gradient(145deg,#fff,#f7faf8);
+    box-shadow:0 16px 34px -30px rgba(9,31,23,.65);
+    transition:transform .22s ease,border-color .22s ease,box-shadow .22s ease;
+  }
+  .dashboard-page .metric-tile:hover {
+    transform:translateY(-3px); border-color:#b5c6bf;
+    box-shadow:0 24px 38px -30px rgba(9,31,23,.72);
+  }
+  .dashboard-page .metric-tile::after {
+    content:""; position:absolute; right:-30px; bottom:-42px;
+    width:118px; height:118px; border:1px solid rgba(0,108,73,.09);
+    border-radius:50%; box-shadow:0 0 0 16px rgba(0,108,73,.035);
+  }
+  .dashboard-page .metric-tile--hero {
+    min-height:156px; border-color:#13211c;
+    background:
+      radial-gradient(circle at 93% 8%,rgba(92,242,178,.16),transparent 35%),
+      linear-gradient(145deg,#0b1513,#14241e);
+    color:#fff;
+  }
+  .dashboard-page .metric-tile--hero::after {
+    border-color:rgba(131,242,195,.14);
+    box-shadow:0 0 0 16px rgba(131,242,195,.04);
+  }
+  .dashboard-page .metric-tile--warning {
+    background:linear-gradient(145deg,#fffdf8,#fff8e8);
+    border-color:#eadfca;
+  }
+  .metric-top { position:relative; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .metric-icon {
+    width:34px; height:34px; display:grid; place-items:center;
+    border-radius:10px; background:#e6f5ee; color:#00714d;
+  }
+  .metric-icon .material-symbols-outlined { font-size:18px; }
+  .metric-tile--hero .metric-icon {
+    background:rgba(131,242,195,.12); color:#83f2c3;
+  }
+  .metric-tile--warning .metric-icon { background:#fff0cf; color:#9a5b00; }
+  .dashboard-page .metric-tile .label {
+    position:relative; z-index:1; color:#69726e; font-size:9px;
+    letter-spacing:.14em;
+  }
+  .dashboard-page .metric-tile--hero .label { color:#9eb0a9; }
+  .dashboard-page .metric-tile .value {
+    position:relative; z-index:1; margin-top:15px; color:#111915;
+    font-size:29px; line-height:1; font-weight:850; letter-spacing:-.045em;
+  }
+  .dashboard-page .metric-tile--hero .value { color:#fff; font-size:32px; }
+  .metric-foot {
+    position:relative; z-index:1; display:flex; align-items:center;
+    justify-content:space-between; gap:8px; margin-top:12px;
+    color:#77807c; font-size:10px;
+  }
+  .metric-tile--hero .metric-foot { color:#9eb0a9; }
+  .metric-signal {
+    display:inline-flex; align-items:center; gap:4px; padding:4px 7px;
+    border-radius:999px; background:#e7f8f0; color:#00714d;
+    font-size:9px; font-weight:800; white-space:nowrap;
+  }
+  .metric-tile--hero .metric-signal { background:rgba(131,242,195,.11); color:#9ff4cf; }
+  .metric-signal.warning { background:#fff0cf; color:#8b5500; }
+  .dashboard-customer-metrics .metric-tile {
+    min-height:126px; padding:16px 17px;
+  }
+  .dashboard-customer-metrics .metric-tile .value {
+    margin-top:13px; font-size:25px;
+  }
+  .dashboard-customer-metrics .metric-tile::after { width:90px; height:90px; }
+  .dashboard-page .card {
+    border-color:#d9dfdc; border-radius:17px;
+    background:rgba(255,255,255,.96);
+    box-shadow:0 18px 42px -38px rgba(9,31,23,.7);
+  }
+  .dashboard-page .card:hover { border-color:#c6d2cd; }
+  .dashboard-page .section-card-head {
+    align-items:center; min-height:76px; padding:17px 19px;
+    border-color:#e4e9e6;
+  }
+  .dashboard-page .section-card-head h2 {
+    color:#121a16; font-size:15px; font-weight:800; letter-spacing:-.015em;
+  }
+  .dashboard-page .section-card-head p { color:#7a837f; }
+  .dashboard-section-icon {
+    width:36px; height:36px; display:grid; place-items:center;
+    border-radius:11px; background:#edf6f1; color:#00714d;
+  }
+  .dashboard-section-icon .material-symbols-outlined { font-size:19px; }
+  .dashboard-card--money {
+    background:
+      radial-gradient(circle at 100% 0,rgba(71,231,164,.12),transparent 34%),
+      linear-gradient(160deg,#0c1713,#15251f) !important;
+    border-color:#172720 !important; color:#fff;
+  }
+  .dashboard-card--money .section-card-head { border-color:rgba(255,255,255,.1); }
+  .dashboard-card--money .section-card-head h2 { color:#fff; }
+  .dashboard-card--money .section-card-head p { color:#91a39b; }
+  .dashboard-card--money .dashboard-section-icon {
+    background:rgba(131,242,195,.1); color:#83f2c3;
+  }
+  .money-summary { display:grid; gap:18px; }
+  .money-total strong {
+    display:block; color:#fff; font-size:32px; line-height:1;
+    font-weight:850; letter-spacing:-.045em;
+  }
+  .money-total span { display:block; margin-top:6px; color:#99aaa3; font-size:11px; }
+  .money-total--inventory strong { color:#8ef0c6; }
+  .money-bar-track {
+    height:7px; overflow:hidden; border-radius:99px;
+    background:rgba(255,255,255,.09);
+  }
+  .money-bar-fill {
+    height:100%; min-width:8px; border-radius:inherit;
+    background:linear-gradient(90deg,#55e7aa,#a2f8d2);
+  }
+  .money-note {
+    display:flex; align-items:flex-start; gap:8px; padding-top:2px;
+    color:#83968e; font-size:10px; line-height:1.45;
+  }
+  .money-note .material-symbols-outlined { font-size:15px; color:#d0a34a; }
+  .dashboard-chart { min-height:268px; }
+  .crm-rank-row {
+    position:relative; grid-template-columns:34px minmax(0,1fr) auto;
+    min-height:64px; padding:12px 18px; border-color:#e5e9e7;
+    transition:background .18s ease;
+  }
+  .crm-rank-row:hover { background:#f5faf7; }
+  .crm-rank-row .rank {
+    width:28px; height:28px; display:grid; place-items:center;
+    border-radius:9px; background:#edf4f0; color:#00714d;
+  }
+  .crm-rank-row:first-child .rank {
+    background:#0d1915; color:#83f2c3; box-shadow:0 6px 14px -10px #000;
+  }
+  .dashboard-frozen-card .section-card-head {
+    background:linear-gradient(90deg,#fffaf0,#fff);
+  }
+  .dashboard-frozen-card .dashboard-section-icon {
+    background:#fff0d2; color:#9a5b00;
+  }
+  .frozen-total-line {
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    margin-bottom:13px; padding:12px 14px; border:1px solid #f0dfbd;
+    border-radius:11px; background:#fffaf0; color:#716554; font-size:11px;
+  }
+  .frozen-total-line b { color:#8d5100; font-size:17px; }
+  .dashboard-page .ledger-table-wrap { border-color:#e0e5e2; }
+  .dashboard-page .ledger-table th { background:#f4f7f5; }
+  .dashboard-page .ledger-table tbody tr { transition:background .16s ease; }
+  .dashboard-page .ledger-table tbody tr:hover { background:#f7fbf9; }
+  .dashboard-page > * {
+    animation:dashboardEnter .48s cubic-bezier(.2,.75,.25,1) both;
+  }
+  .dashboard-page > *:nth-child(2) { animation-delay:.04s; }
+  .dashboard-page > *:nth-child(3) { animation-delay:.08s; }
+  .dashboard-page > *:nth-child(4) { animation-delay:.12s; }
+  .dashboard-page > *:nth-child(5) { animation-delay:.16s; }
+  @keyframes dashboardEnter {
+    from { opacity:0; transform:translateY(9px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+
   @media (max-width: 760px) {
     .customer-metrics { grid-template-columns:1fr; }
-    .dashboard-metrics, .dashboard-customer-metrics,
+    .dashboard-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
+    .dashboard-metrics .metric-tile:first-child { grid-column:1/-1; }
+    .dashboard-customer-metrics { grid-template-columns:repeat(2,minmax(0,1fr)); }
     .dashboard-grid, .dashboard-chart-grid { grid-template-columns:1fr; }
+    .dashboard-heading { align-items:flex-start; padding:22px 20px; }
+    .dashboard-heading-actions { width:100%; justify-content:space-between; }
+    .dashboard-heading h1 { font-size:31px; }
+    .dashboard-page .metric-tile { min-height:130px; }
+    .dashboard-page .metric-tile--hero { min-height:146px; }
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
     .customer-create-panel { grid-template-columns:1fr; }
@@ -1016,6 +1257,16 @@
         calc(12px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
     }
     .inventory-modal-actions button { width:100%; min-width:0; min-height:44px; }
+  }
+  @media (max-width: 390px) {
+    .dashboard-metrics,.dashboard-customer-metrics { grid-template-columns:1fr; }
+    .dashboard-metrics .metric-tile:first-child { grid-column:auto; }
+    .dashboard-heading-actions { align-items:stretch; flex-direction:column; }
+    .dashboard-live,.dashboard-voice-cta { justify-content:center; }
+  }
+  @media (prefers-reduced-motion:reduce) {
+    .dashboard-page > *,.dashboard-live::before { animation:none !important; }
+    .dashboard-page .metric-tile,.dashboard-voice-cta { transition:none !important; }
   }
 
   .mobile-account-menu { display:none; position:relative; }
@@ -1968,59 +2219,66 @@
   </section>
 
   <!-- DASHBOARD -->
-  <section id="tab-dashboard" class="tabpane">
-    <div class="page-heading">
+  <section id="tab-dashboard" class="tabpane dashboard-page">
+    <div class="page-heading dashboard-heading">
       <div>
         <div class="eyebrow">Business overview</div>
-        <h1>Dashboard</h1>
-        <p>Sales health, customer growth, receivables and capital in one view.</p>
+        <h1>Your shop, at a glance.</h1>
+        <p>Sales health, customer growth, receivables and capital. Live from the ledger.</p>
+      </div>
+      <div class="dashboard-heading-actions">
+        <span class="dashboard-live">Ledger live</span>
+        <button onclick="showTab('sale')" class="dashboard-voice-cta">
+          <span class="material-symbols-outlined">graphic_eq</span>
+          Talk to Chhotu
+        </button>
       </div>
     </div>
     <div id="dashboardMetrics" class="dashboard-metrics"></div>
     <div id="crmDashboardMetrics" class="dashboard-customer-metrics"></div>
     <div class="dashboard-grid">
-      <div class="card overflow-hidden">
+      <div class="card dashboard-card dashboard-card--trend overflow-hidden">
         <div class="section-card-head">
           <div><h2>Margin trend</h2><p>Daily gross margin · last 30 days</p></div>
-          <span class="material-symbols-outlined text-slate-400">monitoring</span>
+          <span class="dashboard-section-icon"><span class="material-symbols-outlined">monitoring</span></span>
         </div>
         <div class="p-5"><canvas id="trendChart" height="110"></canvas></div>
       </div>
-      <div class="card overflow-hidden">
+      <div class="card dashboard-card dashboard-card--money overflow-hidden">
         <div class="section-card-head">
           <div><h2>Money position</h2><p>Receivables and inventory cost</p></div>
-          <span class="material-symbols-outlined text-slate-400">account_balance_wallet</span>
+          <span class="dashboard-section-icon"><span class="material-symbols-outlined">account_balance_wallet</span></span>
         </div>
         <div id="moneyBody" class="p-5"></div>
       </div>
     </div>
     <div class="dashboard-chart-grid">
-      <div class="card overflow-hidden">
+      <div class="card dashboard-card overflow-hidden">
         <div class="section-card-head">
           <div><h2>Customer acquisition</h2><p>New customers · rolling 8 weeks</p></div>
-          <span class="material-symbols-outlined text-slate-400">person_add</span>
+          <span class="dashboard-section-icon"><span class="material-symbols-outlined">person_add</span></span>
         </div>
         <div class="dashboard-chart"><canvas id="acquisitionChart"></canvas></div>
       </div>
-      <div class="card overflow-hidden">
+      <div class="card dashboard-card overflow-hidden">
         <div class="section-card-head">
           <div><h2>Best-selling products</h2><p>Sales value · last 30 days</p></div>
-          <span class="material-symbols-outlined text-slate-400">leaderboard</span>
+          <span class="dashboard-section-icon"><span class="material-symbols-outlined">leaderboard</span></span>
         </div>
         <div class="dashboard-chart"><canvas id="productMixChart"></canvas></div>
       </div>
     </div>
-    <div class="card overflow-hidden mt-4">
+    <div class="card dashboard-card overflow-hidden mt-4">
       <div class="section-card-head">
         <div><h2>Most valuable customers</h2><p>Ranked by recorded lifetime sales</p></div>
-        <span class="material-symbols-outlined text-slate-400">workspace_premium</span>
+        <span class="dashboard-section-icon"><span class="material-symbols-outlined">workspace_premium</span></span>
       </div>
       <div id="topCustomersBody"></div>
     </div>
-    <div class="card overflow-hidden mt-4">
+    <div class="card dashboard-card dashboard-frozen-card overflow-hidden mt-4">
       <div class="section-card-head">
         <div><h2>Frozen capital</h2><p>No movement in the last 60 days</p></div>
-        <span class="material-symbols-outlined text-slate-400">ac_unit</span>
+        <span class="dashboard-section-icon"><span class="material-symbols-outlined">inventory</span></span>
       </div>
       <div id="frozenBody" class="p-5"></div>
     </div>
@@ -3619,37 +3877,81 @@ async function loadDashboard(){
   if(trendChartObj) trendChartObj.destroy();
   const risePlugin={id:'rise',afterDraw(c){ if(riseIdx<0) return; const x=c.scales.x.getPixelForValue(riseIdx);
     const ctx=c.ctx, top=c.chartArea.top, bot=c.chartArea.bottom; ctx.save();
-    ctx.strokeStyle='#f59e0b'; ctx.setLineDash([5,4]); ctx.lineWidth=2;
+    ctx.strokeStyle='#c98b25'; ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
     ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot); ctx.stroke();
-    ctx.setLineDash([]); ctx.fillStyle='#f59e0b'; ctx.font='12px system-ui';
-    ctx.fillText('⬆ steel price rise',x+6,top+14); ctx.restore(); }};
+    ctx.setLineDash([]); ctx.fillStyle='#9a650d'; ctx.font='600 10px Inter,system-ui';
+    ctx.fillText('STEEL RATE ↑',x+6,top+12); ctx.restore(); }};
+  const trendCanvas=document.getElementById('trendChart');
+  const trendGradient=trendCanvas.getContext('2d').createLinearGradient(0,0,0,230);
+  trendGradient.addColorStop(0,'rgba(0,168,112,.25)');
+  trendGradient.addColorStop(1,'rgba(0,168,112,0)');
   trendChartObj=new Chart(document.getElementById('trendChart'),{type:'line',
-    data:{labels,datasets:[{label:'Daily margin ₹',data,borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.15)',fill:true,tension:.3,pointRadius:2}]},
-    options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#94a3b8',maxTicksLimit:10}},y:{ticks:{color:'#94a3b8'}}}},plugins:[risePlugin]});
+    data:{labels,datasets:[{label:'Daily margin ₹',data,borderColor:'#00865b',
+      backgroundColor:trendGradient,fill:true,tension:.38,borderWidth:2.4,
+      pointRadius:0,pointHoverRadius:5,pointHoverBackgroundColor:'#0b1513',
+      pointHoverBorderColor:'#83f2c3',pointHoverBorderWidth:2}]},
+    options:{interaction:{intersect:false,mode:'index'},plugins:{legend:{display:false},
+      tooltip:{displayColors:false,backgroundColor:'#0b1513',padding:11,
+        callbacks:{label:ctx=>` Margin  ₹${Number(ctx.raw||0).toLocaleString('en-IN')}`}}},
+      scales:{x:{grid:{display:false},border:{display:false},
+        ticks:{color:'#7b8580',font:{size:10,weight:'600'},maxTicksLimit:8}},
+        y:{border:{display:false},grid:{color:'rgba(15,23,42,.06)'},
+          ticks:{color:'#7b8580',font:{size:10},callback:v=>`₹${Number(v).toLocaleString('en-IN')}`}}}},
+    plugins:[risePlugin]});
   const mp=d.money_position;
   document.getElementById('dashboardMetrics').innerHTML=`
-    <div class="metric-tile"><div class="label">Outstanding credit</div><div class="value">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div></div>
-    <div class="metric-tile"><div class="label">Inventory value</div><div class="value">₹${mp.inventory_value.toLocaleString('en-IN')}</div></div>
-    <div class="metric-tile"><div class="label">Frozen capital</div><div class="value">₹${d.frozen_total.toLocaleString('en-IN')}</div></div>`;
+    <div class="metric-tile metric-tile--hero">
+      <div class="metric-top"><div class="label">Outstanding credit</div><span class="metric-icon"><span class="material-symbols-outlined">payments</span></span></div>
+      <div class="value">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div>
+      <div class="metric-foot"><span>Customer receivables</span><span class="metric-signal">Collectable</span></div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-top"><div class="label">Inventory value</div><span class="metric-icon"><span class="material-symbols-outlined">inventory_2</span></span></div>
+      <div class="value">₹${mp.inventory_value.toLocaleString('en-IN')}</div>
+      <div class="metric-foot"><span>At landed cost</span><span class="metric-signal">Live stock</span></div>
+    </div>
+    <div class="metric-tile metric-tile--warning">
+      <div class="metric-top"><div class="label">Frozen capital</div><span class="metric-icon"><span class="material-symbols-outlined">hourglass_top</span></span></div>
+      <div class="value">₹${d.frozen_total.toLocaleString('en-IN')}</div>
+      <div class="metric-foot"><span>No move in 60 days</span><span class="metric-signal warning">Review</span></div>
+    </div>`;
   const growth=crm.acquisition_growth_pct;
+  const growthCopy=growth==null?'No prior comparison':`${growth>=0?'+':''}${growth}% vs previous`;
   document.getElementById('crmDashboardMetrics').innerHTML=`
-    <div class="metric-tile"><div class="label">New customers · 30 days</div><div class="value">${crm.new_customers||0}</div><div class="muted">${growth==null?'No prior comparison':`${growth>=0?'+':''}${growth}% vs previous period`}</div></div>
-    <div class="metric-tile"><div class="label">Repeat buyers</div><div class="value">${crm.repeat_buyers||0}</div><div class="muted">${crm.repeat_rate_pct||0}% of buyers</div></div>
-    <div class="metric-tile"><div class="label">Average order value</div><div class="value">₹${(crm.average_order_value||0).toLocaleString('en-IN')}</div><div class="muted">${crm.active_buyers||0} active buyers</div></div>
-    <div class="metric-tile"><div class="label">Open credit accounts</div><div class="value">${crm.open_credit_accounts||0}</div><div class="muted">₹${(crm.outstanding_credit||0).toLocaleString('en-IN')} receivable</div></div>`;
+    <div class="metric-tile">
+      <div class="metric-top"><div class="label">New customers · 30 days</div><span class="metric-icon"><span class="material-symbols-outlined">person_add</span></span></div>
+      <div class="value">${crm.new_customers||0}</div><div class="metric-foot"><span>${growthCopy}</span></div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-top"><div class="label">Repeat buyers</div><span class="metric-icon"><span class="material-symbols-outlined">repeat</span></span></div>
+      <div class="value">${crm.repeat_buyers||0}</div><div class="metric-foot"><span>${crm.repeat_rate_pct||0}% of buyers returned</span></div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-top"><div class="label">Average order value</div><span class="metric-icon"><span class="material-symbols-outlined">receipt_long</span></span></div>
+      <div class="value">₹${(crm.average_order_value||0).toLocaleString('en-IN')}</div><div class="metric-foot"><span>${crm.active_buyers||0} active buyers</span></div>
+    </div>
+    <div class="metric-tile">
+      <div class="metric-top"><div class="label">Open credit accounts</div><span class="metric-icon"><span class="material-symbols-outlined">account_balance</span></span></div>
+      <div class="value">${crm.open_credit_accounts||0}</div><div class="metric-foot"><span>₹${(crm.outstanding_credit||0).toLocaleString('en-IN')} receivable</span></div>
+    </div>`;
+  const moneyTotal=Math.max(1,mp.outstanding_credit+mp.inventory_value);
+  const inventoryShare=Math.max(2,Math.min(100,(mp.inventory_value/moneyTotal)*100));
   document.getElementById('moneyBody').innerHTML=`
-    <div class="mb-5"><div class="text-3xl font-bold text-slate-950">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Outstanding udhaar (contractors)</div></div>
-    <div class="mb-3"><div class="text-3xl font-bold text-emerald-800">₹${mp.inventory_value.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Inventory value at landed cost</div></div>
-    <div class="text-xs text-slate-500">${mp.uncounted_excluded} uncounted SKUs excluded (gina nahi — value pata nahi)</div>`;
+    <div class="money-summary">
+      <div class="money-total"><strong>₹${mp.outstanding_credit.toLocaleString('en-IN')}</strong><span>Outstanding udhaar</span></div>
+      <div class="money-total money-total--inventory"><strong>₹${mp.inventory_value.toLocaleString('en-IN')}</strong><span>Inventory at landed cost</span></div>
+      <div class="money-bar-track" title="Inventory share of tracked capital"><div class="money-bar-fill" style="width:${inventoryShare.toFixed(1)}%"></div></div>
+      <div class="money-note"><span class="material-symbols-outlined">info</span><span>${mp.uncounted_excluded} uncounted SKUs excluded. Count them to include their value.</span></div>
+    </div>`;
   const frozenRows=d.frozen_capital.map(f=>`<tr>
       <td><div class="font-semibold text-slate-900">${f.canonical}</div></td>
       <td>${f.stock}</td>
       <td class="amount text-rose-700">₹${f.value.toLocaleString('en-IN')}</td>
     </tr>`).join('');
   document.getElementById('frozenBody').innerHTML=`
-    <div class="mb-3 flex items-center justify-between text-sm">
+    <div class="frozen-total-line">
       <span class="text-slate-500">Total locked capital</span>
-      <b class="text-rose-700">₹${d.frozen_total.toLocaleString('en-IN')}</b>
+      <b>₹${d.frozen_total.toLocaleString('en-IN')}</b>
     </div>
     <div class="ledger-table-wrap"><table class="ledger-table mobile-compact">
       <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
@@ -3662,11 +3964,14 @@ async function loadDashboard(){
     data:{
       labels:acquisitions.map(x=>new Date(`${x.end}T00:00:00`).toLocaleDateString('en-IN',{day:'numeric',month:'short'})),
       datasets:[{label:'New customers',data:acquisitions.map(x=>x.new_customers),
-        backgroundColor:'#047857',borderRadius:6,maxBarThickness:36}]
+        backgroundColor:'#00a870',hoverBackgroundColor:'#0b1513',
+        borderRadius:8,borderSkipped:false,maxBarThickness:34}]
     },
-    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{color:'#6b7280'}},
-        y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#eef0f2'}}}}
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{displayColors:false,backgroundColor:'#0b1513',padding:10}},
+      scales:{x:{border:{display:false},grid:{display:false},ticks:{color:'#68736e',font:{size:10,weight:'600'}}},
+        y:{border:{display:false},beginAtZero:true,ticks:{precision:0,color:'#68736e'},
+          grid:{color:'rgba(15,23,42,.06)'}}}}
   });
   const products=crm.best_products||[];
   if(productMixChartObj) productMixChartObj.destroy();
@@ -3675,12 +3980,16 @@ async function loadDashboard(){
     data:{
       labels:products.map(x=>x.canonical),
       datasets:[{label:'Sales ₹',data:products.map(x=>x.revenue),
-        backgroundColor:'#111827',borderRadius:5,maxBarThickness:24}]
+        backgroundColor:products.map((_,i)=>i===0?'#0b1513':i===1?'#00865b':'#87cdb0'),
+        hoverBackgroundColor:'#00a870',borderRadius:7,borderSkipped:false,maxBarThickness:22}]
     },
     options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},
-      tooltip:{callbacks:{label:ctx=>` ₹${Number(ctx.raw||0).toLocaleString('en-IN')}`}}},
-      scales:{x:{beginAtZero:true,ticks:{color:'#6b7280',callback:v=>`₹${Number(v).toLocaleString('en-IN')}`},
-        grid:{color:'#eef0f2'}},y:{grid:{display:false},ticks:{color:'#374151'}}}}
+      tooltip:{displayColors:false,backgroundColor:'#0b1513',padding:10,
+        callbacks:{label:ctx=>` ₹${Number(ctx.raw||0).toLocaleString('en-IN')}`}}},
+      scales:{x:{border:{display:false},beginAtZero:true,ticks:{color:'#68736e',
+        font:{size:10},callback:v=>`₹${Number(v).toLocaleString('en-IN')}`},
+        grid:{color:'rgba(15,23,42,.06)'}},y:{border:{display:false},
+          grid:{display:false},ticks:{color:'#28332e',font:{size:10,weight:'600'}}}}}
   });
   const topCustomers=(crm.top_customers||[]).map((row,index)=>`
     <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.name)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.total_sales.toLocaleString('en-IN')}</b></div>`).join('');
