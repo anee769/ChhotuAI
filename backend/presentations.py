@@ -73,15 +73,29 @@ def get(user_id: str, presentation_id: str, *, kind: str = None) -> dict | None:
         return None
     with db.connect() as conn:
         _ensure(conn)
-        cur = conn.execute(
-            """SELECT presentation_id, kind, payload, created_at
-               FROM voice_presentations
-               WHERE user_id = %s AND presentation_id = %s
-                 AND expires_at > now()
-                 AND (%s IS NULL OR kind = %s)
-               LIMIT 1""",
-            (user_id, presentation_id, kind, kind),
-        )
+        if kind is None:
+            cur = conn.execute(
+                """SELECT presentation_id, kind, payload, created_at
+                   FROM voice_presentations
+                   WHERE user_id = %s AND presentation_id = %s
+                     AND expires_at > now()
+                   LIMIT 1""",
+                (user_id, presentation_id),
+            )
+        else:
+            # Do not express an optional filter as ``%s IS NULL OR kind = %s``.
+            # PostgreSQL cannot infer a datatype for a parameter used only by
+            # ``IS NULL`` and raises IndeterminateDatatype before send_bill can
+            # load its preview. Separate queries keep every placeholder tied
+            # to a typed column.
+            cur = conn.execute(
+                """SELECT presentation_id, kind, payload, created_at
+                   FROM voice_presentations
+                   WHERE user_id = %s AND presentation_id = %s
+                     AND expires_at > now() AND kind = %s
+                   LIMIT 1""",
+                (user_id, presentation_id, kind),
+            )
         rows = db.rows_to_dicts(cur)
     if not rows:
         return None
