@@ -376,8 +376,9 @@ node --check /tmp/chhotu-inline.js
 
 ## Deployment
 
-The repository includes `vercel.json` for the FastAPI serverless entry point
-and a daily reminder cron. Before production deployment:
+Vercel discovers the FastAPI application through the root `app.py` entry point.
+`vercel.json` configures the function duration and daily reminder cron without
+rewriting the browser's request path. Before production deployment:
 
 1. provision PostgreSQL/Neon and run the schema migration;
 2. configure all core and Samvaad environment variables;
