@@ -12,6 +12,42 @@ SAMVAAD_AGENT_VERSION=6
 
 Leaving the version unset tests the unversioned draft, which can have different tools and variables. After any dashboard edit, commit it and update this version deliberately.
 
+## Required body migration after version 6
+
+Update these three existing tools in the Sarvam dashboard before committing the next agent version. Every value below must use **Let the agent decide**, with type **Text**. Do not use Fixed value, do not put the fields under `args`, and do not create nested body rows. `items` itself is Text containing a JSON array.
+
+### `record_sale` Body
+
+```json
+{"items": "{{items}}", "item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "rate_unit": "{{rate_unit}}", "payment": "{{payment}}", "customer": "{{customer}}", "customer_phone": "{{customer_phone}}", "payment_deadline": "{{payment_deadline}}", "request_id": "{{request_id}}"}
+```
+
+New or changed fields are `items` and `rate_unit`. For a three-item sale, `items` must contain all three lines in one JSON array; the flat fields remain only as backward-compatible single-item fallbacks.
+
+### `record_purchase` Body
+
+```json
+{"items": "{{items}}", "item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "occurred_on": "{{occurred_on}}", "rate": "{{rate}}", "rate_unit": "{{rate_unit}}", "request_id": "{{request_id}}"}
+```
+
+New or changed fields are `items` and `rate_unit`. Multiple incoming stock lines must be sent together in `items`.
+
+### `send_bill` Body
+
+```json
+{"presentation_id": "{{presentation_id}}", "customer": "{{customer}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}", "item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "payment": "{{payment}}", "payment_deadline": "{{payment_deadline}}", "items": "{{items}}"}
+```
+
+The important new field is `presentation_id`. After `show_bill`, pass its exact returned `presentation_id` to `send_bill`; do not reconstruct the bill lines from conversation memory. Keep the remaining fields as compatibility fallbacks.
+
+Example value composed by the agent for the `items` Text field:
+
+```json
+[{"sku_id":"CEM_ULTRATECH_PPC","qty":"10","unit":"bori","rate":"420"},{"sku_id":"TMT_12_FE500D_TATA","qty":"1","unit":"tonne","rate":"55000"}]
+```
+
+After saving the three tools, replace the agent instructions with the instructions below, commit the new dashboard version, and set `SAMVAAD_AGENT_VERSION` to that committed version in both the production and dev deployments.
+
 ## Agent instructions
 
 ```
