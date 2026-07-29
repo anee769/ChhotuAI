@@ -860,6 +860,315 @@
   .section-card-head h2 { font-size:16px; font-weight:750; }
   .section-card-head p { margin-top:3px; color:#6b7078; font-size:11px; }
 
+  /* Unified workspace design system */
+  body {
+    background-color:#f4f7f5;
+    background-image:
+      linear-gradient(rgba(15,23,42,.018) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(15,23,42,.018) 1px,transparent 1px);
+    background-size:32px 32px;
+  }
+  .app-header {
+    background:rgba(250,252,251,.94); border-bottom-color:#d7dfdb;
+    backdrop-filter:blur(18px);
+  }
+  .app-nav {
+    background:
+      radial-gradient(circle at 0 0,rgba(70,234,164,.1),transparent 32%),
+      linear-gradient(180deg,#0b1513 0%,#0e1c17 100%);
+    border-right:1px solid #162820;
+    box-shadow:18px 0 44px -40px rgba(4,17,12,.9);
+  }
+  .app-nav::after {
+    content:""; position:absolute; left:18px; right:18px; top:93px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(131,242,195,.3),transparent);
+  }
+  .shop-card {
+    border-color:rgba(255,255,255,.1); background:rgba(255,255,255,.055);
+  }
+  .shop-avatar { background:#83f2c3; color:#0b1513; }
+  .shop-card #shopName { color:#f5fbf8; }
+  .shop-card span { color:#879a92; }
+  .nav-label { color:#60776e; }
+  .app-nav .tab-btn {
+    color:#aab8b2; transition:background .18s ease,color .18s ease,transform .18s ease;
+  }
+  .app-nav .tab-btn:hover { color:#fff; background:rgba(255,255,255,.055); transform:translateX(2px); }
+  .app-nav .tab-btn.active {
+    color:#0b1513; background:#83f2c3;
+    box-shadow:0 14px 25px -19px rgba(131,242,195,.7);
+  }
+  .nav-footer { border-top-color:rgba(255,255,255,.09); }
+  .nav-footer button { color:#8fa198; }
+  .nav-footer button:hover { color:#fff; background:rgba(255,255,255,.05); }
+  .app-main { min-height:100vh; }
+  .workspace-page,.voice-page { position:relative; }
+  .workspace-page > *,.voice-page > * {
+    animation:workspaceEnter .42s cubic-bezier(.2,.75,.25,1) both;
+  }
+  @keyframes workspaceEnter {
+    from { opacity:0; transform:translateY(7px); }
+    to { opacity:1; transform:translateY(0); }
+  }
+  .page-heading:not(.dashboard-heading) {
+    position:relative; align-items:center; min-height:92px; margin-bottom:18px;
+    padding:19px 21px 19px 24px; overflow:hidden;
+    border:1px solid #d9dfdc; border-radius:17px;
+    background:rgba(255,255,255,.9);
+    box-shadow:0 18px 42px -38px rgba(9,31,23,.72);
+  }
+  .page-heading:not(.dashboard-heading)::before {
+    content:""; position:absolute; inset:0 auto 0 0; width:5px;
+    background:linear-gradient(180deg,#0b1513,#00a870);
+  }
+  .page-heading:not(.dashboard-heading) h1 {
+    color:#111915; font-size:29px; letter-spacing:-.04em;
+  }
+  .page-heading:not(.dashboard-heading) .eyebrow { color:#00835a; }
+  .page-heading:not(.dashboard-heading) p { max-width:650px; color:#737d78; }
+  .card {
+    border-color:#d9dfdc; border-radius:17px;
+    box-shadow:0 18px 42px -38px rgba(9,31,23,.7);
+    transition:border-color .2s ease,box-shadow .2s ease;
+  }
+  .card:hover { border-color:#c6d2cd; }
+  .btn-primary {
+    background:#0b1513; border:1px solid #0b1513; border-radius:10px;
+    box-shadow:0 12px 24px -18px rgba(7,25,18,.75);
+    transition:transform .18s ease,background .18s ease,box-shadow .18s ease;
+  }
+  .btn-primary:hover {
+    background:#007d56; border-color:#007d56; transform:translateY(-1px);
+    box-shadow:0 16px 26px -18px rgba(0,125,86,.72);
+  }
+  .btn-secondary {
+    border-color:#d3dcd7; background:#fff; color:#26312c;
+    transition:background .18s ease,border-color .18s ease;
+  }
+  .btn-secondary:hover { border-color:#9eb3aa; background:#f4f9f6; }
+  input,select,textarea {
+    border-color:#d7dfdb !important; background:#f8faf9 !important;
+    transition:border-color .18s ease,box-shadow .18s ease,background .18s ease;
+  }
+  input:focus,select:focus,textarea:focus {
+    outline:0 !important; border-color:#00a870 !important;
+    background:#fff !important; box-shadow:0 0 0 4px rgba(0,168,112,.09);
+  }
+  .local-search {
+    border-color:#d7dfdb; background:#f8faf9;
+    transition:border-color .18s ease,box-shadow .18s ease;
+  }
+  .local-search:focus-within {
+    border-color:#00a870; box-shadow:0 0 0 4px rgba(0,168,112,.08);
+  }
+  .section-card-head {
+    align-items:center; min-height:72px; padding:17px 19px;
+    border-color:#e2e8e4;
+  }
+  .section-card-head h2 { color:#121a16; font-weight:800; letter-spacing:-.015em; }
+  .section-card-head p { color:#7a837f; }
+  .section-card-head > .material-symbols-outlined {
+    width:36px; height:36px; display:grid; place-items:center;
+    border-radius:11px; background:#edf6f1; color:#00714d !important;
+    font-size:19px;
+  }
+  .ledger-table-wrap { border-color:#dfe6e2; border-radius:12px; }
+  .ledger-table th {
+    background:#f2f6f4; color:#68736e; border-bottom-color:#dfe6e2;
+    letter-spacing:.11em;
+  }
+  .ledger-table td { border-bottom-color:#e8edea; }
+  .ledger-table tbody tr { transition:background .15s ease; }
+  .ledger-table tbody tr:hover { background:#f7fbf9; }
+  .eyebrow { color:#00835a; }
+
+  /* Voice workspace */
+  .voice-entry-card {
+    max-width:1040px; border-color:#cfd9d4; border-radius:20px;
+    background:rgba(255,255,255,.97);
+  }
+  .voice-entry-head { padding-bottom:20px; border-color:#e3e8e5; }
+  .voice-entry-head h2 { color:#111915; font-size:31px; }
+  .voice-live-badge { border-color:#b8e8d2; background:#effbf5; color:#00714d; }
+  .voice-stage {
+    position:relative; isolation:isolate; overflow:hidden; padding:44px 36px 30px;
+    border-color:#192a23; border-radius:17px;
+    background:
+      radial-gradient(circle at 50% 18%,rgba(87,241,176,.13),transparent 24%),
+      linear-gradient(145deg,#0a1310,#12231c);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.04);
+  }
+  .voice-stage::before {
+    content:""; position:absolute; inset:0; z-index:-1; opacity:.24;
+    background-image:
+      linear-gradient(rgba(131,242,195,.08) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(131,242,195,.08) 1px,transparent 1px);
+    background-size:28px 28px;
+    mask-image:radial-gradient(circle at center,#000,transparent 78%);
+  }
+  .voice-stage .text-slate-900 { color:#fff !important; }
+  .voice-stage .text-slate-500,.voice-stage .text-slate-400 { color:#91a49c !important; }
+  .voice-stage .bg-slate-200 { background:rgba(255,255,255,.12) !important; }
+  .voice-mic-button {
+    width:88px; height:88px; background:#83f2c3; color:#0b1513;
+    box-shadow:0 18px 36px -20px rgba(131,242,195,.7);
+  }
+  .voice-mic-button.is-listening { background:#5fe2aa; }
+  .voice-mic-button::before,.voice-mic-button::after {
+    border-color:rgba(131,242,195,.4);
+  }
+  .voice-level-bars i { background:#0b1513; }
+  .voice-command-input {
+    padding:5px; border-color:rgba(255,255,255,.13);
+    background:rgba(255,255,255,.96);
+    box-shadow:0 14px 28px -22px rgba(0,0,0,.8);
+  }
+  .voice-command-input button {
+    background:#0b1513 !important; border-radius:9px;
+    transition:background .18s ease;
+  }
+  .voice-command-input button:hover { background:#007d56 !important; }
+  .voice-conversation {
+    border-color:#d4ddd8; border-radius:16px;
+    box-shadow:0 18px 36px -34px rgba(9,31,23,.72);
+  }
+  .voice-assistant-turn { border-color:#e3e9e6; }
+  .voice-turn-state::before { background:#00a870; }
+  .voice-current-entry { border-color:#dfe6e2; background:#f3f7f5; }
+  .voice-draft-list,.voice-presentation { border-color:#d9e2dd; }
+  .samvaad-session-actions { border-color:#dfe6e2; background:#f5f8f6; }
+  .samvaad-end-button { border-color:#d3dcd7; }
+
+  /* Invoice intelligence */
+  .invoice-workbench { overflow:hidden; }
+  .invoice-intro {
+    display:grid; grid-template-columns:minmax(0,1fr) auto; gap:22px;
+    align-items:center; padding:22px; border-bottom:1px solid #e2e8e4;
+  }
+  .invoice-intro h2 { color:#111915; font-size:18px; font-weight:800; letter-spacing:-.02em; }
+  .invoice-intro p { max-width:680px; margin-top:5px; color:#717b76; font-size:12px; line-height:1.55; }
+  .invoice-step {
+    display:inline-flex; align-items:center; gap:7px; margin-bottom:9px;
+    color:#00835a; font-size:9px; font-weight:850; letter-spacing:.13em;
+    text-transform:uppercase;
+  }
+  .invoice-step::before { content:"01"; display:grid; place-items:center; width:25px; height:25px; border-radius:8px; background:#e6f6ee; }
+  .invoice-upload-zone {
+    margin:20px; padding:20px; border:1px dashed #a9bcb3; border-radius:14px;
+    background:
+      linear-gradient(135deg,rgba(0,168,112,.035),transparent 55%),
+      #f8faf9;
+  }
+  .invoice-upload-controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; }
+  .invoice-upload-controls input[type=file] { min-height:45px; padding:7px 9px; background:#fff !important; }
+  .invoice-upload-controls button { min-height:45px; }
+  .invoice-sample-button {
+    min-height:45px; padding:0 15px; border:1px solid #d2dcd7;
+    border-radius:10px; background:#fff; color:#35413b; font-size:12px; font-weight:750;
+  }
+  .invoice-sample-button:hover { border-color:#9db2a8; background:#f1f8f4; }
+  #invoiceResult { margin:0 20px 20px; }
+  .invoice-status {
+    margin-bottom:13px; padding:13px 15px; border:1px solid #cce4d8;
+    border-radius:11px; background:#f1faf5; color:#355247;
+    font-size:12px; line-height:1.5;
+  }
+  .invoice-status.fixture { border-color:#eadbbd; background:#fff9ed; color:#6c5a39; }
+  .invoice-line-card {
+    padding:14px !important; border-radius:12px !important;
+    box-shadow:none !important;
+  }
+
+  /* Inventory */
+  .inventory-toolbar { border-color:#e1e7e4; background:#fbfcfb; }
+  .stock-icon { border-color:#d7e0dc; background:#eef5f1; color:#1b3329; }
+  .stock-status.stable { background:#dff8ec; color:#00714d; }
+  .stock-status.attention { background:#fff0d2; color:#8e5600; }
+  .inventory-delete,.entity-edit-button {
+    border-color:#d8e0dc; background:#fff; transition:.18s ease;
+  }
+  .inventory-delete:hover { transform:translateY(-1px); }
+  .entity-edit-button:hover { border-color:#9eb3aa; background:#f2f8f5; }
+  .entity-form-panel {
+    padding:19px; border-color:#d2ddd7; border-radius:15px;
+    background:linear-gradient(145deg,#fff,#f6faf8);
+    box-shadow:0 18px 34px -34px rgba(9,31,23,.7);
+  }
+
+  /* Customer CRM */
+  .customer-metrics .metric-tile {
+    border-color:#d9e1dd; border-radius:15px;
+    background:linear-gradient(145deg,#fff,#f7faf8);
+  }
+  .crm-layout { border-color:#d7e0dc; border-radius:17px; box-shadow:0 18px 42px -38px rgba(9,31,23,.7); }
+  .customer-list { border-color:#dce4e0; background:#f5f8f6; }
+  .customer-list-search { border-color:#dce4e0; background:#fbfcfb; }
+  .customer-row { border-color:#e1e7e4; background:#fbfcfb; }
+  .customer-row:hover { background:#f0f7f3; }
+  .customer-row.active {
+    background:#e3f6ed; box-shadow:inset 4px 0 0 #00865b;
+  }
+  .customer-avatar { background:linear-gradient(145deg,#0b1513,#18402f); color:#83f2c3; }
+  .customer-profile { border-color:#e1e7e4; }
+  .balance-card { border-color:#dae2de; background:#f4f8f6; }
+  .balance-card.dark {
+    border-color:#15271f;
+    background:radial-gradient(circle at 100% 0,rgba(131,242,195,.13),transparent 42%),#0d1915;
+  }
+  .payment-bar { border-color:#d6e0db; background:#f2f7f4; }
+  .customer-reminder-button { border-color:#bed9cd; color:#006f4b; }
+  .customer-reminder-button:hover { border-color:#87bba4; background:#eef9f3; }
+  .customer-create-panel,.customer-edit-panel {
+    border-color:#d3ddd8; border-radius:15px;
+    background:linear-gradient(145deg,#fff,#f6faf8);
+  }
+  .crm-insight-card { border-color:#d8e1dc; border-radius:15px; }
+
+  /* Today */
+  .today-card { overflow:hidden; }
+  .today-card #todayBody { padding:20px; }
+  .today-card #todayBody > .ledger-table-wrap:first-child {
+    border:0; border-radius:14px; background:#0d1915;
+  }
+  .today-card #todayBody > .ledger-table-wrap:first-child table { background:transparent; }
+  .today-card #todayBody > .ledger-table-wrap:first-child th {
+    background:rgba(255,255,255,.06); color:#93a69d; border-color:rgba(255,255,255,.09);
+  }
+  .today-card #todayBody > .ledger-table-wrap:first-child td {
+    color:#e8f2ed; border-color:rgba(255,255,255,.08);
+  }
+  .today-card #todayBody > .ledger-table-wrap:first-child .text-slate-900,
+  .today-card #todayBody > .ledger-table-wrap:first-child .text-slate-950 { color:#fff !important; }
+  .today-card #todayBody > .ledger-table-wrap:first-child .muted { color:#8da198; }
+
+  /* Settings */
+  .settings-grid {
+    display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px;
+  }
+  .settings-grid .settings-card:last-child { grid-column:1/-1; }
+  .settings-card { overflow:hidden; }
+  .settings-card .p-5 { background:linear-gradient(145deg,#fff,#fafcfb); }
+  .setting-row { border-color:#e1e7e4; }
+  .setting-check {
+    width:42px !important; height:24px; appearance:none; cursor:pointer;
+    border:0 !important; border-radius:99px !important; background:#d5ddd9 !important;
+    box-shadow:inset 0 0 0 1px rgba(15,23,42,.06);
+  }
+  .setting-check::before {
+    content:""; display:block; width:18px; height:18px; margin:3px;
+    border-radius:50%; background:#fff; box-shadow:0 2px 5px rgba(0,0,0,.18);
+    transition:transform .18s ease;
+  }
+  .setting-check:checked { background:#00a870 !important; }
+  .setting-check:checked::before { transform:translateX(18px); }
+  .settings-save-bar {
+    position:sticky; bottom:12px; z-index:5; display:flex; align-items:center;
+    justify-content:flex-end; gap:12px; margin-top:16px; padding:11px;
+    border:1px solid #d6dfda; border-radius:13px;
+    background:rgba(255,255,255,.9); box-shadow:0 16px 34px -26px rgba(9,31,23,.75);
+    backdrop-filter:blur(14px);
+  }
+
   /* Dashboard command centre */
   .dashboard-page {
     --dash-ink:#0b1513;
@@ -1105,6 +1414,13 @@
     .dashboard-heading h1 { font-size:31px; }
     .dashboard-page .metric-tile { min-height:130px; }
     .dashboard-page .metric-tile--hero { min-height:146px; }
+    .settings-grid { grid-template-columns:1fr; }
+    .settings-grid .settings-card:last-child { grid-column:auto; }
+    .invoice-intro { grid-template-columns:1fr; padding:18px 16px; }
+    .invoice-upload-zone { margin:14px; padding:15px; }
+    #invoiceResult { margin:0 14px 14px; }
+    .invoice-upload-controls { align-items:stretch; flex-direction:column; }
+    .invoice-upload-controls input,.invoice-upload-controls button { width:100%; }
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
     .customer-create-panel { grid-template-columns:1fr; }
@@ -1242,9 +1558,7 @@
     input[type="file"] { width:100%; }
     #tab-invoice .card { padding:16px !important; }
     #tab-invoice .card > .flex button { width:100%; min-height:44px; }
-    #tab-today > .card { padding:16px !important; }
-    #tab-today > .card > .flex { align-items:flex-start; flex-direction:column; }
-    #tab-today > .card > .flex button { width:100%; min-height:44px; }
+    .today-card #todayBody { padding:14px; }
     .inventory-modal { align-items:end; padding:0; }
     .inventory-modal-card {
       width:100%; max-height:88dvh; overflow-y:auto;
@@ -2104,26 +2418,44 @@
     <div class="main-column space-y-6">
 
   <!-- UNIFIED VOICE ENTRY -->
-  <section id="tab-sale" class="tabpane hidden">
+  <section id="tab-sale" class="tabpane voice-page hidden">
     <div id="voiceUI-sale"></div>
   </section>
 
   <!-- INVOICE -->
-  <section id="tab-invoice" class="tabpane hidden">
-    <div class="card p-5">
-      <h2 class="text-xl font-bold mb-1">Invoice photo → catalogue + landed cost + stock</h2>
-      <p class="text-sm text-slate-500 mb-4">Purchase invoices build the catalogue, the cost basis, <b class="text-emerald-600">and add the delivered quantity to stock</b> — a line still needing confirmation (illegible/handwritten qty) is held back until you resolve it.</p>
-      <div class="flex gap-3 flex-wrap items-center">
-        <input type="file" id="invoiceFile" accept="image/*,application/pdf" class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm">
-        <button onclick="ingestInvoice(true)" class="btn-primary px-4 py-2.5">Parse uploaded</button>
-        <button onclick="ingestInvoice(false)" class="chip px-4 py-2.5 rounded-full font-semibold">Use sample hard invoice</button>
+  <section id="tab-invoice" class="tabpane workspace-page hidden">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Purchase intelligence</div>
+        <h1>Invoice intake</h1>
+        <p>Turn a supplier invoice into catalogue, landed cost, and verified stock.</p>
       </div>
-      <div id="invoiceResult" class="mt-5"></div>
+    </div>
+    <div class="card invoice-workbench">
+      <div class="invoice-intro">
+        <div>
+          <div class="invoice-step">Upload and verify</div>
+          <h2>One invoice. Three clean updates.</h2>
+          <p>Chhotu reads each line, calculates landed cost, and adds only confirmed quantities to stock. Unclear handwriting always waits for you.</p>
+        </div>
+        <span class="dashboard-section-icon"><span class="material-symbols-outlined">document_scanner</span></span>
+      </div>
+      <div class="invoice-upload-zone">
+        <div class="invoice-upload-controls">
+        <input type="file" id="invoiceFile" accept="image/*,application/pdf" class="rounded-xl border border-slate-200 bg-white px-2 py-2 text-sm">
+          <button onclick="ingestInvoice(true)" class="btn-primary px-4 py-2.5">
+            <span class="material-symbols-outlined align-middle text-[18px]">auto_awesome</span>
+            Read invoice
+          </button>
+          <button onclick="ingestInvoice(false)" class="invoice-sample-button">Try sample invoice</button>
+        </div>
+      </div>
+      <div id="invoiceResult"></div>
     </div>
   </section>
 
   <!-- STOCK & COUNT -->
-  <section id="tab-stock" class="tabpane hidden">
+  <section id="tab-stock" class="tabpane workspace-page hidden">
     <div class="page-heading">
       <div>
         <div class="eyebrow">Inventory control</div>
@@ -2175,7 +2507,7 @@
   </section>
 
   <!-- CUSTOMERS -->
-  <section id="tab-customers" class="tabpane hidden">
+  <section id="tab-customers" class="tabpane workspace-page hidden">
     <div class="page-heading">
       <div>
         <div class="eyebrow">Credit ledger</div>
@@ -2204,15 +2536,19 @@
   </section>
 
   <!-- TODAY -->
-  <section id="tab-today" class="tabpane hidden">
-    <div class="card p-6">
-      <div class="flex items-center justify-between mb-4">
-        <h2 class="text-2xl font-bold">Aaj ka hisaab</h2>
-        <button onclick="speakToday()" class="btn-primary px-4 py-2.5">
+  <section id="tab-today" class="tabpane workspace-page hidden">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Daily operations</div>
+        <h1>Aaj ka hisaab</h1>
+        <p>Today’s sales, collections, credit and margin in one clean ledger.</p>
+      </div>
+      <button onclick="speakToday()" class="btn-primary px-4 py-2.5">
           <span class="material-symbols-outlined align-middle text-[18px]">mic</span>
           Ask Chhotu
-        </button>
-      </div>
+      </button>
+    </div>
+    <div class="card today-card">
       <div id="todayBody"></div>
       <audio id="todayAudio" class="hidden"></audio>
     </div>
@@ -2284,8 +2620,16 @@
     </div>
   </section>
 
-  <section id="tab-settings" class="tabpane hidden">
-    <div class="card overflow-hidden">
+  <section id="tab-settings" class="tabpane workspace-page hidden">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Workspace control</div>
+        <h1>Settings</h1>
+        <p>Keep billing, tax and voice behaviour aligned with the way your shop works.</p>
+      </div>
+    </div>
+    <div class="settings-grid">
+    <div class="card settings-card overflow-hidden">
       <div class="section-card-head">
         <div><h2>Shop</h2><p>Basic details used on bills and greetings</p></div>
         <span class="material-symbols-outlined text-slate-400">storefront</span>
@@ -2299,7 +2643,7 @@
       </div>
     </div>
 
-    <div class="card overflow-hidden mt-4">
+    <div class="card settings-card overflow-hidden">
       <div class="section-card-head">
         <div><h2>GST rates</h2><p>Used for invoices and landed-cost calculations</p></div>
         <span class="material-symbols-outlined text-slate-400">percent</span>
@@ -2309,7 +2653,7 @@
       </div>
     </div>
 
-    <div class="card overflow-hidden mt-4">
+    <div class="card settings-card overflow-hidden">
       <div class="section-card-head">
         <div><h2>Voice assistant</h2><p>How Chhotu listens and replies</p></div>
         <span class="material-symbols-outlined text-slate-400">mic</span>
@@ -2340,10 +2684,11 @@
         </label>
       </div>
     </div>
+    </div>
 
-    <div class="mt-4 flex items-center gap-3">
-      <button onclick="saveSettings()" class="btn-primary px-5 py-2.5">Save settings</button>
+    <div class="settings-save-bar">
       <span id="set-status" class="setting-hint"></span>
+      <button onclick="saveSettings()" class="btn-primary px-5 py-2.5">Save settings</button>
     </div>
   </section>
     </div>
@@ -4053,27 +4398,27 @@ function renderInvoice(r){
   const img = r.meta.image ? `/data/${r.meta.image}` : null;
   const goods=r.lines.filter(l=>!l.is_freight);
   let lineHtml=r.lines.map(l=>{
-    if(l.is_freight) return `<div class="card p-3 border-sky-800"><b>Freight/Transport</b>: ₹${l.freight_value} <span class="text-xs text-slate-400">— sab items pe value ke hisaab se baanta jayega</span></div>`;
+    if(l.is_freight) return `<div class="card invoice-line-card border-sky-800"><b>Freight/Transport</b>: ₹${l.freight_value} <span class="text-xs text-slate-400">— sab items pe value ke hisaab se baanta jayega</span></div>`;
     if(l.certain===false && l.uncertain_reason){
-      return `<div class="card p-3 border-rose-700"><div class="text-rose-300 font-semibold">⚠️ UNCERTAIN row</div><div class="text-xs text-slate-400">${l.uncertain_reason}</div>${cropImg(img,l.bbox)}</div>`;
+      return `<div class="card invoice-line-card border-rose-700"><div class="text-rose-300 font-semibold">⚠️ UNCERTAIN row</div><div class="text-xs text-slate-400">${l.uncertain_reason}</div>${cropImg(img,l.bbox)}</div>`;
     }
     if(l.handwritten_correction){
       const hc=l.handwritten_correction;
-      return `<div class="card p-3 border-amber-700" id="line-${l.line_id}"><div class="font-semibold">${STATE.byId[(l.match||{}).sku_id]?.canonical||l.product_phrase}</div>
+      return `<div class="card invoice-line-card border-amber-700" id="line-${l.line_id}"><div class="font-semibold">${STATE.byId[(l.match||{}).sku_id]?.canonical||l.product_phrase}</div>
         <div class="text-amber-300 text-sm mt-1">✍️ Handwritten correction — kaunsa sahi hai?</div>
         <div class="flex gap-2 mt-1"><button onclick="pickHand('${l.line_id}',${hc.struck})" class="chip px-3 py-1 rounded text-sm line-through">${hc.struck} ${l.unit}</button>
         <button onclick="pickHand('${l.line_id}',${hc.written})" class="chip px-3 py-1 rounded text-sm">${hc.written} ${l.unit} (naya)</button></div>${cropImg(img,l.bbox)}</div>`;
     }
     const canon=STATE.byId[(l.match||{}).sku_id]?.canonical || l.product_phrase;
     const unit=baseUnitOf(l);
-    return `<div class="card p-3"><div class="flex justify-between items-start gap-3"><div><b>${canon}</b>
+    return `<div class="card invoice-line-card"><div class="flex justify-between items-start gap-3"><div><b>${canon}</b>
       <div class="text-xs text-slate-400 mt-0.5">${fmtNum(l.qty)} ${l.unit} · bill amount ₹${(l.taxable_value||0).toLocaleString('en-IN')}</div></div>
       <div class="text-right shrink-0"><div class="text-emerald-400 font-bold text-lg">₹${fmtNum(l.landed_cost_per_unit)}<span class="text-xs text-slate-400 font-normal">/${unit}</span></div>
       <div class="text-[10px] text-slate-500">aapki cost</div></div></div>
       <div class="text-[11px] text-slate-500 mt-1">GST ${l.gst_rate}% hata ke, freight ka hissa jod ke</div>${cropImg(img,l.bbox)}</div>`;
   }).join('');
   box.innerHTML=`
-    <div class="mb-3 p-3 rounded-lg ${r.used_fixture?'bg-amber-900/40':'bg-emerald-900/40'} text-sm">
+    <div class="invoice-status ${r.used_fixture?'fixture':''}">
       ${r.used_fixture?'Fixture invoice (no API key / parse fallback) — beat still runs.':'Parsed live via Sarvam Document Digitization.'}
       Supplier: <b>${r.meta.supplier}</b> · ${r.meta.invoice_no}</div>
     <div class="grid md:grid-cols-2 gap-4">
