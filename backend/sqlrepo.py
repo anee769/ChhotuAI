@@ -21,6 +21,8 @@ from __future__ import annotations
 
 import json
 import threading
+import uuid
+from contextlib import contextmanager
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
@@ -38,6 +40,20 @@ _EVENT_COLUMNS = (
 )
 
 _NUMERIC_EVENT_FIELDS = ("qty", "rate", "quoted_rate", "confidence")
+
+_ORDER_COLUMNS = (
+    "order_id", "customer_id", "status", "source", "payment",
+    "payment_deadline", "fulfilment_method", "delivery_address",
+    "requested_delivery_on", "notes",
+    "subtotal", "gst_total", "total", "request_id", "sale_event_ids",
+    "created_at", "updated_at",
+)
+
+_ORDER_ITEM_COLUMNS = (
+    "line_id", "sku_id", "canonical", "qty", "unit", "rate", "rate_unit",
+    "gst_rate", "subtotal", "gst_amount", "total", "requested_base",
+    "reserved_base", "availability_status",
+)
 
 
 def _plain(value):
@@ -204,6 +220,11 @@ class SqlRepo:
             used = conn.execute(
                 "SELECT 1 FROM events WHERE user_id = %s AND sku_id = %s LIMIT 1",
                 (self.user_id, sku_id)).fetchone()
+            if not used:
+                used = conn.execute(
+                    "SELECT 1 FROM order_items WHERE user_id = %s"
+                    " AND sku_id = %s LIMIT 1",
+                    (self.user_id, sku_id)).fetchone()
             if used:
                 return False
             conn.execute("DELETE FROM skus WHERE user_id = %s AND sku_id = %s",
@@ -492,7 +513,7 @@ class SqlRepo:
     def delete_customer(self, customer_id: str) -> bool:
         """Delete only a contact with no ledger, credit, or payment history."""
         with db.connect() as conn:
-            for table in ("events", "receivables", "payments"):
+            for table in ("events", "receivables", "payments", "orders"):
                 used = conn.execute(
                     f"SELECT 1 FROM {table}"
                     " WHERE user_id = %s AND customer_id = %s LIMIT 1",
@@ -557,6 +578,210 @@ class SqlRepo:
                  paid_on, note, now))
         self._invalidate("payments")
         return next(p for p in self.payments() if p["payment_id"] == pid)
+
+    # ---- customer orders / fulfilment ---------------------------------
+    def _hydrate_order(self, conn, row: dict) -> dict:
+        order = _clean_row(row)
+        order["sale_event_ids"] = order.get("sale_event_ids") or []
+        cur = conn.execute(
+            f"SELECT {', '.join(_ORDER_ITEM_COLUMNS)} FROM order_items"
+            " WHERE user_id = %s AND order_id = %s ORDER BY line_id",
+            (self.user_id, order["order_id"]))
+        order["items"] = [_clean_row(r) for r in db.rows_to_dicts(cur)]
+        cur = conn.execute(
+            "SELECT from_status, to_status, note, source, changed_at"
+            " FROM order_status_history WHERE user_id = %s AND order_id = %s"
+            " ORDER BY row_id",
+            (self.user_id, order["order_id"]))
+        order["history"] = [_clean_row(r) for r in db.rows_to_dicts(cur)]
+        cur = conn.execute(
+            "SELECT delivery_id, order_id, status, provider,"
+            " provider_order_id, tracking_url, scheduled_for, address,"
+            " driver_name, driver_phone, vehicle, proof_note, created_at,"
+            " updated_at FROM deliveries WHERE user_id = %s AND order_id = %s",
+            (self.user_id, order["order_id"]))
+        delivery = cur.fetchone()
+        order["delivery"] = (
+            _clean_row(dict(zip([d.name for d in cur.description], delivery)))
+            if delivery else None
+        )
+        return order
+
+    def _load_orders(self) -> list:
+        with db.connect() as conn:
+            cur = conn.execute(
+                f"SELECT {', '.join(_ORDER_COLUMNS)} FROM orders"
+                " WHERE user_id = %s ORDER BY created_at DESC, order_id DESC",
+                (self.user_id,))
+            rows = db.rows_to_dicts(cur)
+            return [self._hydrate_order(conn, row) for row in rows]
+
+    def orders(self) -> list:
+        return list(self._cached("orders", self._load_orders))
+
+    def order(self, order_id: str) -> Optional[dict]:
+        return next((row for row in self.orders()
+                     if row.get("order_id") == order_id), None)
+
+    def _write_order_items(self, conn, order_id: str, items: list) -> None:
+        conn.execute(
+            "DELETE FROM order_items WHERE user_id = %s AND order_id = %s",
+            (self.user_id, order_id))
+        for item in items:
+            values = [_plain(item.get(column)) for column in _ORDER_ITEM_COLUMNS]
+            conn.execute(
+                f"INSERT INTO order_items (user_id, order_id,"
+                f" {', '.join(_ORDER_ITEM_COLUMNS)}) VALUES ("
+                + ", ".join(["%s"] * (len(_ORDER_ITEM_COLUMNS) + 2)) + ")",
+                [self.user_id, order_id] + values)
+
+    def create_order(self, order: dict) -> dict:
+        request_id = str(order.get("request_id") or "").strip() or None
+        with db.connect() as conn:
+            order_id = order.get("order_id") or f"ord_{uuid.uuid4().hex[:12]}"
+            values = []
+            for column in _ORDER_COLUMNS:
+                value = order_id if column == "order_id" else order.get(column)
+                if column == "sale_event_ids":
+                    value = json.dumps(value or [])
+                values.append(value)
+            insert_sql = (
+                f"INSERT INTO orders (user_id, {', '.join(_ORDER_COLUMNS)})"
+                " VALUES ("
+                + ", ".join(["%s"] * (len(_ORDER_COLUMNS) + 1)) + ")"
+                + " ON CONFLICT (user_id, request_id) DO NOTHING"
+                  " RETURNING order_id"
+            )
+            inserted = conn.execute(
+                insert_sql, [self.user_id] + values).fetchone()
+            if inserted:
+                order_id = inserted[0]
+                self._write_order_items(
+                    conn, order_id, order.get("items") or [])
+                for entry in order.get("history") or []:
+                    conn.execute(
+                        "INSERT INTO order_status_history"
+                        " (user_id, order_id, from_status, to_status, note,"
+                        " source, changed_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                        (self.user_id, order_id, entry.get("from_status"),
+                         entry.get("to_status"), entry.get("note", ""),
+                         entry.get("source", "manual"),
+                         entry.get("changed_at")))
+            else:
+                existing = conn.execute(
+                    "SELECT order_id FROM orders WHERE user_id = %s"
+                    " AND request_id = %s",
+                    (self.user_id, request_id)).fetchone()
+                order_id = existing[0]
+        self._invalidate("orders")
+        return self.order(order_id)
+
+    def update_order(self, order_id: str, mutator) -> dict:
+        with db.connect() as conn:
+            cur = conn.execute(
+                f"SELECT {', '.join(_ORDER_COLUMNS)} FROM orders"
+                " WHERE user_id = %s AND order_id = %s FOR UPDATE",
+                (self.user_id, order_id))
+            raw = cur.fetchone()
+            if not raw:
+                raise ValueError("order not found")
+            row = dict(zip([d.name for d in cur.description], raw))
+            order = self._hydrate_order(conn, row)
+            previous_history = len(order.get("history") or [])
+            mutator(order)
+            assignments = []
+            values = []
+            for column in _ORDER_COLUMNS:
+                if column == "order_id":
+                    continue
+                value = order.get(column)
+                if column == "sale_event_ids":
+                    value = json.dumps(value or [])
+                    assignments.append(f"{column} = %s::jsonb")
+                else:
+                    assignments.append(f"{column} = %s")
+                values.append(value)
+            conn.execute(
+                f"UPDATE orders SET {', '.join(assignments)}"
+                " WHERE user_id = %s AND order_id = %s",
+                values + [self.user_id, order_id])
+            self._write_order_items(conn, order_id, order.get("items") or [])
+            for entry in (order.get("history") or [])[previous_history:]:
+                conn.execute(
+                    "INSERT INTO order_status_history"
+                    " (user_id, order_id, from_status, to_status, note, source,"
+                    " changed_at) VALUES (%s,%s,%s,%s,%s,%s,%s)",
+                    (self.user_id, order_id, entry.get("from_status"),
+                     entry.get("to_status"), entry.get("note", ""),
+                     entry.get("source", "manual"), entry.get("changed_at")))
+        self._invalidate("orders")
+        return self.order(order_id)
+
+    def delivery_for_order(self, order_id: str) -> Optional[dict]:
+        order = self.order(order_id)
+        return order.get("delivery") if order else None
+
+    def upsert_delivery(self, order_id: str, patch: dict) -> dict:
+        now = datetime.now().isoformat(timespec="seconds")
+        with db.connect() as conn:
+            existing = conn.execute(
+                "SELECT delivery_id, created_at FROM deliveries"
+                " WHERE user_id = %s AND order_id = %s FOR UPDATE",
+                (self.user_id, order_id)).fetchone()
+            delivery_id = (
+                existing[0] if existing else
+                f"del_{uuid.uuid4().hex[:12]}"
+            )
+            created_at = existing[1] if existing else now
+            defaults = {
+                "status": "unscheduled", "provider": "manual",
+                "provider_order_id": "", "tracking_url": "",
+                "scheduled_for": None, "address": "", "driver_name": "",
+                "driver_phone": "", "vehicle": "", "proof_note": "",
+            }
+            if existing:
+                cur = conn.execute(
+                    "SELECT status, provider, provider_order_id, tracking_url,"
+                    " scheduled_for, address, driver_name, driver_phone,"
+                    " vehicle, proof_note FROM deliveries"
+                    " WHERE user_id = %s AND order_id = %s",
+                    (self.user_id, order_id))
+                current = cur.fetchone()
+                defaults.update(dict(zip([d.name for d in cur.description], current)))
+            defaults.update(patch)
+            conn.execute(
+                "INSERT INTO deliveries"
+                " (user_id, delivery_id, order_id, status, provider,"
+                " provider_order_id, tracking_url, scheduled_for, address,"
+                " driver_name, driver_phone, vehicle, proof_note, created_at,"
+                " updated_at) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,"
+                "%s,%s,%s)"
+                " ON CONFLICT (user_id, order_id) DO UPDATE SET"
+                " status=EXCLUDED.status, provider=EXCLUDED.provider,"
+                " provider_order_id=EXCLUDED.provider_order_id,"
+                " tracking_url=EXCLUDED.tracking_url,"
+                " scheduled_for=EXCLUDED.scheduled_for,"
+                " address=EXCLUDED.address, driver_name=EXCLUDED.driver_name,"
+                " driver_phone=EXCLUDED.driver_phone, vehicle=EXCLUDED.vehicle,"
+                " proof_note=EXCLUDED.proof_note, updated_at=EXCLUDED.updated_at",
+                (self.user_id, delivery_id, order_id, defaults["status"],
+                 defaults["provider"], defaults["provider_order_id"],
+                 defaults["tracking_url"], defaults["scheduled_for"],
+                 defaults["address"], defaults["driver_name"],
+                 defaults["driver_phone"], defaults["vehicle"],
+                 defaults["proof_note"], created_at, now))
+        self._invalidate("orders")
+        return self.delivery_for_order(order_id)
+
+    @contextmanager
+    def reservation_guard(self):
+        """Serialize stock checks and reservation writes within one tenant."""
+        with db.connect() as conn:
+            conn.execute(
+                "SELECT pg_advisory_xact_lock(hashtext(%s))",
+                (f"chhotu:reservation:{self.user_id}",))
+            self._invalidate("orders")
+            yield
 
 
 def _next_id(conn, user_id: str, table: str, field: str, prefix: str) -> str:

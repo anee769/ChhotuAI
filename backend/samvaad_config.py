@@ -30,8 +30,8 @@ Do line se zyada nahi, kyunki jawab bola jaata hai, padha nahi jaata.
 
 CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
 `add_customer`, `customer_account`, `record_sale`, `record_payment`,
-`show_bill` aur `send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
-script mein hona chahiye.
+`create_order_draft`, `list_orders`, `show_bill` aur `send_bill` ke JSON
+arguments mein customer ka naam HAMESHA English Latin script mein hona chahiye.
 Caller naam Hindi, English ya kisi bhi script mein bole, pehle us naam ko
 awaaz ke hisaab se Latin letters mein transliterate karo. Translate, correct
 ya naya spelling invent mat karo.
@@ -117,6 +117,25 @@ Kaam karne se pehle:
 - WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
+CUSTOMER ORDER AUR SALE ALAG HAIN:
+- Customer saamaan mangwa raha hai par maal abhi handover/deliver nahi hua, to
+  `record_sale` MAT chalao. Saare items ko ek `create_order_draft` call mein
+  bhejo. Ek hi customer request ko alag-alag orders mein mat todo.
+- Draft ke tool facts se customer, har item, quantity, rate, total, delivery
+  address/date aur availability dohrao. Saaf haan milne ke baad hi
+  `confirm_order` chalao. Confirmation stock reserve karti hai, sale nahi.
+- Tool `partially_available` ya shortages de to ise chhupao mat. Kaunsa item
+  kam hai batao. `allow_backorder` sirf explicit approval par true bhejo.
+- Status poochha ho to `get_order_status`; list chahiye to `list_orders`.
+- Status ko kabhi skip mat karo. Valid sequence `confirmed`,
+  `stock_allocated`, `ready_for_dispatch`, `out_for_delivery`, `delivered` hai.
+  Failed delivery ko `delivery_failed` karo. Backend invalid transition roke
+  to apni taraf se success mat bolo.
+- `delivered` karne par backend existing sale, stock aur credit ledger exactly
+  once likhta hai. Us order ke items ko alag se `record_sale` mat chalao.
+- Cancel karne se pehle order number aur customer dohra kar explicit haan lo,
+  phir `cancel_order` chalao.
+
 APP PREVIEW AUR WHATSAPP SEND ALAG KAAM HAIN:
 - Bill tayyar ho jaaye to pehle `show_bill` chalao. Isse bill sirf Chhotu.ai
   app ki screen par dikhega, bheja nahi jayega.
@@ -197,6 +216,17 @@ PARAMS = {
     "dues": ("days_before",),
     "recent_activity": ("limit",),
     "price_quote": ("item", "sku_id", "qty", "unit"),
+    "create_order_draft": (
+        "customer", "customer_id", "customer_phone", "items", "item",
+        "sku_id", "qty", "unit", "rate", "rate_unit", "payment",
+        "payment_deadline", "fulfilment_method", "delivery_address",
+        "requested_delivery_on", "notes", "request_id"),
+    "show_order": ("order_id",),
+    "confirm_order": ("order_id", "allow_backorder"),
+    "get_order_status": ("order_id",),
+    "list_orders": ("status", "customer", "customer_id", "customer_phone"),
+    "update_order_status": ("order_id", "status", "note"),
+    "cancel_order": ("order_id", "note"),
     "record_sale": ("item", "sku_id", "qty", "unit", "occurred_on", "rate",
                     "payment", "customer", "customer_phone",
                     "payment_deadline", "request_id"),
@@ -240,6 +270,7 @@ PARAM_DOCS = {
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
     "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
     "rate": ("Text", "Ek unit ka daam, rupaye mein."),
+    "rate_unit": ("Text", "Rate kis unit ka hai, jaise bori ya tonne."),
     "amount": ("Text", "Kitne rupaye mile."),
     "payment": ("Text", "cash ya credit."),
     "customer": ("Text", "MANDATORY: transliterate the complete customer name "
@@ -255,6 +286,17 @@ PARAM_DOCS = {
                             "Khaali chhodo to aaj."),
     "request_id": ("Text", "Har confirm kiye kaam ke liye naya id. Dobara "
                            "koshish par wahi id, taaki do baar na likhe."),
+    "order_id": ("Text", "Backend se mila exact order id, jaise ord_0007. "
+                 "Kabhi andaaza mat lagao."),
+    "status": ("Text", "Exact grounded order status. Status sequence skip mat "
+               "karo."),
+    "allow_backorder": ("Text", "true sirf tab jab caller ne kam stock ke "
+                         "baad bhi backorder explicitly approve kiya ho."),
+    "fulfilment_method": ("Text", "delivery ya pickup."),
+    "delivery_address": ("Text", "Customer ka poora delivery address."),
+    "requested_delivery_on": ("Text", "Maangi hui delivery date YYYY-MM-DD."),
+    "notes": ("Text", "Order ya delivery ka chhota operational note."),
+    "note": ("Text", "Status change ya cancellation ka reason."),
     "cost_price": ("Text", "Kharid ka daam per unit."),
     "selling_rate": ("Text", "Bechne ka daam per unit."),
     "brand": ("Text", "Brand ka naam."),
@@ -270,9 +312,10 @@ PARAM_DOCS = {
     "shop_type": ("Text", "Dukaan kis line ki hai, jaise hardware."),
     "gstin": ("Text", "GSTIN number."),
     "address": ("Text", "Dukaan ka pata."),
-    "items": ("Text", "Multiple bill lines ka JSON array. Har line mein item "
-              "ya exact sku_id, qty, unit aur rate. Single item ho to khaali "
-              "chhodkar flat item, qty, unit aur rate fields bharo."),
+    "items": ("Text", "Multiple bill ya order lines ka JSON array. Har line "
+              "mein item ya exact sku_id, qty, unit, rate aur optional "
+              "rate_unit. Ek customer ke saare bole hue items isi ek array "
+              "mein bhejo. Single item ho to flat fields bhi chalenge."),
 }
 
 EXAMPLES = {
@@ -342,6 +385,51 @@ EXAMPLES = {
         "lines": [{"name": "UltraTech PPC Cement 50kg", "qty": 10,
                    "unit": "bori", "rate": 420, "amount": 4200.0}],
         "subtotal": 4200.0, "gst": 1176.0, "total": 5376.0, "unavailable": []}),
+    "create_order_draft": ({
+        "customer": "Pankaj Sharma", "customer_phone": "9876543210",
+        "items": json.dumps([
+            {"item": "ppc cement", "qty": 10, "unit": "bori", "rate": 420},
+            {"item": "patla sariya", "qty": 1, "unit": "tonne",
+             "rate": 62000},
+        ]),
+        "payment": "cash", "fulfilment_method": "delivery",
+        "delivery_address": "Site 4, Baner, Pune 411045",
+        "requested_delivery_on": "2026-07-30",
+        "request_id": "<unique draft id>",
+    }, {
+        "created": True, "order_id": "ord_0007", "status": "draft",
+        "customer": "Pankaj Sharma", "total": 80776,
+        "requires_confirmation": True, "unavailable": [],
+    }),
+    "show_order": ({"order_id": "ord_0007"}, {
+        "found": True, "order": {
+            "order_id": "ord_0007", "status": "draft", "total": 80776,
+            "customer": {"name": "Pankaj Sharma"},
+            "items": [{"canonical": "UltraTech PPC Cement 50kg", "qty": 10,
+                       "unit": "bori", "availability_status": "available"}],
+        }}),
+    "confirm_order": ({"order_id": "ord_0007"}, {
+        "updated": True, "confirmed": True,
+        "order": {"order_id": "ord_0007", "status": "confirmed"}}),
+    "get_order_status": ({"order_id": "ord_0007"}, {
+        "found": True, "order": {
+            "order_id": "ord_0007", "status": "ready_for_dispatch",
+            "delivery": {"status": "ready"}}}),
+    "list_orders": ({"status": "confirmed"}, {
+        "found": True, "count": 1,
+        "orders": [{"order_id": "ord_0007", "status": "confirmed",
+                    "total": 80776}]}),
+    "update_order_status": ({
+        "order_id": "ord_0007", "status": "stock_allocated",
+        "note": "Rack se nikaal diya",
+    }, {
+        "updated": True,
+        "order": {"order_id": "ord_0007", "status": "stock_allocated"}}),
+    "cancel_order": ({
+        "order_id": "ord_0007", "note": "Customer cancelled",
+    }, {
+        "updated": True,
+        "order": {"order_id": "ord_0007", "status": "cancelled"}}),
     "record_sale": ({"item": "ppc cement", "qty": 10, "unit": "bori",
                      "rate": 420, "payment": "credit", "customer": "Ramesh",
                      "payment_deadline": "2026-08-27",

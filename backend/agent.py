@@ -48,6 +48,7 @@ import clock
 import crm
 import ledger as L
 import matcher as M
+import orderbook
 import sqlrepo
 
 LOW_STOCK_THRESHOLD = 5.0
@@ -499,7 +500,8 @@ def _lines(args: dict) -> list:
     if not rows and (args.get("item") or args.get("sku_id")):
         rows = [{"item": args.get("item"), "sku_id": args.get("sku_id"),
                  "qty": args.get("qty"),
-                 "unit": args.get("unit"), "rate": args.get("rate")}]
+                 "unit": args.get("unit"), "rate": args.get("rate"),
+                 "rate_unit": args.get("rate_unit")}]
     return [r for r in (rows or [])
             if isinstance(r, dict) and (r.get("item") or r.get("sku_id"))]
 
@@ -1603,6 +1605,189 @@ def send_reminders(repo, user, args):
 
 
 # ---------------------------------------------------------------------------
+# Customer order and fulfilment tools
+# ---------------------------------------------------------------------------
+def _order_failure(exc: orderbook.OrderError) -> dict:
+    return {"created": False, "updated": False, "found": False,
+            "error": exc.code, **exc.details, "speak": str(exc)}
+
+
+def _order_customer(repo, args: dict):
+    ref = _customer_ref(args)
+    customer, options = _customer_by_name(repo, ref)
+    if not customer and options:
+        return None, _ask_which_customer(options)
+    if not customer and args.get("customer_phone") and (
+            args.get("customer") or args.get("customer_name")):
+        customer = repo.upsert_customer(
+            args["customer_phone"],
+            args.get("customer") or args.get("customer_name"))
+    if not customer:
+        return None, {
+            "needs": {"field": "customer"},
+            "speak": "Order kiske naam par hai? Naam aur phone number bataiye.",
+        }
+    return customer, None
+
+
+def create_order_draft(repo, user, args):
+    customer, question = _order_customer(repo, args)
+    if question:
+        return {"created": False, **question}
+    lines = []
+    unavailable = []
+    for row in _lines(args):
+        ref = _item_ref(row)
+        sku, ambiguity = _find_sku(repo, ref)
+        if ambiguity:
+            return {"created": False, **_ask_which(ambiguity)}
+        if not sku:
+            unavailable.append(ref)
+            continue
+        qty = _number(row.get("qty"))
+        if qty is None or qty <= 0:
+            return {"created": False,
+                    "needs": {"field": "qty", "said": ref},
+                    "speak": f"{sku['canonical']} kitna chahiye?"}
+        lines.append({
+            "sku_id": sku["sku_id"], "qty": qty,
+            "unit": row.get("unit") or sku.get("default_unit"),
+            "rate": _number(row.get("rate")),
+            "rate_unit": row.get("rate_unit") or row.get("unit")
+                         or sku.get("default_unit"),
+        })
+    if unavailable:
+        return {
+            "created": False, "unavailable": unavailable,
+            "speak": f"{', '.join(unavailable)} inventory mein nahi mila. "
+                     "Order draft nahi banaya.",
+        }
+    if not lines:
+        return {"created": False, "needs": {"field": "items"},
+                "speak": "Order mein kaunsa saamaan aur kitna chahiye?"}
+    try:
+        order = orderbook.create(repo, {
+            **args,
+            "customer_id": customer["customer_id"],
+            "customer_name": customer.get("name"),
+            "items": lines,
+        }, source="voice_agent")
+    except orderbook.OrderError as exc:
+        return _order_failure(exc)
+    backordered = [
+        item["canonical"] for item in order["items"]
+        if item.get("availability_status") != "available"
+    ]
+    availability = (
+        f" Stock issue: {', '.join(backordered)}."
+        if backordered else " Saara stock available hai."
+    )
+    return {
+        "created": True, "order_id": order["order_id"],
+        "status": order["status"], "customer": customer.get("name"),
+        "items": order["items"], "total": order["total"],
+        "requires_confirmation": True, "unavailable": backordered,
+        "speak": f"Order {order['order_id']} ka draft ban gaya, total "
+                 f"{_say_number(order['total'])} rupaye.{availability} "
+                 "Confirm karun?",
+    }
+
+
+def show_order(repo, user, args):
+    order_id = str(args.get("order_id") or "").strip()
+    if not order_id:
+        return {"found": False, "needs": {"field": "order_id"},
+                "speak": "Kaunsa order number?"}
+    try:
+        order = orderbook.get(repo, order_id)
+    except orderbook.OrderError as exc:
+        return _order_failure(exc)
+    return {"found": True, "order": order,
+            "speak": f"{order_id}, {order['customer']['name']}, "
+                     f"{len(order['items'])} item, "
+                     f"{_say_number(order['total'])} rupaye, "
+                     f"status {order['status']}."}
+
+
+def confirm_customer_order(repo, user, args):
+    order_id = str(args.get("order_id") or "").strip()
+    if not order_id:
+        return {"updated": False, "needs": {"field": "order_id"},
+                "speak": "Kaunsa order confirm karna hai?"}
+    try:
+        raw_backorder = args.get("allow_backorder")
+        allow_backorder = (
+            raw_backorder if isinstance(raw_backorder, bool)
+            else str(raw_backorder or "").strip().lower()
+            in {"1", "true", "yes", "haan", "ha"}
+        )
+        order = orderbook.confirm(
+            repo, order_id,
+            allow_backorder=allow_backorder,
+            source="voice_agent")
+    except orderbook.OrderError as exc:
+        return _order_failure(exc)
+    if order["status"] == "partially_available":
+        names = ", ".join(row["name"] for row in order.get("shortages") or [])
+        return {"updated": True, "confirmed": False, "order": order,
+                "speak": f"Order confirm nahi hua. {names} ka stock kam hai. "
+                         "Backorder ke saath confirm karna hai?"}
+    return {"updated": True, "confirmed": True, "order": order,
+            "speak": f"Order {order_id} confirm ho gaya aur available stock "
+                     "reserve ho gaya."}
+
+
+def get_order_status(repo, user, args):
+    return show_order(repo, user, args)
+
+
+def list_customer_orders(repo, user, args):
+    customer_id = ""
+    ref = _customer_ref(args)
+    if ref:
+        customer, options = _customer_by_name(repo, ref)
+        if not customer and options:
+            return _ask_which_customer(options)
+        if not customer:
+            return {"found": False, "orders": [],
+                    "speak": "Customer nahi mila."}
+        customer_id = customer["customer_id"]
+    rows = orderbook.list_orders(
+        repo, status=str(args.get("status") or "").lower(),
+        customer_id=customer_id)
+    return {"found": bool(rows), "count": len(rows), "orders": rows[:20],
+            "speak": (
+                "; ".join(f"{row['order_id']} {row['status']}"
+                          for row in rows[:5])
+                if rows else "Koi matching order nahi mila."
+            )}
+
+
+def update_order_status(repo, user, args):
+    order_id = str(args.get("order_id") or "").strip()
+    status = str(args.get("status") or "").strip().lower()
+    if not order_id:
+        return {"updated": False, "needs": {"field": "order_id"},
+                "speak": "Kaunsa order?"}
+    if not status:
+        return {"updated": False, "needs": {"field": "status"},
+                "speak": "Order ka naya status kya hai?"}
+    try:
+        order = orderbook.transition(
+            repo, order_id, status, note=str(args.get("note") or ""),
+            source="voice_agent")
+    except orderbook.OrderError as exc:
+        return _order_failure(exc)
+    return {"updated": True, "order": order,
+            "speak": f"Order {order_id} ab {order['status']} hai."}
+
+
+def cancel_order(repo, user, args):
+    return update_order_status(
+        repo, user, {**args, "status": "cancelled"})
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 # `description` is what the Samvaad console shows the agent — it is how the
@@ -1656,6 +1841,43 @@ TOOLS = {
     "price_quote": (price_quote,
                     "Kisi saamaan ka bhaav aur GST ke saath total, bina kuch "
                     "record kiye. args: item ya sku_id, qty, unit."),
+    "create_order_draft": (
+        create_order_draft,
+        "Customer ka delivery ya pickup order DRAFT banao; sale abhi record "
+        "mat karo. Saare items ek hi call ke items array mein bhejo. args: "
+        "customer/customer_id/customer_phone (naam English Latin script mein), "
+        "items [{item ya sku_id, qty, unit, rate, rate_unit}], payment "
+        "(cash/credit), payment_deadline credit ke liye, fulfilment_method "
+        "(delivery/pickup), delivery_address delivery ke liye, "
+        "requested_delivery_on, notes, request_id. Tool ke summary ke baad "
+        "caller se confirmation zaroor lo."),
+    "show_order": (
+        show_order,
+        "Ek order ka item, customer, total, reservation aur delivery detail "
+        "dikhao. args: exact order_id."),
+    "confirm_order": (
+        confirm_customer_order,
+        "Order summary sunane aur explicit haan milne ke baad draft order "
+        "confirm karke stock reserve karo. args: order_id; allow_backorder "
+        "sirf explicit approval par true."),
+    "get_order_status": (
+        get_order_status,
+        "Order number se current grounded order aur delivery status batao. "
+        "args: order_id."),
+    "list_orders": (
+        list_customer_orders,
+        "Orders dhoondo. Optional args: status, customer/customer_id/"
+        "customer_phone. customer value English Latin script mein bhejo."),
+    "update_order_status": (
+        update_order_status,
+        "Order ko backend ke valid agle status mein badlo. Kabhi status skip "
+        "mat karo. args: order_id, status, note. Valid flow: confirmed → "
+        "stock_allocated → ready_for_dispatch → out_for_delivery → delivered; "
+        "failed delivery ke liye delivery_failed."),
+    "cancel_order": (
+        cancel_order,
+        "Explicit confirmation ke baad open order cancel karke reservation "
+        "release karo. args: order_id, note."),
 
     "record_sale": (record_sale,
                     "Sale record karo. Ek item ek call mein. Caller ka local "
@@ -1793,7 +2015,7 @@ def _facts(payload: dict) -> str:
         return text
     # Long lists are the only thing that gets near the limit. Trim the rows
     # rather than truncating the JSON into something unparseable.
-    for key in ("items", "customers", "events", "dues", "lines"):
+    for key in ("items", "customers", "events", "dues", "lines", "orders"):
         rows = body.get(key)
         if isinstance(rows, list) and len(rows) > 12:
             body[key] = rows[:12]

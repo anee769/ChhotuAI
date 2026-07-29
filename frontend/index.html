@@ -1144,6 +1144,86 @@
   .today-card #todayBody > .ledger-table-wrap:first-child .text-slate-950 { color:#fff !important; }
   .today-card #todayBody > .ledger-table-wrap:first-child .muted { color:#8da198; }
 
+  /* Orders and fulfilment */
+  .orders-toolbar {
+    display:flex; align-items:center; justify-content:space-between; gap:14px;
+    padding:16px 18px; border-bottom:1px solid #e2e8e5;
+    background:linear-gradient(135deg,#fbfdfc,#f2f8f5);
+  }
+  .order-composer {
+    margin-bottom:18px; padding:18px; border:1px solid #d4dfda;
+    border-radius:18px; background:linear-gradient(145deg,#fff,#f5faf7);
+  }
+  .order-form-grid {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:12px;
+  }
+  .order-form-grid label,.order-line-grid label,.delivery-editor label {
+    display:flex; flex-direction:column; gap:6px; color:#52615b;
+    font-size:11px; font-weight:750; letter-spacing:.06em; text-transform:uppercase;
+  }
+  .order-form-grid input,.order-form-grid select,
+  .order-line-grid input,.order-line-grid select,.delivery-editor input {
+    min-height:42px; border:1px solid #d3ddd8; border-radius:11px;
+    background:#fff; padding:8px 10px; color:#111b17; font-size:13px;
+    font-weight:550; letter-spacing:0; text-transform:none; outline:none;
+  }
+  .order-form-grid input:focus,.order-form-grid select:focus,
+  .order-line-grid input:focus,.order-line-grid select:focus,
+  .delivery-editor input:focus { border-color:#168461; box-shadow:0 0 0 3px rgba(0,108,73,.09); }
+  .order-lines { margin-top:14px; display:grid; gap:9px; }
+  .order-line-grid {
+    display:grid; grid-template-columns:minmax(220px,2fr) .7fr .8fr .8fr auto;
+    gap:9px; align-items:end; padding:11px; border:1px solid #e0e7e3;
+    border-radius:13px; background:#fff;
+  }
+  .order-line-remove {
+    width:40px; height:40px; border:1px solid #e3d4d1; border-radius:10px;
+    color:#a33a2f; background:#fff8f7;
+  }
+  .order-list { display:grid; gap:12px; padding:16px; }
+  .order-card {
+    border:1px solid #d9e2de; border-radius:16px; background:#fff;
+    overflow:hidden; transition:border-color .16s ease,box-shadow .16s ease;
+  }
+  .order-card:hover { border-color:#b7c9c0; box-shadow:0 12px 30px -25px #173c2d; }
+  .order-card-head {
+    display:flex; align-items:flex-start; justify-content:space-between;
+    gap:12px; padding:15px 16px; border-bottom:1px solid #e7ece9;
+  }
+  .order-card-id { font-size:16px; font-weight:850; color:#101a16; }
+  .order-card-meta { margin-top:3px; color:#68756f; font-size:12px; }
+  .order-status {
+    display:inline-flex; align-items:center; min-height:26px; padding:4px 9px;
+    border-radius:999px; background:#edf3f0; color:#44534c;
+    font-size:10px; font-weight:850; letter-spacing:.07em; text-transform:uppercase;
+  }
+  .order-status.confirmed,.order-status.stock_allocated { background:#dff5e9; color:#006c49; }
+  .order-status.ready_for_dispatch,.order-status.out_for_delivery { background:#e8f0ff; color:#28589a; }
+  .order-status.partially_available,.order-status.delivery_failed { background:#fff0d8; color:#995b00; }
+  .order-status.delivered { background:#d7f5e6; color:#006641; }
+  .order-status.cancelled { background:#f3e7e5; color:#91372d; }
+  .order-items { width:100%; border-collapse:collapse; font-size:12px; }
+  .order-items td { padding:10px 16px; border-bottom:1px solid #edf0ee; }
+  .order-items td:last-child { text-align:right; font-weight:750; }
+  .order-availability { color:#9a5a00; font-weight:700; }
+  .order-card-foot {
+    display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;
+    gap:10px; padding:12px 16px; background:#fafcfb;
+  }
+  .order-actions { display:flex; flex-wrap:wrap; gap:7px; }
+  .order-action {
+    min-height:36px; padding:7px 11px; border:1px solid #cfdad5;
+    border-radius:10px; background:#fff; color:#26342e; font-size:12px; font-weight:750;
+  }
+  .order-action.primary { border-color:#006c49; background:#006c49; color:#fff; }
+  .order-action.danger { border-color:#ead1cd; color:#a1382d; background:#fff8f7; }
+  .delivery-editor {
+    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)) auto;
+    gap:9px; align-items:end; padding:12px 16px 16px; background:#f5f8f6;
+    border-top:1px solid #e5ebe8;
+  }
+  .delivery-editor summary { cursor:pointer; font-weight:750; }
+
   /* Settings */
   .settings-grid {
     display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:15px;
@@ -1450,7 +1530,7 @@
       width:100%; height:calc(68px + env(safe-area-inset-bottom));
       padding:6px max(4px,env(safe-area-inset-right))
         env(safe-area-inset-bottom) max(4px,env(safe-area-inset-left));
-      display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:2px;
+      display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:2px;
       overflow:visible; border:0; border-top:1px solid #d4d7db;
       background:rgba(255,255,255,.97); box-shadow:0 -8px 28px -22px rgba(15,23,42,.55);
       backdrop-filter:blur(14px);
@@ -1562,6 +1642,10 @@
     #tab-invoice .card { padding:16px !important; }
     #tab-invoice .card > .flex button { width:100%; min-height:44px; }
     .today-card #todayBody { padding:14px; }
+    .order-form-grid { grid-template-columns:1fr 1fr; }
+    .order-line-grid { grid-template-columns:1fr 1fr; }
+    .order-line-grid label:first-child { grid-column:1/-1; }
+    .delivery-editor { grid-template-columns:1fr 1fr; }
     .inventory-modal { align-items:end; padding:0; }
     .inventory-modal-card {
       width:100%; max-height:88dvh; overflow-y:auto;
@@ -2381,6 +2465,7 @@
   <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span data-mobile-label="Invoice">Invoice</span></button>
   <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span data-mobile-label="Stock">Inventory</span></button>
   <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span data-mobile-label="People">Customers</span></button>
+  <button class="tab-btn" data-tab="orders" onclick="showTab('orders')"><span class="material-symbols-outlined">local_shipping</span><span data-mobile-label="Orders">Orders</span></button>
   <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span data-mobile-label="Today">Today</span></button>
   <div class="nav-footer">
     <button class="tab-btn" data-tab="settings" onclick="showTab('settings')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
@@ -2536,6 +2621,75 @@
         class="btn-primary px-5 py-3">Save customer</button>
     </div>
     <div id="customerBody"></div>
+  </section>
+
+  <!-- ORDERS & FULFILMENT -->
+  <section id="tab-orders" class="tabpane workspace-page hidden">
+    <div class="page-heading">
+      <div>
+        <div class="eyebrow">Order operations</div>
+        <h1>Orders & delivery</h1>
+        <p>Reserve stock, prepare dispatches, and track every customer promise.</p>
+      </div>
+      <button onclick="toggleOrderComposer()" class="btn-primary px-4 py-2.5">
+        <span class="material-symbols-outlined align-middle text-[18px]">add</span>
+        New order
+      </button>
+    </div>
+    <div id="orderComposer" class="order-composer hidden">
+      <div class="order-form-grid">
+        <label>Customer<select id="orderCustomer"></select></label>
+        <label>Payment
+          <select id="orderPayment" onchange="toggleOrderCredit()">
+            <option value="cash">Cash</option><option value="credit">Credit</option>
+          </select>
+        </label>
+        <label id="orderDeadlineLabel" class="hidden">Payment deadline
+          <input id="orderDeadline" type="date">
+        </label>
+        <label>Fulfilment
+          <select id="orderFulfilment" onchange="toggleOrderAddress()">
+            <option value="delivery">Delivery</option><option value="pickup">Customer pickup</option>
+          </select>
+        </label>
+        <label id="orderAddressLabel" class="md:col-span-2">Delivery address
+          <input id="orderAddress" type="text" placeholder="Site, street, area and pincode">
+        </label>
+        <label>Requested date<input id="orderDeliveryDate" type="date"></label>
+        <label>Notes<input id="orderNotes" type="text" placeholder="Gate, floor, unloading note…"></label>
+      </div>
+      <div class="mt-4 flex items-center justify-between gap-3">
+        <div><div class="font-semibold">Order items</div><div class="text-xs text-slate-500">Stock is checked now and reserved only after confirmation.</div></div>
+        <button onclick="addOrderLine()" class="btn-secondary px-3 py-2">Add item</button>
+      </div>
+      <div id="orderLines" class="order-lines"></div>
+      <div class="mt-4 flex flex-wrap justify-end gap-2">
+        <button onclick="toggleOrderComposer(false)" class="btn-secondary px-4 py-2.5">Cancel</button>
+        <button id="createOrderButton" onclick="createManualOrder()" class="btn-primary px-5 py-2.5">Create draft</button>
+      </div>
+    </div>
+    <div class="card overflow-hidden">
+      <div class="orders-toolbar">
+        <div>
+          <div class="font-semibold">Fulfilment queue</div>
+          <div id="orderCounts" class="text-xs text-slate-500">Loading orders…</div>
+        </div>
+        <select id="orderStatusFilter" onchange="loadOrders()"
+          class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm">
+          <option value="">All statuses</option>
+          <option value="draft">Draft</option>
+          <option value="partially_available">Stock issue</option>
+          <option value="confirmed">Confirmed</option>
+          <option value="stock_allocated">Allocated</option>
+          <option value="ready_for_dispatch">Ready</option>
+          <option value="out_for_delivery">Out for delivery</option>
+          <option value="delivery_failed">Delivery failed</option>
+          <option value="delivered">Delivered</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div id="ordersBody" class="order-list"></div>
+    </div>
   </section>
 
   <!-- TODAY -->
@@ -2784,6 +2938,28 @@
   </section>
 </div>
 
+<div id="orderActionModal" class="inventory-modal hidden" aria-hidden="true"
+  onclick="if(event.target===this) closeOrderActionModal()">
+  <section class="inventory-modal-card" role="dialog" aria-modal="true"
+    aria-labelledby="orderActionTitle" aria-describedby="orderActionMessage">
+    <div class="inventory-modal-body">
+      <div class="inventory-modal-icon">
+        <span id="orderActionIcon" class="material-symbols-outlined">local_shipping</span>
+      </div>
+      <div class="eyebrow">Order control</div>
+      <h3 id="orderActionTitle">Confirm this action?</h3>
+      <p id="orderActionMessage"></p>
+      <div id="orderActionError" class="inventory-modal-error hidden" role="alert"></div>
+    </div>
+    <div class="inventory-modal-actions">
+      <button id="orderActionCancel" type="button" class="inventory-modal-cancel"
+        onclick="closeOrderActionModal()">Go back</button>
+      <button id="orderActionConfirm" type="button" class="inventory-modal-confirm"
+        onclick="confirmOrderAction()">Continue</button>
+    </div>
+  </section>
+</div>
+
 <script src="/assets/samvaad.bundle.js"></script>
 <script>
 const GATES = {live_sale:0.80, delivery:0.92, recall:0.88, count:0.92, stock_take:0.92};
@@ -2821,7 +2997,11 @@ async function api(path, opts){
     throw new Error('Login required');
   }
   const data=await responseJson(r);
-  if(!r.ok) throw new Error(data.detail||'Request complete nahi hui.');
+  if(!r.ok){
+    const detail=(data.detail&&typeof data.detail==='object')
+      ? (data.detail.message||data.detail.code) : data.detail;
+    throw new Error(detail||'Request complete nahi hui.');
+  }
   return data;
 }
 function fmtNum(n){ const x=Number(n); return Number.isFinite(x) ? (Number.isInteger(x)?x:parseFloat(x.toFixed(2))) : n; }
@@ -2853,7 +3033,8 @@ function showTab(t){
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
-  if(t==='customers') loadCustomers(); if(t==='settings') loadSettings(); }
+  if(t==='customers') loadCustomers(); if(t==='orders') loadOrders();
+  if(t==='settings') loadSettings(); }
 
 function closeMobileAccountMenu(){
   const panel=document.getElementById('mobileAccountPanel');
@@ -3853,7 +4034,8 @@ async function loadStock(){
       <td class="capitalize">${x.family||'other'}</td>
       <td>${x.brand||'—'}</td>
       <td>${x.type||'—'}</td>
-      <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}</td>
+      <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}
+        ${Number(x.reserved_display||0)>0?`<div class="muted">${fmtNum(x.available_display)} ${escHtml(x.display_unit)} available · ${fmtNum(x.reserved_display)} reserved</div>`:''}</td>
       <td><span class="stock-status ${status}">${label}</span></td>
       <td><div class="inventory-actions"><button type="button" class="entity-edit-button"
         data-sku="${escHtml(x.sku_id)}" onclick="openInventoryEditor(this.dataset.sku)">
@@ -3867,7 +4049,7 @@ async function loadStock(){
     </tr>`;
   }).join('');
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
-    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th><th>Action</th></tr></thead>
+    <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">Physical / available</th><th>Status</th><th>Action</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
   filterStockRows(document.getElementById('stockSearch')?.value);
 }
@@ -3968,6 +4150,8 @@ document.addEventListener('keydown',event=>{
       closeInventoryDeleteModal();
     }else if(!document.getElementById('customerDeleteModal').classList.contains('hidden')){
       closeCustomerDeleteModal();
+    }else if(!document.getElementById('orderActionModal').classList.contains('hidden')){
+      closeOrderActionModal();
     }
   }
 });
@@ -4053,6 +4237,12 @@ function renderCustomerDetail(){
     <td><span class="stock-status ${order.payment==='credit'?'uncounted':'stable'}">${order.payment}</span></td>
     <td class="amount">₹${order.total.toLocaleString('en-IN')}</td>
   </tr>`).join('');
+  const fulfilmentOrders=(c.fulfilment_orders||[]).map(order=>`<tr>
+    <td>${dayLabel((order.created_at||'').slice(0,10))}<div class="muted">${escHtml(order.order_id)}</div></td>
+    <td>${(order.items||[]).map(item=>`${escHtml(item.canonical)} <span class="muted">(${fmtNum(item.qty)} ${escHtml(item.unit)})</span>`).join('<br>')}</td>
+    <td><span class="order-status ${escHtml(order.status)}">${escHtml(orderStatusLabel(order.status))}</span></td>
+    <td class="amount">₹${Number(order.total||0).toLocaleString('en-IN')}</td>
+  </tr>`).join('');
   return `<div class="customer-profile"><div class="customer-avatar">${initials}</div><div>
       <h3>${escHtml(c.name||'Unnamed')}</h3><p>${escHtml(c.phone)} · Customer since ${(c.created_at||'').slice(0,10)||'—'} · ${c.order_count||0} orders</p></div>
       <div class="customer-profile-actions"><button onclick="toggleCustomerEdit(true)"
@@ -4076,7 +4266,10 @@ function renderCustomerDetail(){
         class="customer-reminder-button rounded-lg">
         <span class="material-symbols-outlined">notifications</span><span>Send reminder</span>
       </button></div>`:''}
-    <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Orders</div><span class="text-xs text-slate-500">₹${(c.total_sales||0).toLocaleString('en-IN')} lifetime sales</span></div>
+    <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Active fulfilment</div><button class="text-xs font-semibold text-emerald-700" onclick="showTab('orders')">Open order queue</button></div>
+    <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Created</th><th>Products</th><th>Status</th><th class="amount">Total</th></tr></thead>
+      <tbody>${fulfilmentOrders||'<tr><td colspan="4" class="muted">No fulfilment orders yet.</td></tr>'}</tbody></table></div>
+    <div class="mb-2 mt-6 flex items-center justify-between"><div class="font-semibold">Completed sales</div><span class="text-xs text-slate-500">₹${(c.total_sales||0).toLocaleString('en-IN')} lifetime sales</span></div>
     <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Date</th><th>Products</th><th>Payment</th><th class="amount">Total</th></tr></thead>
       <tbody>${orders||'<tr><td colspan="4" class="muted">No linked orders yet.</td></tr>'}</tbody></table></div>
     <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Credit history</div><span class="text-xs text-slate-500">${c.open_dues.length} open entries</span></div>
@@ -4176,6 +4369,247 @@ async function confirmCustomerDelete(){
     confirmButton.disabled=false; cancelButton.disabled=false;
     confirmButton.textContent='Try again';
   }
+}
+
+// ---------- Orders & fulfilment ----------
+const ORDER_UI={lines:[{}],customers:[]};
+function orderProductOptions(selected=''){
+  return '<option value="">Select product</option>'+STATE.catalogue.map(s=>
+    `<option value="${escHtml(s.sku_id)}" ${s.sku_id===selected?'selected':''}>${escHtml(s.canonical)}</option>`
+  ).join('');
+}
+function renderOrderLines(){
+  const host=document.getElementById('orderLines'); if(!host) return;
+  host.innerHTML=ORDER_UI.lines.map((line,index)=>`
+    <div class="order-line-grid">
+      <label>Product<select onchange="selectOrderProduct(${index},this.value)">${orderProductOptions(line.sku_id||'')}</select></label>
+      <label>Quantity<input type="number" min="0.001" step="any" value="${escHtml(line.qty||'')}" oninput="ORDER_UI.lines[${index}].qty=this.value"></label>
+      <label>Unit<input type="text" value="${escHtml(line.unit||'')}" placeholder="bori" oninput="ORDER_UI.lines[${index}].unit=this.value"></label>
+      <label>Rate<input type="number" min="0" step="0.01" value="${escHtml(line.rate||'')}" placeholder="catalogue" oninput="ORDER_UI.lines[${index}].rate=this.value"></label>
+      <button class="order-line-remove" aria-label="Remove item" onclick="removeOrderLine(${index})"><span class="material-symbols-outlined">close</span></button>
+    </div>`).join('');
+}
+function addOrderLine(){ ORDER_UI.lines.push({}); renderOrderLines(); }
+function selectOrderProduct(index,skuId){
+  const line=ORDER_UI.lines[index]; if(!line) return;
+  line.sku_id=skuId;
+  const sku=STATE.byId[skuId];
+  if(sku && !line.unit) line.unit=sku.default_unit||'';
+  renderOrderLines();
+}
+function removeOrderLine(index){
+  if(ORDER_UI.lines.length===1){ ORDER_UI.lines=[{}]; }
+  else ORDER_UI.lines.splice(index,1);
+  renderOrderLines();
+}
+function toggleOrderCredit(){
+  document.getElementById('orderDeadlineLabel')?.classList.toggle(
+    'hidden',document.getElementById('orderPayment')?.value!=='credit');
+}
+function toggleOrderAddress(){
+  const delivery=document.getElementById('orderFulfilment')?.value==='delivery';
+  document.getElementById('orderAddressLabel')?.classList.toggle('hidden',!delivery);
+}
+function toggleOrderComposer(force){
+  const panel=document.getElementById('orderComposer'); if(!panel) return;
+  const open=typeof force==='boolean'?force:panel.classList.contains('hidden');
+  panel.classList.toggle('hidden',!open);
+  if(open){
+    ORDER_UI.lines=[{}]; renderOrderLines(); toggleOrderCredit(); toggleOrderAddress();
+  }
+}
+function orderStatusLabel(status){
+  return String(status||'').replaceAll('_',' ').replace(/\b\w/g,c=>c.toUpperCase());
+}
+function orderNextAction(order){
+  const actions={
+    draft:['Confirm order','confirm'],
+    awaiting_confirmation:['Confirm order','confirm'],
+    partially_available:['Confirm backorder','backorder'],
+    confirmed:['Allocate stock','stock_allocated'],
+    stock_allocated:['Ready for dispatch','ready_for_dispatch'],
+    ready_for_dispatch:['Mark out for delivery','out_for_delivery'],
+    out_for_delivery:['Mark delivered','delivered'],
+    delivery_failed:['Ready for reattempt','ready_for_dispatch'],
+  };
+  return actions[order.status]||null;
+}
+function renderOrders(rows){
+  const host=document.getElementById('ordersBody'); if(!host) return;
+  if(!rows.length){ host.innerHTML='<div class="p-8 text-center text-sm text-slate-500">No matching orders yet.</div>'; return; }
+  host.innerHTML=rows.map(order=>{
+    const next=orderNextAction(order);
+    const canCancel=['draft','awaiting_confirmation','partially_available','confirmed','stock_allocated','ready_for_dispatch','delivery_failed'].includes(order.status);
+    const items=(order.items||[]).map(item=>`<tr>
+      <td><div class="font-semibold">${escHtml(item.canonical)}</div>${item.availability_status!=='available'?`<div class="order-availability">${escHtml(orderStatusLabel(item.availability_status))}</div>`:''}</td>
+      <td>${fmtNum(item.qty)} ${escHtml(item.unit)}</td>
+      <td>₹${Number(item.rate||0).toLocaleString('en-IN')} / ${escHtml(item.rate_unit||item.unit)}</td>
+      <td>₹${Number(item.total||0).toLocaleString('en-IN')}</td>
+    </tr>`).join('');
+    const delivery=order.delivery||{};
+    return `<article class="order-card">
+      <div class="order-card-head">
+        <div><div class="order-card-id">${escHtml(order.order_id)} · ${escHtml(order.customer?.name||'Customer')}</div>
+          <div class="order-card-meta">${escHtml(order.customer?.phone||'')} · ${escHtml(order.fulfilment_method)} · ${escHtml(order.payment)}${order.requested_delivery_on?' · '+escHtml(order.requested_delivery_on):''}</div></div>
+        <span class="order-status ${escHtml(order.status)}">${escHtml(orderStatusLabel(order.status))}</span>
+      </div>
+      <table class="order-items"><tbody>${items}</tbody></table>
+      <div class="order-card-foot">
+        <div><div class="text-xs text-slate-500">Order total</div><div class="text-lg font-black">₹${Number(order.total||0).toLocaleString('en-IN')}</div></div>
+        <div class="order-actions">
+          ${next?`<button class="order-action primary" onclick="requestOrderAction('${escHtml(order.order_id)}','${next[1]}')">${escHtml(next[0])}</button>`:''}
+          ${canCancel?`<button class="order-action danger" onclick="requestOrderAction('${escHtml(order.order_id)}','cancelled')">Cancel order</button>`:''}
+        </div>
+      </div>
+      ${order.fulfilment_method==='delivery'?`<details>
+        <summary class="px-4 py-3 text-sm text-slate-600">Delivery details · ${escHtml(orderStatusLabel(delivery.status||'unscheduled'))}</summary>
+        <div class="delivery-editor">
+          <label>Scheduled<input id="deliveryDate-${escHtml(order.order_id)}" type="datetime-local" value="${escHtml((delivery.scheduled_for||'').slice(0,16))}"></label>
+          <label>Driver<input id="deliveryDriver-${escHtml(order.order_id)}" value="${escHtml(delivery.driver_name||'')}" placeholder="Driver name"></label>
+          <label>Vehicle<input id="deliveryVehicle-${escHtml(order.order_id)}" value="${escHtml(delivery.vehicle||'')}" placeholder="Tata Ace · MH 01…"></label>
+          <button class="order-action primary" onclick="saveDelivery('${escHtml(order.order_id)}')">Save delivery</button>
+        </div>
+      </details>`:''}
+    </article>`;
+  }).join('');
+}
+async function loadOrders(){
+  const filter=document.getElementById('orderStatusFilter')?.value||'';
+  try{
+    const [orders,customers]=await Promise.all([
+      api('/api/orders'+(filter?'?status='+encodeURIComponent(filter):'')),
+      api('/api/customers')
+    ]);
+    ORDER_UI.customers=customers.customers||[];
+    const select=document.getElementById('orderCustomer');
+    if(select){
+      const current=select.value;
+      select.innerHTML='<option value="">Select customer</option>'+ORDER_UI.customers.map(c=>
+        `<option value="${escHtml(c.customer_id)}">${escHtml(c.name)} · ${escHtml(c.phone)}</option>`).join('');
+      if(current) select.value=current;
+    }
+    const active=(orders.orders||[]).filter(o=>!['delivered','cancelled'].includes(o.status)).length;
+    const ready=(orders.orders||[]).filter(o=>o.status==='ready_for_dispatch').length;
+    document.getElementById('orderCounts').textContent=`${active} active · ${ready} ready to dispatch · ${(orders.orders||[]).length} shown`;
+    renderOrders(orders.orders||[]);
+  }catch(e){ toast(e.message,false); }
+}
+async function createManualOrder(){
+  const button=document.getElementById('createOrderButton');
+  const fulfilment=document.getElementById('orderFulfilment').value;
+  const items=ORDER_UI.lines.map(line=>({
+    sku_id:line.sku_id,qty:Number(line.qty),unit:line.unit||undefined,
+    rate:line.rate!==''&&line.rate!=null?Number(line.rate):undefined,
+    rate_unit:line.unit||undefined,
+  })).filter(line=>line.sku_id&&line.qty>0);
+  const payload={
+    customer_id:document.getElementById('orderCustomer').value,
+    payment:document.getElementById('orderPayment').value,
+    payment_deadline:document.getElementById('orderDeadline').value||undefined,
+    fulfilment_method:fulfilment,
+    delivery_address:fulfilment==='delivery'?document.getElementById('orderAddress').value:'',
+    requested_delivery_on:document.getElementById('orderDeliveryDate').value||undefined,
+    notes:document.getElementById('orderNotes').value,
+    request_id:'manual_'+Date.now()+'_'+Math.random().toString(36).slice(2,8),
+    items,
+  };
+  button.disabled=true; button.textContent='Creating…';
+  try{
+    const order=await api('/api/orders',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    toast(`${order.order_id} draft created`);
+    toggleOrderComposer(false); await loadOrders();
+  }catch(e){ toast(e.message,false); }
+  finally{ button.disabled=false; button.textContent='Create draft'; }
+}
+let ORDER_ACTION_TARGET=null;
+function requestOrderAction(orderId,action){
+  if(!['cancelled','delivered','backorder'].includes(action)){
+    advanceOrder(orderId,action); return;
+  }
+  const copy={
+    cancelled:{
+      title:'Cancel this order?', icon:'cancel',
+      message:`${orderId} will leave the fulfilment queue and its reserved stock will be released.`,
+      button:'Cancel order',
+    },
+    delivered:{
+      title:'Mark this order delivered?', icon:'task_alt',
+      message:`${orderId} will become a completed sale. Stock, customer credit, and the ledger will be updated exactly once.`,
+      button:'Mark delivered',
+    },
+    backorder:{
+      title:'Confirm with a stock shortage?', icon:'inventory',
+      message:`${orderId} has unavailable stock. Confirming keeps the shortage visible and reserves only what is currently available.`,
+      button:'Confirm backorder',
+    },
+  }[action];
+  ORDER_ACTION_TARGET={orderId,action};
+  document.getElementById('orderActionTitle').textContent=copy.title;
+  document.getElementById('orderActionIcon').textContent=copy.icon;
+  document.getElementById('orderActionMessage').textContent=copy.message;
+  document.getElementById('orderActionConfirm').textContent=copy.button;
+  document.getElementById('orderActionError').classList.add('hidden');
+  const modal=document.getElementById('orderActionModal');
+  modal.classList.remove('hidden'); modal.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>document.getElementById('orderActionCancel').focus());
+}
+function closeOrderActionModal(){
+  const button=document.getElementById('orderActionConfirm');
+  if(button.disabled) return;
+  const modal=document.getElementById('orderActionModal');
+  modal.classList.add('hidden'); modal.setAttribute('aria-hidden','true');
+  ORDER_ACTION_TARGET=null;
+}
+async function confirmOrderAction(){
+  if(!ORDER_ACTION_TARGET) return;
+  const target=ORDER_ACTION_TARGET;
+  const button=document.getElementById('orderActionConfirm');
+  const cancel=document.getElementById('orderActionCancel');
+  const error=document.getElementById('orderActionError');
+  button.disabled=true; cancel.disabled=true; error.classList.add('hidden');
+  const label=button.textContent; button.textContent='Working…';
+  try{
+    await advanceOrder(target.orderId,target.action,false);
+    button.disabled=false; cancel.disabled=false; button.textContent=label;
+    closeOrderActionModal();
+  }catch(e){
+    error.textContent=e.message||'Order update failed.';
+    error.classList.remove('hidden');
+    button.disabled=false; cancel.disabled=false; button.textContent='Try again';
+  }
+}
+async function advanceOrder(orderId,action,showError=true){
+  try{
+    if(action==='confirm'||action==='backorder'){
+      await api(`/api/orders/${encodeURIComponent(orderId)}/confirm`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({allow_backorder:action==='backorder'})
+      });
+    }else{
+      await api(`/api/orders/${encodeURIComponent(orderId)}/transition`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({status:action})
+      });
+    }
+    toast(`${orderId} · ${orderStatusLabel(action==='backorder'?'confirmed':action)}`);
+    await loadOrders();
+  }catch(e){
+    if(showError){ toast(e.message,false); return; }
+    throw e;
+  }
+}
+async function saveDelivery(orderId){
+  try{
+    await api(`/api/orders/${encodeURIComponent(orderId)}/delivery`,{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        scheduled_for:document.getElementById(`deliveryDate-${orderId}`).value||null,
+        driver_name:document.getElementById(`deliveryDriver-${orderId}`).value,
+        vehicle:document.getElementById(`deliveryVehicle-${orderId}`).value,
+      })
+    });
+    toast('Delivery details saved'); await loadOrders();
+  }catch(e){ toast(e.message,false); }
 }
 // ---------- Today ----------
 async function loadToday(){

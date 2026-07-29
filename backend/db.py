@@ -122,6 +122,102 @@ CREATE TABLE IF NOT EXISTS payments (
 CREATE INDEX IF NOT EXISTS payments_user_customer
     ON payments(user_id, customer_id);
 
+-- Orders are promises, not stock movements. Confirmed orders reserve stock;
+-- the existing event ledger changes only when an order is delivered.
+CREATE TABLE IF NOT EXISTS orders (
+    user_id              TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    order_id             TEXT NOT NULL,
+    customer_id          TEXT NOT NULL,
+    status               TEXT NOT NULL DEFAULT 'draft',
+    source               TEXT NOT NULL DEFAULT 'manual',
+    payment              TEXT NOT NULL DEFAULT 'cash',
+    payment_deadline     TEXT,
+    fulfilment_method    TEXT NOT NULL DEFAULT 'delivery',
+    delivery_address     TEXT NOT NULL DEFAULT '',
+    requested_delivery_on TEXT,
+    notes                TEXT NOT NULL DEFAULT '',
+    subtotal             NUMERIC NOT NULL DEFAULT 0,
+    gst_total            NUMERIC NOT NULL DEFAULT 0,
+    total                NUMERIC NOT NULL DEFAULT 0,
+    request_id           TEXT,
+    sale_event_ids       JSONB NOT NULL DEFAULT '[]'::jsonb,
+    created_at           TEXT NOT NULL,
+    updated_at           TEXT NOT NULL,
+    PRIMARY KEY (user_id, order_id),
+    UNIQUE (user_id, request_id),
+    FOREIGN KEY (user_id, customer_id)
+        REFERENCES customers(user_id, customer_id)
+);
+CREATE INDEX IF NOT EXISTS orders_user_status
+    ON orders(user_id, status, created_at);
+CREATE INDEX IF NOT EXISTS orders_user_customer
+    ON orders(user_id, customer_id, created_at);
+
+CREATE TABLE IF NOT EXISTS order_items (
+    user_id             TEXT NOT NULL,
+    order_id            TEXT NOT NULL,
+    line_id             TEXT NOT NULL,
+    sku_id              TEXT NOT NULL,
+    canonical           TEXT NOT NULL,
+    qty                 NUMERIC NOT NULL,
+    unit                TEXT NOT NULL,
+    rate                NUMERIC NOT NULL,
+    rate_unit           TEXT NOT NULL,
+    gst_rate            NUMERIC NOT NULL DEFAULT 0,
+    subtotal            NUMERIC NOT NULL DEFAULT 0,
+    gst_amount          NUMERIC NOT NULL DEFAULT 0,
+    total               NUMERIC NOT NULL DEFAULT 0,
+    requested_base      NUMERIC NOT NULL DEFAULT 0,
+    reserved_base       NUMERIC NOT NULL DEFAULT 0,
+    availability_status TEXT NOT NULL DEFAULT 'available',
+    PRIMARY KEY (user_id, order_id, line_id),
+    FOREIGN KEY (user_id, order_id)
+        REFERENCES orders(user_id, order_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id, sku_id)
+        REFERENCES skus(user_id, sku_id)
+);
+CREATE INDEX IF NOT EXISTS order_items_user_sku
+    ON order_items(user_id, sku_id);
+
+CREATE TABLE IF NOT EXISTS order_status_history (
+    row_id      BIGSERIAL PRIMARY KEY,
+    user_id     TEXT NOT NULL,
+    order_id    TEXT NOT NULL,
+    from_status TEXT,
+    to_status   TEXT NOT NULL,
+    note        TEXT NOT NULL DEFAULT '',
+    source      TEXT NOT NULL DEFAULT 'manual',
+    changed_at  TEXT NOT NULL,
+    FOREIGN KEY (user_id, order_id)
+        REFERENCES orders(user_id, order_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS order_history_user_order
+    ON order_status_history(user_id, order_id, row_id);
+
+CREATE TABLE IF NOT EXISTS deliveries (
+    user_id          TEXT NOT NULL,
+    delivery_id      TEXT NOT NULL,
+    order_id         TEXT NOT NULL,
+    status           TEXT NOT NULL DEFAULT 'unscheduled',
+    provider         TEXT NOT NULL DEFAULT 'manual',
+    provider_order_id TEXT NOT NULL DEFAULT '',
+    tracking_url     TEXT NOT NULL DEFAULT '',
+    scheduled_for    TEXT,
+    address          TEXT NOT NULL DEFAULT '',
+    driver_name      TEXT NOT NULL DEFAULT '',
+    driver_phone     TEXT NOT NULL DEFAULT '',
+    vehicle          TEXT NOT NULL DEFAULT '',
+    proof_note       TEXT NOT NULL DEFAULT '',
+    created_at       TEXT NOT NULL,
+    updated_at       TEXT NOT NULL,
+    PRIMARY KEY (user_id, delivery_id),
+    UNIQUE (user_id, order_id),
+    FOREIGN KEY (user_id, order_id)
+        REFERENCES orders(user_id, order_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS deliveries_user_status
+    ON deliveries(user_id, status, scheduled_for);
+
 -- Read and written whole, never queried by field: a JSONB bag is the honest
 -- representation, and it avoids a migration every time the matcher learns a
 -- new kind of prior.

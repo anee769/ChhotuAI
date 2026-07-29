@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+from contextlib import contextmanager
 from datetime import date, datetime
 from pathlib import Path
 from typing import Optional
@@ -69,6 +70,13 @@ class Repo:
     def delete_sku(self, sku_id: str) -> bool: ...
     def update_customer(self, customer_id: str, phone: str, name: str) -> dict: ...
     def delete_customer(self, customer_id: str) -> bool: ...
+    def orders(self) -> list: ...
+    def order(self, order_id: str) -> Optional[dict]: ...
+    def create_order(self, order: dict) -> dict: ...
+    def update_order(self, order_id: str, mutator) -> dict: ...
+    def delivery_for_order(self, order_id: str) -> Optional[dict]: ...
+    def upsert_delivery(self, order_id: str, patch: dict) -> dict: ...
+    def reservation_guard(self): ...
     def load_learning(self) -> dict: ...
     def upsert_learning(self, patch: dict) -> None: ...
     def seed_learning(self, seed: dict) -> None: ...
@@ -84,13 +92,18 @@ class JsonRepo(Repo):
         # Files locally, Postgres when DATABASE_URL is set. Both speak the same
         # two primitives, so nothing below this line changes between them.
         self._store = store.make_store(self.dir)
-        self._lock = threading.Lock()
+        # Order fulfilment writes its sale events while the order document is
+        # held for an atomic status transition. A re-entrant lock lets that
+        # nested append use the same repository without deadlocking.
+        self._lock = threading.RLock()
         self._catalogue = self._read("catalogue.json", default=[])
         self._by_sku = {s["sku_id"]: s for s in self._catalogue}
         self._events = self._read("events.json", default=[])
         self._customers = self._read("customers.json", default=[])
         self._receivables = self._read("receivables.json", default=[])
         self._payments = self._read("payments.json", default=[])
+        self._orders = self._read("orders.json", default=[])
+        self._deliveries = self._read("deliveries.json", default=[])
         self._learning = self._continuous_learning()
         self._knowledge_graph = self._read(
             "knowledge_graph.json", default={"entities": [], "edges": []})
@@ -137,6 +150,8 @@ class JsonRepo(Repo):
             self._customers = self._store.read("customers.json", [])
             self._receivables = self._store.read("receivables.json", [])
             self._payments = self._store.read("payments.json", [])
+            self._orders = self._store.read("orders.json", [])
+            self._deliveries = self._store.read("deliveries.json", [])
             self._config = self._store.read(
                 "config.json", {"gst_default": 18, "gst_by_family": {}})
             self._learning = self._continuous_learning()
@@ -210,6 +225,10 @@ class JsonRepo(Repo):
     def delete_sku(self, sku_id: str) -> bool:
         """Delete an unused product without rewriting ledger history."""
         if self.events_for_sku(sku_id):
+            return False
+        if any(item.get("sku_id") == sku_id
+               for order in self._orders
+               for item in order.get("items") or []):
             return False
 
         def _delete(catalogue):
@@ -405,6 +424,8 @@ class JsonRepo(Repo):
             return False
         if any(p.get("customer_id") == customer_id for p in self._payments):
             return False
+        if any(o.get("customer_id") == customer_id for o in self._orders):
+            return False
 
         removed = False
 
@@ -460,3 +481,87 @@ class JsonRepo(Repo):
         with self._lock:
             self._payments, row = self._store.mutate("payments.json", [], _add)
             return row
+
+    # ---- customer orders / fulfilment ---------------------------------
+    def orders(self) -> list:
+        return [dict(row) for row in self._orders]
+
+    def order(self, order_id: str) -> Optional[dict]:
+        row = next((row for row in self._orders
+                    if row.get("order_id") == order_id), None)
+        return dict(row) if row else None
+
+    def create_order(self, order: dict) -> dict:
+        """Insert one durable order, idempotently by request_id."""
+        def _create(rows):
+            request_id = str(order.get("request_id") or "")
+            if request_id:
+                existing = next((r for r in rows
+                                 if r.get("request_id") == request_id), None)
+                if existing:
+                    return dict(existing)
+            row = dict(order)
+            row.setdefault("order_id", _next_id(rows, "order_id", "ord"))
+            row.setdefault("items", [])
+            row.setdefault("history", [])
+            rows.append(row)
+            return dict(row)
+
+        with self._lock:
+            self._orders, row = self._store.mutate("orders.json", [], _create)
+        return row
+
+    def update_order(self, order_id: str, mutator) -> dict:
+        """Atomically mutate an order in the local document backend."""
+        def _update(rows):
+            row = next((r for r in rows if r.get("order_id") == order_id), None)
+            if not row:
+                raise ValueError("order not found")
+            mutator(row)
+            return dict(row)
+
+        with self._lock:
+            self._orders, row = self._store.mutate("orders.json", [], _update)
+        return row
+
+    def delivery_for_order(self, order_id: str) -> Optional[dict]:
+        row = next((r for r in self._deliveries
+                    if r.get("order_id") == order_id), None)
+        return dict(row) if row else None
+
+    def upsert_delivery(self, order_id: str, patch: dict) -> dict:
+        def _upsert(rows):
+            row = next((r for r in rows if r.get("order_id") == order_id), None)
+            now = datetime.now().isoformat(timespec="seconds")
+            if not row:
+                row = {
+                    "delivery_id": _next_id(rows, "delivery_id", "del"),
+                    "order_id": order_id,
+                    "status": "unscheduled",
+                    "provider": "manual",
+                    "provider_order_id": "",
+                    "tracking_url": "",
+                    "scheduled_for": None,
+                    "address": "",
+                    "driver_name": "",
+                    "driver_phone": "",
+                    "vehicle": "",
+                    "proof_note": "",
+                    "created_at": now,
+                }
+                rows.append(row)
+            row.update(patch)
+            row["updated_at"] = now
+            return dict(row)
+
+        with self._lock:
+            self._deliveries, row = self._store.mutate(
+                "deliveries.json", [], _upsert)
+        return row
+
+    @contextmanager
+    def reservation_guard(self):
+        # The JSON repository is local/test-only; one re-entrant process lock
+        # gives it the same check-and-reserve boundary as PostgreSQL.
+        with self._lock:
+            yield

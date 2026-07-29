@@ -33,9 +33,11 @@ import clock
 import learning as LEARN
 import nlp
 import crm
+import orderbook
 from repo import JsonRepo
 import sqlrepo
 import auth
+import db
 import documents
 import samvaad_runtime
 import presentations
@@ -46,6 +48,13 @@ DATA = ROOT / "data"
 FRONTEND_ASSETS = ROOT / "frontend" / "assets"
 
 app = FastAPI(title="Chhotu.ai — Awaaz se hisaab")
+
+
+@app.on_event("startup")
+def _ensure_relational_schema():
+    """Apply additive CREATE/ALTER statements before serving a deployment."""
+    if db.is_configured():
+        db.init_schema()
 
 # The ledger is now per-user, but 113 call sites across this file,
 # conversation.py, crm.py and learning.py say `repo.something`. Rather than
@@ -972,6 +981,78 @@ def send_customer_reminder(customer_id: str):
         raise HTTPException(502, f"Reminder could not be sent: {str(e)[:160]}")
 
 
+# ---------------------------------------------------------------------------
+# Customer orders / reservations / fulfilment
+# ---------------------------------------------------------------------------
+def _order_http_error(exc: orderbook.OrderError):
+    status = 404 if exc.code in ("order_not_found", "item_not_found") else 409 \
+        if exc.code in ("invalid_transition", "stock_not_allocated") else 400
+    raise HTTPException(status, {
+        "code": exc.code, "message": str(exc), **exc.details,
+    })
+
+
+@app.get("/api/orders")
+def orders(status: str = "", customer_id: str = ""):
+    rows = orderbook.list_orders(
+        repo, status=status.strip(), customer_id=customer_id.strip())
+    counts = {name: 0 for name in orderbook.STATUSES}
+    for row in orderbook.list_orders(repo):
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    return {"orders": rows, "counts": counts}
+
+
+@app.post("/api/orders")
+def create_order(payload: dict = Body(...)):
+    try:
+        return orderbook.create(repo, payload, source="manual")
+    except orderbook.OrderError as exc:
+        _order_http_error(exc)
+
+
+@app.get("/api/orders/{order_id}")
+def get_order(order_id: str):
+    try:
+        return orderbook.get(repo, order_id)
+    except orderbook.OrderError as exc:
+        _order_http_error(exc)
+
+
+@app.post("/api/orders/{order_id}/confirm")
+def confirm_order(order_id: str, payload: dict = Body(default={})):
+    try:
+        raw_backorder = payload.get("allow_backorder")
+        allow_backorder = (
+            raw_backorder if isinstance(raw_backorder, bool)
+            else str(raw_backorder or "").strip().lower()
+            in {"1", "true", "yes", "haan", "ha"}
+        )
+        return orderbook.confirm(
+            repo, order_id,
+            allow_backorder=allow_backorder,
+            source="manual")
+    except orderbook.OrderError as exc:
+        _order_http_error(exc)
+
+
+@app.post("/api/orders/{order_id}/transition")
+def transition_order(order_id: str, payload: dict = Body(...)):
+    try:
+        return orderbook.transition(
+            repo, order_id, payload.get("status", ""),
+            note=str(payload.get("note") or ""), source="manual")
+    except orderbook.OrderError as exc:
+        _order_http_error(exc)
+
+
+@app.patch("/api/orders/{order_id}/delivery")
+def update_order_delivery(order_id: str, payload: dict = Body(...)):
+    try:
+        return orderbook.update_delivery(repo, order_id, payload)
+    except orderbook.OrderError as exc:
+        _order_http_error(exc)
+
+
 def _stock_view(sku: dict, det: dict) -> dict:
     if det["qty"] == L.UNCOUNTED:
         return {"display": "abhi tak gina nahi", "uncounted": True,
@@ -1051,10 +1132,12 @@ def _low_stock_items(target_repo=None, *, lookback_days: int = 30,
 def stock(as_of: str = None):
     events = repo.all_events()
     ao = L._d(as_of) if as_of else None
+    reservations = orderbook.stock_rows(repo) if not as_of else {}
     rows = []
     for sku in repo.load_catalogue():
         det = L._stock_detail(sku, events, ao)
         attrs = sku.get("attributes") or {}
+        reservation = reservations.get(sku["sku_id"], {})
         rows.append({"sku_id": sku["sku_id"], "canonical": sku["canonical"],
                      "family": sku["family"], "brand": attrs.get("brand"),
                      "type": attrs.get("type") or (
@@ -1064,6 +1147,12 @@ def stock(as_of: str = None):
                      "cost_price": sku.get("opening_cost_per_kg"),
                      "selling_rate": attrs.get("selling_rate"),
                      "gst_rate": sku.get("gst_rate"),
+                     "reserved_base": reservation.get("reserved_base", 0),
+                     "available_base": reservation.get("available_base"),
+                     "base_unit": reservation.get("base_unit"),
+                     "reserved_display": reservation.get("reserved_display", 0),
+                     "available_display": reservation.get("available_display"),
+                     "display_unit": reservation.get("display_unit"),
                      **_stock_view(sku, det)})
     return {"as_of": (as_of or clock.today().isoformat()), "rows": rows}
 

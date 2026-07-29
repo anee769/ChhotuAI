@@ -43,12 +43,13 @@ supported language and does not need to learn conventional ERP screens.
 The primary assistant is a multilingual Sarvam Samvaad v6 voice-to-voice
 agent. It maintains context for the active job, supports interruptions,
 supports the complete language set available to Sarvam AI Agents—including
-mixed-language conversations—and calls 27 grounded HTTP tools for:
+mixed-language conversations—and calls grounded HTTP tools for:
 
 - shop profile and catalogue queries;
 - stock checks, product search, item details, low-stock alerts, and stock value;
 - sales, incoming purchases, and physical stock counts;
 - customer accounts, outstanding dues, and payment recording;
+- multi-item customer order drafts, confirmation, status, and cancellation;
 - daily, weekly, monthly, and custom-period business summaries;
 - top-selling, slow-moving, and margin-ranked products;
 - product creation, editing, and safe deletion;
@@ -102,6 +103,20 @@ its clean starting state.
 - GST invoice PDF generation and short-lived, token-protected document links.
 - Incoming purchase and supplier-invoice flows that update catalogue cost and
   add confirmed delivered quantities to the event ledger.
+
+### Orders and fulfilment
+
+- Multi-item customer orders created manually or through Chhotu.
+- Draft-first workflow with explicit confirmation before stock reservation.
+- Separate physical, reserved, and available stock so two orders cannot promise
+  the same inventory.
+- Validated progression from confirmed to allocated, ready, out for delivery,
+  and delivered, with cancellation and failed-delivery paths.
+- Manual driver, vehicle, schedule, and delivery-address management.
+- A delivered order creates the existing sale and credit records exactly once;
+  creating or confirming an order does not prematurely reduce physical stock.
+- Open and completed fulfilment orders appear on the customer account.
+- Provider-neutral delivery records are ready for a future carrier adapter.
 
 ### Customers, credit, and collection
 
@@ -162,6 +177,7 @@ Delivery status is checked before the UI or agent claims success.
 | Invoice | Digitize supplier invoices, resolve matches, calculate landed cost, and add confirmed stock |
 | Inventory | Search stock, review count/status/cost, and manage the catalogue |
 | Customers | Search accounts, review dues and receipts, record payments, and send reminders |
+| Orders | Create multi-item orders, reserve stock, prepare dispatches, and track delivery |
 | Today | Review the day’s sale, margin, cash/credit split, and individual sale lines |
 | Dashboard | Review trends, inventory value, outstanding money, low stock, and frozen capital |
 | Settings | Maintain company and billing details |
@@ -179,6 +195,8 @@ flowchart LR
     Ledger --> DB[("PostgreSQL / Neon")]
     API --> Sarvam["Sarvam STT, TTS, chat, documents"]
     API --> Twilio["Twilio WhatsApp"]
+    API --> Orders["Orders, reservations and fulfilment"]
+    Orders --> Ledger
     Tools --> Preview["Short-lived bill and summary presentation"]
     Preview --> UI
 ```
@@ -229,6 +247,8 @@ PostgreSQL is the operational database. A Neon PostgreSQL URL works directly.
 | `customers` | Customer identity and contact details |
 | `receivables` | Credit created by sales |
 | `payments` | Immutable customer payment receipts |
+| `orders`, `order_items`, `order_status_history` | Customer promises, item snapshots, reservations, and status audit |
+| `deliveries` | Manual/own-fleet or external-provider delivery metadata |
 | `learning` | Per-shop aliases, priors, and corrections |
 | `knowledge_entities`, `knowledge_edges` | Explainable tenant-specific aliases and product relationships |
 | `user_config` | Shop, GSTIN, address, and operating settings |
@@ -401,10 +421,12 @@ and a daily reminder cron. Before production deployment:
 | `backend/conversation.py` | Legacy/fallback conversational transaction controller |
 | `backend/matcher.py` | Alias, substring, SKU, fuzzy, and learned product resolution |
 | `backend/crm.py` | Customer accounts, FIFO credit allocation, and payment history |
+| `backend/orderbook.py` | Order totals, reservations, status transitions, and exactly-once fulfilment |
 | `backend/notify.py` | Bills, summaries, reminders, PDFs, and delivery verification |
 | `backend/sarvam_client.py` | Sarvam STT, TTS, chat, and document intelligence |
 | `frontend/index.html` | Complete responsive single-page operating interface |
 | `docs/samvaad-setup.md` | Generated Samvaad v6 prompt and tool setup |
+| `docs/order-fulfilment-roadmap.md` | Orders, delivery, calling, restocking, and invoice roadmap |
 
 ## Current limitations
 
@@ -413,6 +435,9 @@ and a daily reminder cron. Before production deployment:
 - Costing is last-purchase/replacement-cost based, not FIFO or weighted average.
 - The current tenancy model is owner-centric; staff roles and granular
   permissions are not implemented.
+- External delivery booking is not enabled yet. Phase 1 uses manual/own-fleet
+  tracking; a provider adapter follows after vehicle coverage and commercial
+  API access are confirmed.
 - Warehouse bins, barcode scanning, supplier accounts, purchase orders,
   returns/credit notes, and offline synchronization are not yet implemented.
 - Samvaad tool configuration is committed manually in its console and must stay

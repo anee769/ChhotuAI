@@ -75,6 +75,14 @@ def accounts(repo) -> list:
         pays_by.setdefault(p["customer_id"], []).append(dict(p))
 
     customer_orders = orders_by_customer(repo)
+    workflow_orders = {}
+    if hasattr(repo, "orders"):
+        for order in repo.orders():
+            workflow_orders.setdefault(order.get("customer_id"), []).append(order)
+        for rows in workflow_orders.values():
+            rows.sort(
+                key=lambda row: (row.get("created_at") or "", row["order_id"]),
+                reverse=True)
     out = []
     for cid, customer in customers.items():
         recs = sorted(recs_by.get(cid, []), key=lambda r: (r["deadline"], r["created_at"]))
@@ -108,6 +116,7 @@ def accounts(repo) -> list:
             # Keep every receipt as its own immutable row. Totals remain derived.
             "payments": customer_payments,
             "orders": orders,
+            "fulfilment_orders": workflow_orders.get(cid, []),
             "order_count": len(orders),
             "total_sales": round(sum(order["total"] for order in orders), 2),
             "last_order_on": orders[0]["occurred_on"] if orders else None,

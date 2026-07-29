@@ -39,6 +39,7 @@ class FakeRepo:
         self.catalogue = json.loads(path.read_text(encoding="utf-8"))
         self.by_id = {r["sku_id"]: r for r in self.catalogue}
         self.events, self._customers, self._recv, self._pay = [], [], [], []
+        self._orders, self._deliveries = [], []
         self.learning = {"aliases_learned": [], "attribute_priors": [],
                          "unit_priors": [], "corrections": []}
         self._learning_state = "continuous"
@@ -107,6 +108,10 @@ class FakeRepo:
         self._customers.append(row)
         return row
 
+    def customer_by_phone(self, phone):
+        norm = self.normalize_phone(phone)
+        return next((c for c in self._customers if c["phone"] == norm), None)
+
     def receivables(self):
         return list(self._recv)
 
@@ -126,6 +131,44 @@ class FakeRepo:
                "customer_id": customer_id, "amount": round(float(amount), 2),
                "paid_on": paid_on, "note": note, "created_at": paid_on}
         self._pay.append(row)
+        return row
+
+    # --- customer orders ------------------------------------------------
+    def orders(self):
+        return list(self._orders)
+
+    def order(self, order_id):
+        return next((o for o in self._orders if o["order_id"] == order_id), None)
+
+    def create_order(self, order):
+        if order.get("request_id"):
+            existing = next((o for o in self._orders
+                             if o.get("request_id") == order["request_id"]), None)
+            if existing:
+                return existing
+        row = dict(order, order_id=f"ord_{len(self._orders) + 1:04d}")
+        self._orders.append(row)
+        return row
+
+    def update_order(self, order_id, mutator):
+        row = self.order(order_id)
+        if not row:
+            raise ValueError("order not found")
+        mutator(row)
+        return row
+
+    def delivery_for_order(self, order_id):
+        return next((d for d in self._deliveries
+                     if d["order_id"] == order_id), None)
+
+    def upsert_delivery(self, order_id, patch):
+        row = self.delivery_for_order(order_id)
+        if not row:
+            row = {"delivery_id": f"del_{len(self._deliveries) + 1:04d}",
+                   "order_id": order_id, "status": "unscheduled",
+                   "provider": "manual"}
+            self._deliveries.append(row)
+        row.update(patch)
         return row
 
 
@@ -177,6 +220,57 @@ class AgentToolTests(unittest.TestCase):
                     out = fn(self.repo, USER, {})
                     self.assertIsInstance(out, dict)
                     json.dumps(out)
+
+    def test_voice_order_keeps_multiple_items_in_one_draft(self):
+        customer = self.repo.upsert_customer("9876543210", "Pankaj Sharma")
+        out = self.call(
+            "create_order_draft",
+            customer_id=customer["customer_id"],
+            fulfilment_method="delivery",
+            delivery_address="Site 4, Pune",
+            payment="cash",
+            request_id="voice-order-1",
+            items=[
+                {"sku_id": CEMENT_PPC, "qty": 5, "unit": "bori", "rate": 420},
+                {"sku_id": TMT_12, "qty": 1, "unit": "tonne", "rate": 62000},
+            ],
+        )
+
+        self.assertTrue(out["created"])
+        self.assertEqual(len(out["items"]), 2)
+        self.assertTrue(out["requires_confirmation"])
+        self.assertEqual(len(self.repo.orders()), 1)
+        self.assertFalse(any(e["type"] == "sale" for e in self.repo.events))
+
+    def test_voice_order_reports_unknown_line_and_creates_nothing(self):
+        customer = self.repo.upsert_customer("9876543210", "Pankaj Sharma")
+        out = self.call(
+            "create_order_draft",
+            customer_id=customer["customer_id"],
+            fulfilment_method="pickup",
+            items=[{"item": "Moon bricks", "qty": 10, "unit": "piece"}],
+        )
+
+        self.assertFalse(out["created"])
+        self.assertIn("Moon bricks", out["unavailable"])
+        self.assertEqual(self.repo.orders(), [])
+
+    def test_confirm_order_reserves_only_after_explicit_tool_call(self):
+        customer = self.repo.upsert_customer("9876543210", "Pankaj Sharma")
+        draft = self.call(
+            "create_order_draft",
+            customer_id=customer["customer_id"],
+            fulfilment_method="pickup",
+            request_id="voice-order-2",
+            items=[{"sku_id": CEMENT_PPC, "qty": 5, "unit": "bori"}],
+        )
+
+        confirmed = self.call("confirm_order", order_id=draft["order_id"])
+
+        self.assertTrue(confirmed["confirmed"])
+        self.assertEqual(confirmed["order"]["status"], "confirmed")
+        self.assertGreater(
+            confirmed["order"]["items"][0]["reserved_base"], 0)
 
     # --- reads -----------------------------------------------------------
     def test_profile_counts_the_shop(self):

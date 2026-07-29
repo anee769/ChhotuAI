@@ -23,8 +23,8 @@ Do line se zyada nahi, kyunki jawab bola jaata hai, padha nahi jaata.
 
 CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
 `add_customer`, `customer_account`, `record_sale`, `record_payment`,
-`show_bill` aur `send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
-script mein hona chahiye.
+`create_order_draft`, `list_orders`, `show_bill` aur `send_bill` ke JSON
+arguments mein customer ka naam HAMESHA English Latin script mein hona chahiye.
 Caller naam Hindi, English ya kisi bhi script mein bole, pehle us naam ko
 awaaz ke hisaab se Latin letters mein transliterate karo. Translate, correct
 ya naya spelling invent mat karo.
@@ -110,6 +110,25 @@ Kaam karne se pehle:
 - WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
+CUSTOMER ORDER AUR SALE ALAG HAIN:
+- Customer saamaan mangwa raha hai par maal abhi handover/deliver nahi hua, to
+  `record_sale` MAT chalao. Saare items ko ek `create_order_draft` call mein
+  bhejo. Ek hi customer request ko alag-alag orders mein mat todo.
+- Draft ke tool facts se customer, har item, quantity, rate, total, delivery
+  address/date aur availability dohrao. Saaf haan milne ke baad hi
+  `confirm_order` chalao. Confirmation stock reserve karti hai, sale nahi.
+- Tool `partially_available` ya shortages de to ise chhupao mat. Kaunsa item
+  kam hai batao. `allow_backorder` sirf explicit approval par true bhejo.
+- Status poochha ho to `get_order_status`; list chahiye to `list_orders`.
+- Status ko kabhi skip mat karo. Valid sequence `confirmed`,
+  `stock_allocated`, `ready_for_dispatch`, `out_for_delivery`, `delivered` hai.
+  Failed delivery ko `delivery_failed` karo. Backend invalid transition roke
+  to apni taraf se success mat bolo.
+- `delivered` karne par backend existing sale, stock aur credit ledger exactly
+  once likhta hai. Us order ke items ko alag se `record_sale` mat chalao.
+- Cancel karne se pehle order number aur customer dohra kar explicit haan lo,
+  phir `cancel_order` chalao.
+
 APP PREVIEW AUR WHATSAPP SEND ALAG KAAM HAIN:
 - Bill tayyar ho jaaye to pehle `show_bill` chalao. Isse bill sirf Chhotu.ai
   app ki screen par dikhega, bheja nahi jayega.
@@ -175,9 +194,9 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 
 ## Auth
 
-The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 28 tools — and rotating it later becomes one edit rather than 28.
+The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 35 tools — and rotating it later becomes one edit rather than 35.
 
-The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 28 times. Check the Value dropdown points at your stored secret and move on.
+The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 35 times. Check the Value dropdown points at your stored secret and move on.
 
 The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header, so the endpoint accepts the secret two ways:
 
@@ -188,7 +207,7 @@ The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header
 
 Either is accepted; pick whichever the console lets you configure cleanly. The cURLs below keep the header in place so the console prefills the header *name* — the placeholder is not a real secret, so set the value in Auth and delete the header afterwards.
 
-## Tools (28)
+## Tools (35)
 
 Each tool POSTs to its own named path under `/api/agent/tool/`. Identity is in the URL variables and the body contains only direct agent-filled arguments. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
 
@@ -270,12 +289,48 @@ The body must contain only the fields listed below, directly at the top level. M
 | `start` | Text | Shuru ki date, YYYY-MM-DD. |
 | `end` | Text | Aakhri date, YYYY-MM-DD. |
 
+**`cancel_order`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `order_id` | Text | Backend se mila exact order id, jaise ord_0007. Kabhi andaaza mat lagao. |
+| `note` | Text | Status change ya cancellation ka reason. |
+
 **`check_stock`**
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
+
+**`confirm_order`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `order_id` | Text | Backend se mila exact order id, jaise ord_0007. Kabhi andaaza mat lagao. |
+| `allow_backorder` | Text | true sirf tab jab caller ne kam stock ke baad bhi backorder explicitly approve kiya ho. |
+
+**`create_order_draft`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
+| `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
+| `items` | Text | Multiple bill ya order lines ka JSON array. Har line mein item ya exact sku_id, qty, unit, rate aur optional rate_unit. Ek customer ke saare bole hue items isi ek array mein bhejo. Single item ho to flat fields bhi chalenge. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
+| `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
+| `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
+| `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
+| `rate` | Text | Ek unit ka daam, rupaye mein. |
+| `rate_unit` | Text | Rate kis unit ka hai, jaise bori ya tonne. |
+| `payment` | Text | cash ya credit. |
+| `payment_deadline` | Text | Udhaar kab tak, YYYY-MM-DD. |
+| `fulfilment_method` | Text | delivery ya pickup. |
+| `delivery_address` | Text | Customer ka poora delivery address. |
+| `requested_delivery_on` | Text | Maangi hui delivery date YYYY-MM-DD. |
+| `notes` | Text | Order ya delivery ka chhota operational note. |
+| `request_id` | Text | Har confirm kiye kaam ke liye naya id. Dobara koshish par wahi id, taaki do baar na likhe. |
 
 **`customer_account`**
 
@@ -291,12 +346,27 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `days_before` | Text | Deadline se kitne din pehle. |
 
+**`get_order_status`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `order_id` | Text | Backend se mila exact order id, jaise ord_0007. Kabhi andaaza mat lagao. |
+
 **`item_details`**
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
+
+**`list_orders`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `status` | Text | Exact grounded order status. Status sequence skip mat karo. |
+| `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
+| `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 
 **`low_stock`**
 
@@ -384,7 +454,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | `rate` | Text | Ek unit ka daam, rupaye mein. |
 | `payment` | Text | cash ya credit. |
 | `payment_deadline` | Text | Udhaar kab tak, YYYY-MM-DD. |
-| `items` | Text | Multiple bill lines ka JSON array. Har line mein item ya exact sku_id, qty, unit aur rate. Single item ho to khaali chhodkar flat item, qty, unit aur rate fields bharo. |
+| `items` | Text | Multiple bill ya order lines ka JSON array. Har line mein item ya exact sku_id, qty, unit, rate aur optional rate_unit. Ek customer ke saare bole hue items isi ek array mein bhejo. Single item ho to flat fields bhi chalenge. |
 
 **`send_reminders`**
 
@@ -412,7 +482,13 @@ The body must contain only the fields listed below, directly at the top level. M
 | `rate` | Text | Ek unit ka daam, rupaye mein. |
 | `payment` | Text | cash ya credit. |
 | `payment_deadline` | Text | Udhaar kab tak, YYYY-MM-DD. |
-| `items` | Text | Multiple bill lines ka JSON array. Har line mein item ya exact sku_id, qty, unit aur rate. Single item ho to khaali chhodkar flat item, qty, unit aur rate fields bharo. |
+| `items` | Text | Multiple bill ya order lines ka JSON array. Har line mein item ya exact sku_id, qty, unit, rate aur optional rate_unit. Ek customer ke saare bole hue items isi ek array mein bhejo. Single item ho to flat fields bhi chalenge. |
+
+**`show_order`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `order_id` | Text | Backend se mila exact order id, jaise ord_0007. Kabhi andaaza mat lagao. |
 
 **`show_summary`**
 
@@ -456,6 +532,14 @@ The body must contain only the fields listed below, directly at the top level. M
 | `brand` | Text | Brand ka naam. |
 | `type` | Text |  |
 | `gst_rate` | Text |  |
+
+**`update_order_status`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `order_id` | Text | Backend se mila exact order id, jaise ord_0007. Kabhi andaaza mat lagao. |
+| `status` | Text | Exact grounded order status. Status sequence skip mat karo. |
+| `note` | Text | Status change ya cancellation ka reason. |
 
 **`update_shop_profile`**
 
@@ -558,6 +642,31 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/business_summary?caller
 }
 ```
 
+### `cancel_order`
+
+Explicit confirmation ke baad open order cancel karke reservation release karo. args: order_id, note.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/cancel_order?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"order_id": "{{order_id}}", "note": "{{note}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "updated": true,
+  "order": {
+    "order_id": "ord_0007",
+    "status": "cancelled"
+  }
+}
+```
+
 ### `check_stock`
 
 Ek item ka current stock. args: item (jo caller ne bola, Hindi, English ya mix) ya exact sku_id.
@@ -580,6 +689,59 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/check_stock?caller={{ca
   "qty": 190,
   "unit": "bori",
   "low": false
+}
+```
+
+### `confirm_order`
+
+Order summary sunane aur explicit haan milne ke baad draft order confirm karke stock reserve karo. args: order_id; allow_backorder sirf explicit approval par true.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/confirm_order?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"order_id": "{{order_id}}", "allow_backorder": "{{allow_backorder}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "updated": true,
+  "confirmed": true,
+  "order": {
+    "order_id": "ord_0007",
+    "status": "confirmed"
+  }
+}
+```
+
+### `create_order_draft`
+
+Customer ka delivery ya pickup order DRAFT banao; sale abhi record mat karo. Saare items ek hi call ke items array mein bhejo. args: customer/customer_id/customer_phone (naam English Latin script mein), items [{item ya sku_id, qty, unit, rate, rate_unit}], payment (cash/credit), payment_deadline credit ke liye, fulfilment_method (delivery/pickup), delivery_address delivery ke liye, requested_delivery_on, notes, request_id. Tool ke summary ke baad caller se confirmation zaroor lo.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/create_order_draft?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"customer": "{{customer}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}", "items": "{{items}}", "item": "{{item}}", "sku_id": "{{sku_id}}", "qty": "{{qty}}", "unit": "{{unit}}", "rate": "{{rate}}", "rate_unit": "{{rate_unit}}", "payment": "{{payment}}", "payment_deadline": "{{payment_deadline}}", "fulfilment_method": "{{fulfilment_method}}", "delivery_address": "{{delivery_address}}", "requested_delivery_on": "{{requested_delivery_on}}", "notes": "{{notes}}", "request_id": "{{request_id}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "created": true,
+  "order_id": "ord_0007",
+  "status": "draft",
+  "customer": "Pankaj Sharma",
+  "total": 80776,
+  "requires_confirmation": true,
+  "unavailable": []
 }
 ```
 
@@ -646,6 +808,34 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/dues?caller={{caller_nu
       "days_until_deadline": 8
     }
   ]
+}
+```
+
+### `get_order_status`
+
+Order number se current grounded order aur delivery status batao. args: order_id.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/get_order_status?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"order_id": "{{order_id}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "found": true,
+  "order": {
+    "order_id": "ord_0007",
+    "status": "ready_for_dispatch",
+    "delivery": {
+      "status": "ready"
+    }
+  }
 }
 ```
 
@@ -731,6 +921,35 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/list_inventory?caller={
       "stock": 190,
       "low": false,
       "selling_rate": 420
+    }
+  ]
+}
+```
+
+### `list_orders`
+
+Orders dhoondo. Optional args: status, customer/customer_id/customer_phone. customer value English Latin script mein bhejo.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/list_orders?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"status": "{{status}}", "customer": "{{customer}}", "customer_id": "{{customer_id}}", "customer_phone": "{{customer_phone}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "found": true,
+  "count": 1,
+  "orders": [
+    {
+      "order_id": "ord_0007",
+      "status": "confirmed",
+      "total": 80776
     }
   ]
 }
@@ -1104,6 +1323,43 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/show_bill?caller={{call
 }
 ```
 
+### `show_order`
+
+Ek order ka item, customer, total, reservation aur delivery detail dikhao. args: exact order_id.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/show_order?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"order_id": "{{order_id}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "found": true,
+  "order": {
+    "order_id": "ord_0007",
+    "status": "draft",
+    "total": 80776,
+    "customer": {
+      "name": "Pankaj Sharma"
+    },
+    "items": [
+      {
+        "canonical": "UltraTech PPC Cement 50kg",
+        "qty": 10,
+        "unit": "bori",
+        "availability_status": "available"
+      }
+    ]
+  }
+}
+```
+
 ### `show_summary`
 
 Business summary app ki screen par dikhao, WhatsApp par mat bhejo. args: period, days, start, end.
@@ -1245,6 +1501,31 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/update_item?caller={{ca
   "changed": [
     "rate"
   ]
+}
+```
+
+### `update_order_status`
+
+Order ko backend ke valid agle status mein badlo. Kabhi status skip mat karo. args: order_id, status, note. Valid flow: confirmed → stock_allocated → ready_for_dispatch → out_for_delivery → delivered; failed delivery ke liye delivery_failed.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/update_order_status?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"order_id": "{{order_id}}", "status": "{{status}}", "note": "{{note}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "updated": true,
+  "order": {
+    "order_id": "ord_0007",
+    "status": "stock_allocated"
+  }
 }
 ```
 
