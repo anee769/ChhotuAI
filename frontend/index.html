@@ -3519,6 +3519,26 @@ async function startSamvaadConversation(tab){
     }
   };
   if(session.samvaad.version!=null) config.version=Number(session.samvaad.version);
+  // The SDK's waitForConnect() currently treats a WebSocket in CONNECTING
+  // state as connected. Wait for Samvaad's interaction acknowledgement
+  // instead (the SDK changes state to connected/listening only after
+  // server.action.interaction_connected). This also makes an immediate
+  // server-side interaction_end fall back to the regular voice flow.
+  let startupSettled=false;
+  let resolveStartup;
+  const interactionReady=new Promise((resolve)=>{
+    resolveStartup=resolve;
+  });
+  const markInteractionReady=()=>{
+    if(startupSettled) return;
+    startupSettled=true;
+    resolveStartup({ok:true});
+  };
+  const failInteractionStartup=(error)=>{
+    if(startupSettled) return;
+    startupSettled=true;
+    resolveStartup({ok:false,error});
+  };
   const agent=new sdk.ConversationAgent({
     apiKey:'authenticated-session',
     platform:'browser',
@@ -3528,6 +3548,9 @@ async function startSamvaadConversation(tab){
     audioInterface,
     stateCallback:(next)=>{
       SAMVAAD.state=String(next||'').toLowerCase();
+      if(['connected','listening','speaking'].includes(SAMVAAD.state)){
+        markInteractionReady();
+      }
       SAMVAAD.activity='';
       setMicListening(tab,SAMVAAD.state==='listening');
       renderSamvaadConversation();
@@ -3569,6 +3592,10 @@ async function startSamvaadConversation(tab){
     },
     endCallback:async()=>{
       if(SAMVAAD.ending) return;
+      if(!startupSettled){
+        failInteractionStartup(new Error('SAMVAAD_EARLY_END'));
+        return;
+      }
       SAMVAAD.agent=null; SAMVAAD.state='idle';
       setMicListening(tab,false);
       await refreshAfterSamvaad();
@@ -3576,9 +3603,16 @@ async function startSamvaadConversation(tab){
     }
   });
   SAMVAAD.agent=agent;
-  await agent.start();
-  const connected=await agent.waitForConnect(12);
-  if(!connected) throw new Error('Samvaad se connection timeout ho gaya.');
+  const startupTimer=setTimeout(()=>{
+    failInteractionStartup(new Error('Samvaad se connection timeout ho gaya.'));
+  },12000);
+  try{
+    await agent.start();
+    const startup=await interactionReady;
+    if(!startup.ok) throw startup.error;
+  }finally{
+    clearTimeout(startupTimer);
+  }
 }
 
 // start conversation from a spoken utterance (mic)
@@ -4646,7 +4680,7 @@ async function loadToday(){
 async function speakToday(){
   showTab('sale');
   await new Promise(resolve=>requestAnimationFrame(resolve));
-  if(!SAMVAAD.agent) await startSamvaadConversation('sale');
+  if(!SAMVAAD.agent) await convStartVoice('sale','auto');
 }
 
 // ---------- Dashboard ----------
