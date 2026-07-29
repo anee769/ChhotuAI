@@ -630,6 +630,23 @@ class AgentToolTests(unittest.TestCase):
                 self.assertTrue(out["found"], out)
                 self.assertEqual(out["customer_id"], customer["customer_id"])
 
+    def test_add_customer_requires_name_and_valid_phone_then_prevents_duplicate(self):
+        missing = self.call("add_customer", name="Suresh")
+        self.assertFalse(missing["added"])
+        self.assertEqual(missing["needs"]["field"], "customer_phone")
+
+        added = self.call("add_customer", name="Suresh Patil",
+                          customer_phone="9876543210")
+        self.assertTrue(added["added"])
+        self.assertEqual(added["phone"], "+919876543210")
+        self.assertEqual(len(self.repo.customers()), 1)
+
+        duplicate = self.call("add_customer", name="Suresh Patil",
+                              customer_phone="+91 98765 43210")
+        self.assertFalse(duplicate["added"])
+        self.assertTrue(duplicate["existing"])
+        self.assertEqual(len(self.repo.customers()), 1)
+
     def test_overpayment_is_refused(self):
         self.repo.upsert_customer("9876543210", "Ramesh")
         self.call("record_sale", items=[{"item": "ppc cement", "qty": 1,
@@ -884,7 +901,7 @@ class DispatchTests(unittest.TestCase):
         self.assertIn("Pankaj Sharma", SC.INSTRUCTIONS)
         self.assertIn("Never send Devanagari", SC.PARAM_DOCS["name"][1])
         self.assertIn("Never send Devanagari", SC.PARAM_DOCS["customer"][1])
-        for tool in ("customer_account", "record_sale", "record_payment",
+        for tool in ("add_customer", "customer_account", "record_sale", "record_payment",
                      "show_bill", "send_bill"):
             self.assertIn("Latin script", agent.TOOLS[tool][1])
 

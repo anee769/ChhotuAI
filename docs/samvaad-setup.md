@@ -21,8 +21,8 @@ poochha, aur chhote jawab do. Do line se zyada nahi, kyunki jawab bola jaata
 hai, padha nahi jaata.
 
 CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
-`customer_account`, `record_sale`, `record_payment`, `show_bill` aur
-`send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
+`add_customer`, `customer_account`, `record_sale`, `record_payment`,
+`show_bill` aur `send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
 script mein hona chahiye.
 Caller naam Hindi, English ya kisi bhi script mein bole, pehle us naam ko
 awaaz ke hisaab se Latin letters mein transliterate karo. Translate, correct
@@ -78,6 +78,9 @@ diya gaya, is system ki sabse buri galti hai.
 Kaam karne se pehle:
 - Sale, purchase, payment ya stock badalne se pehle ek baar dohra kar confirm
   karo: "10 bori PPC, 420 rupaye, likh doon?"
+- Naya customer add karne se pehle poora naam aur das digit mobile number
+  dono lo, Latin script wale naam aur number ko dohra kar confirm karo, phir
+  `add_customer` tool chalao.
 - Jab caller haan kahe, ek naya `request_id` banao aur wahi us kaam ke saath
   bhejo. Agar dobara koshish karni pade to wahi purana id bhejo. System samajh
   jayega ki ye wahi entry hai aur do baar nahi likhega. Naya sauda, naya id.
@@ -156,9 +159,9 @@ nahi likhi", taaki maalik ko pata rahe ki kya hua aur kya nahi.
 
 ## Auth
 
-The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 27 tools — and rotating it later becomes one edit rather than 27.
+The console will flag `X-Agent-Secret` as a credential sitting outside Auth. Take the suggestion: move it into the **Auth** section and store the value as a secret. It is then entered once and reused, instead of being pasted in clear text into all 28 tools — and rotating it later becomes one edit rather than 28.
 
-The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 23 times. Check the Value dropdown points at your stored secret and move on.
+The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the stored secret rather than its value, so pasting prefills the Auth tab (Api Key / header / X-Agent-Secret) instead of you filling it in 28 times. Check the Value dropdown points at your stored secret and move on.
 
 The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header, so the endpoint accepts the secret two ways:
 
@@ -169,7 +172,7 @@ The Auth dropdown offers Bearer / Api Key / Basic rather than a free-form header
 
 Either is accepted; pick whichever the console lets you configure cleanly. The cURLs below keep the header in place so the console prefills the header *name* — the placeholder is not a real secret, so set the value in Auth and delete the header afterwards.
 
-## Tools (27)
+## Tools (28)
 
 Each tool POSTs to its own named path under `/api/agent/tool/`. Identity is in the URL variables and the body contains only direct agent-filled arguments. Every one runs **During conversation**, except `shop_profile`, which runs **On start**.
 
@@ -222,11 +225,18 @@ And an item this shop does not carry comes back with the shop's own trade attach
 
 The body must contain only the fields listed below, directly at the top level. Mark every one **agent-filled** using the gear icon. Do not create an `args` object. Nested fields were the failure: the model composed the right value while `{"args":{"item":"{{item}}"}}` went over the wire unchanged.
 
+**`add_customer`**
+
+| Field | Type | Description for the model |
+| --- | --- | --- |
+| `name` | Text | Naam. Customer tool mein complete customer name ko English Latin script mein transliterate karo. Never send Devanagari in a customer name field. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
+
 **`add_item`**
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `name` | Text | Item ka naam. MANDATORY for customer lookup: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in a customer name field. |
+| `name` | Text | Naam. Customer tool mein complete customer name ko English Latin script mein transliterate karo. Never send Devanagari in a customer name field. |
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -255,9 +265,9 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `name` | Text | Item ka naam. MANDATORY for customer lookup: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in a customer name field. |
+| `name` | Text | Naam. Customer tool mein complete customer name ko English Latin script mein transliterate karo. Never send Devanagari in a customer name field. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
-| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 
 **`dues`**
 
@@ -299,7 +309,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
-| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 | `amount` | Text | Kitne rupaye mile. |
 | `request_id` | Text | Har confirm kiye kaam ke liye naya id. Dobara koshish par wahi id, taaki do baar na likhe. |
 
@@ -327,7 +337,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | `rate` | Text | Ek unit ka daam, rupaye mein. |
 | `payment` | Text | cash ya credit. |
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
-| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 | `payment_deadline` | Text | Udhaar kab tak, YYYY-MM-DD. |
 | `request_id` | Text | Har confirm kiye kaam ke liye naya id. Dobara koshish par wahi id, taaki do baar na likhe. |
 
@@ -350,7 +360,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
-| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
@@ -378,7 +388,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
-| `customer_phone` | Text | Naye customer ka number, agar bataya ho. |
+| `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
@@ -422,7 +432,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | --- | --- | --- |
 | `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
-| `name` | Text | Item ka naam. MANDATORY for customer lookup: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in a customer name field. |
+| `name` | Text | Naam. Customer tool mein complete customer name ko English Latin script mein transliterate karo. Never send Devanagari in a customer name field. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
@@ -456,6 +466,30 @@ Put this in the **What the agent gets back** box. The same line for every tool:
 That box templates named fields out of the reply, so anything not named there may never reach the agent. Naming each tool's keys by hand would be 23 different strings, every one of them a chance to forget a field, and a written-out sentence there would put the canned answers straight back. So every reply also carries `facts`: the entire payload as one compact JSON string. One placeholder, no loss, and the agent still does the phrasing.
 
 If you would rather read something human while testing, `{{speak}}` gives the fallback sentence alone, but the agent then sees only that sentence and cannot answer a follow-up from the underlying numbers.
+
+### `add_customer`
+
+Naya customer list mein add karo. Confirm karne ke baad args: name English Latin script mein aur customer_phone das digit mobile number.
+
+**Request**
+
+```bash
+curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/add_customer?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
+  -H 'Content-Type: application/json' \
+  -H 'X-Agent-Secret: {{SECRET_KEY}}' \
+  -d '{"name": "{{name}}", "customer_phone": "{{customer_phone}}"}'
+```
+
+**Reply** (also delivered whole as `facts`)
+
+```json
+{
+  "added": true,
+  "customer_id": "cust_0011",
+  "name": "Suresh Patil",
+  "phone": "+919876543210"
+}
+```
 
 ### `add_item`
 

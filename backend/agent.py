@@ -786,6 +786,41 @@ def list_customers(repo, user, args):
             "speak": f"{len(rows)} customer hain, {len(owing)} ka udhaar baaki hai."}
 
 
+def add_customer(repo, user, args):
+    """Create a customer without inventing or silently overwriting identity."""
+    name = str(args.get("name") or args.get("customer") or "").strip()
+    phone = str(args.get("customer_phone") or args.get("phone") or "").strip()
+    normalised_phone = auth.normalize_phone(phone)
+    if len(name) < 2:
+        return {"added": False, "needs": {"field": "name"},
+                "speak": "Customer ka poora naam batayein."}
+    if not re.fullmatch(r"\+91\d{10}", normalised_phone):
+        return {"added": False, "needs": {"field": "customer_phone"},
+                "speak": "Customer ka das digit mobile number batayein."}
+    existing = next(
+        (row for row in repo.customers()
+         if auth.normalize_phone(row.get("phone")) == normalised_phone),
+        None,
+    )
+    if existing:
+        return {
+            "added": False,
+            "existing": True,
+            "customer_id": existing["customer_id"],
+            "name": existing.get("name"),
+            "phone": existing.get("phone"),
+            "speak": f"{existing.get('name') or name} pehle se customer list mein hai.",
+        }
+    customer = repo.upsert_customer(normalised_phone, name)
+    return {
+        "added": True,
+        "customer_id": customer["customer_id"],
+        "name": customer.get("name"),
+        "phone": customer.get("phone"),
+        "speak": f"{customer.get('name') or name} ko customer list mein add kar diya.",
+    }
+
+
 def customer_account(repo, user, args):
     ref = _customer_ref(args)
     acc, options = _customer_by_name(repo, ref)
@@ -1539,6 +1574,10 @@ TOOLS = {
                   "ya margin)."),
     "list_customers": (list_customers,
                        "Saare customer aur unka outstanding udhaar."),
+    "add_customer": (add_customer,
+                     "Naya customer list mein add karo. Confirm karne ke baad "
+                     "args: name English Latin script mein aur "
+                     "customer_phone das digit mobile number."),
     "customer_account": (customer_account,
                          "Ek customer ka hisaab: kitna udhaar baaki, kab tak. "
                          "args: name English Latin script mein, ya exact "

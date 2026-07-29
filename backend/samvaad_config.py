@@ -28,8 +28,8 @@ poochha, aur chhote jawab do. Do line se zyada nahi, kyunki jawab bola jaata
 hai, padha nahi jaata.
 
 CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
-`customer_account`, `record_sale`, `record_payment`, `show_bill` aur
-`send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
+`add_customer`, `customer_account`, `record_sale`, `record_payment`,
+`show_bill` aur `send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
 script mein hona chahiye.
 Caller naam Hindi, English ya kisi bhi script mein bole, pehle us naam ko
 awaaz ke hisaab se Latin letters mein transliterate karo. Translate, correct
@@ -85,6 +85,9 @@ diya gaya, is system ki sabse buri galti hai.
 Kaam karne se pehle:
 - Sale, purchase, payment ya stock badalne se pehle ek baar dohra kar confirm
   karo: "10 bori PPC, 420 rupaye, likh doon?"
+- Naya customer add karne se pehle poora naam aur das digit mobile number
+  dono lo, Latin script wale naam aur number ko dohra kar confirm karo, phir
+  `add_customer` tool chalao.
 - Jab caller haan kahe, ek naya `request_id` banao aur wahi us kaam ke saath
   bhejo. Agar dobara koshish karni pade to wahi purana id bhejo. System samajh
   jayega ki ye wahi entry hai aur do baar nahi likhega. Naya sauda, naya id.
@@ -166,6 +169,7 @@ PARAMS = {
     "shop_profile": (),
     "list_inventory": (),
     "list_customers": (),
+    "add_customer": ("name", "customer_phone"),
     "stock_value": (),
     "check_stock": ("item", "sku_id"),
     "item_details": ("item", "sku_id"),
@@ -213,9 +217,9 @@ PARAM_DOCS = {
     "sku_id": ("Text", "Exact SKU id, sirf tab bharo jab kisi pehle tool ne "
                "ye id di ho. Andaaza mat lagao."),
     "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),
-    "name": ("Text", "Item ka naam. MANDATORY for customer lookup: transliterate "
-             "the complete customer name into English Latin script before the "
-             "tool call. Never send Devanagari in a customer name field."),
+    "name": ("Text", "Naam. Customer tool mein complete customer name ko "
+             "English Latin script mein transliterate karo. Never send "
+             "Devanagari in a customer name field."),
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
     "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
     "rate": ("Text", "Ek unit ka daam, rupaye mein."),
@@ -227,7 +231,8 @@ PARAM_DOCS = {
                  "translate, correct or invent the name. Required for credit."),
     "customer_id": ("Text", "Exact customer id, sirf pehle tool se mila ho "
                     "to bharo. Andaaza mat lagao."),
-    "customer_phone": ("Text", "Naye customer ka number, agar bataya ho."),
+    "customer_phone": ("Text", "Customer ka 10-digit mobile number. Country "
+                       "code optional hai."),
     "payment_deadline": ("Text", "Udhaar kab tak, YYYY-MM-DD."),
     "occurred_on": ("Text", "Kis din ka sauda: aaj, kal, parso ya YYYY-MM-DD. "
                             "Khaali chhodo to aaj."),
@@ -289,6 +294,10 @@ EXAMPLES = {
         "count": 10, "owing_count": 4,
         "customers": [{"name": "Ramesh Kumar", "phone": "+919876543210",
                        "outstanding": 42000.0, "next_deadline": "2026-08-05"}]}),
+    "add_customer": ({"name": "Suresh Patil",
+                      "customer_phone": "9876543210"}, {
+        "added": True, "customer_id": "cust_0011",
+        "name": "Suresh Patil", "phone": "+919876543210"}),
     "customer_account": ({"name": "Ramesh"}, {
         "found": True, "name": "Ramesh Kumar", "outstanding": 42000.0,
         "overdue": False,
@@ -452,8 +461,8 @@ def main() -> None:
           "rather than {0}.\n".format(len(tools)))
     print("The header in each cURL below carries `{{SECRET_KEY}}`, the *name* of the "
           "stored secret rather than its value, so pasting prefills the Auth tab "
-          "(Api Key / header / X-Agent-Secret) instead of you filling it in 23 "
-          "times. Check the Value dropdown points at your stored secret and "
+          "(Api Key / header / X-Agent-Secret) instead of you filling it in "
+          f"{len(tools)} times. Check the Value dropdown points at your stored secret and "
           "move on.\n\nThe Auth dropdown offers Bearer / Api Key / Basic rather than a "
           "free-form header, so the endpoint accepts the secret two ways:\n")
     print("| Auth Type | What to set |")

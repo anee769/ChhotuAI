@@ -185,6 +185,21 @@ def analytics(repo, as_of: date, days: int = 30) -> dict:
         growth = round((new_customers - previous_new) / previous_new * 100, 1)
     elif new_customers:
         growth = 100.0
+    acquisition_trend = []
+    for offset in range(7, -1, -1):
+        bucket_end = as_of - timedelta(days=offset * 7)
+        bucket_start = bucket_end - timedelta(days=6)
+        acquisition_trend.append({
+            "start": bucket_start.isoformat(),
+            "end": bucket_end.isoformat(),
+            "new_customers": sum(
+                1 for row in rows
+                if created_on(row)
+                and bucket_start <= created_on(row) <= bucket_end
+            ),
+        })
+    outstanding_credit = round(
+        sum(float(row.get("outstanding") or 0) for row in rows), 2)
     return {
         "period_days": days,
         "new_customers": new_customers,
@@ -196,6 +211,10 @@ def analytics(repo, as_of: date, days: int = 30) -> dict:
         "average_order_value": round(
             sum(row["total_sales"] for row in buyers)
             / max(1, sum(row["order_count"] for row in buyers)), 2),
+        "outstanding_credit": outstanding_credit,
+        "open_credit_accounts": sum(
+            1 for row in rows if float(row.get("outstanding") or 0) > 0),
+        "acquisition_trend": acquisition_trend,
         "top_customers": top_customers,
         "best_products": best_products,
     }

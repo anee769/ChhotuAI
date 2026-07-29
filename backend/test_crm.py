@@ -75,6 +75,10 @@ class CRMAnalyticsTests(unittest.TestCase):
         self.assertEqual(out["average_order_value"], 200)
         self.assertEqual(out["best_products"][0]["revenue"], 600)
         self.assertEqual(out["top_customers"][0]["name"], "Repeat Buyer")
+        self.assertEqual(len(out["acquisition_trend"]), 8)
+        self.assertEqual(out["acquisition_trend"][-1]["new_customers"], 1)
+        self.assertEqual(out["outstanding_credit"], 0)
+        self.assertEqual(out["open_credit_accounts"], 0)
 
 
 if __name__ == "__main__":

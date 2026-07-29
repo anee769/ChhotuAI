@@ -851,7 +851,14 @@
   .dashboard-metrics {
     display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px;
   }
+  .dashboard-customer-metrics {
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:18px;
+  }
   .dashboard-grid { display:grid; grid-template-columns:1.15fr .85fr; gap:16px; }
+  .dashboard-chart-grid {
+    display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-top:16px;
+  }
+  .dashboard-chart { position:relative; min-height:250px; padding:18px 20px 20px; }
   .section-card-head {
     display:flex; align-items:start; justify-content:space-between; gap:14px;
     padding:18px 20px; border-bottom:1px solid #d8dbe0;
@@ -861,7 +868,8 @@
 
   @media (max-width: 760px) {
     .customer-metrics { grid-template-columns:1fr; }
-    .dashboard-metrics, .dashboard-grid { grid-template-columns:1fr; }
+    .dashboard-metrics, .dashboard-customer-metrics,
+    .dashboard-grid, .dashboard-chart-grid { grid-template-columns:1fr; }
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
     .customer-create-panel { grid-template-columns:1fr; }
@@ -1647,12 +1655,12 @@
     <div><div id="shopName">Sharma Building Materials</div><span>Admin Console</span></div>
   </div>
   <div class="nav-label">Workspace</div>
-  <button class="tab-btn active" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
+  <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
+  <button class="tab-btn" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
   <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span>Invoice</span></button>
   <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span>Inventory</span></button>
   <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span>Customers</span></button>
   <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span>Today</span></button>
-  <button class="tab-btn" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
   <div class="nav-footer">
     <button class="tab-btn" data-tab="settings" onclick="showTab('settings')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
     <button onclick="logout()" id="logoutBtn"><span class="material-symbols-outlined">logout</span><span>Logout</span></button>
@@ -1692,7 +1700,7 @@
     <div class="main-column space-y-6">
 
   <!-- UNIFIED VOICE ENTRY -->
-  <section id="tab-sale" class="tabpane">
+  <section id="tab-sale" class="tabpane hidden">
     <div id="voiceUI-sale"></div>
   </section>
 
@@ -1788,8 +1796,6 @@
       <button id="createCustomerButton" onclick="createCustomer()"
         class="btn-primary px-5 py-3">Save customer</button>
     </div>
-    <div id="customerSummary" class="customer-metrics"></div>
-    <div id="customerInsights" class="crm-insights"></div>
     <div id="customerBody"></div>
   </section>
 
@@ -1809,15 +1815,16 @@
   </section>
 
   <!-- DASHBOARD -->
-  <section id="tab-dashboard" class="tabpane hidden">
+  <section id="tab-dashboard" class="tabpane">
     <div class="page-heading">
       <div>
         <div class="eyebrow">Business overview</div>
         <h1>Dashboard</h1>
-        <p>Margin, receivables and capital locked in stock.</p>
+        <p>Sales health, customer growth, receivables and capital in one view.</p>
       </div>
     </div>
     <div id="dashboardMetrics" class="dashboard-metrics"></div>
+    <div id="crmDashboardMetrics" class="dashboard-customer-metrics"></div>
     <div class="dashboard-grid">
       <div class="card overflow-hidden">
         <div class="section-card-head">
@@ -1833,6 +1840,29 @@
         </div>
         <div id="moneyBody" class="p-5"></div>
       </div>
+    </div>
+    <div class="dashboard-chart-grid">
+      <div class="card overflow-hidden">
+        <div class="section-card-head">
+          <div><h2>Customer acquisition</h2><p>New customers · rolling 8 weeks</p></div>
+          <span class="material-symbols-outlined text-slate-400">person_add</span>
+        </div>
+        <div class="dashboard-chart"><canvas id="acquisitionChart"></canvas></div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="section-card-head">
+          <div><h2>Best-selling products</h2><p>Sales value · last 30 days</p></div>
+          <span class="material-symbols-outlined text-slate-400">leaderboard</span>
+        </div>
+        <div class="dashboard-chart"><canvas id="productMixChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card overflow-hidden mt-4">
+      <div class="section-card-head">
+        <div><h2>Most valuable customers</h2><p>Ranked by recorded lifetime sales</p></div>
+        <span class="material-symbols-outlined text-slate-400">workspace_premium</span>
+      </div>
+      <div id="topCustomersBody"></div>
     </div>
     <div class="card overflow-hidden mt-4">
       <div class="section-card-head">
@@ -2067,6 +2097,7 @@ async function boot(){
     if(cfg.silence_timeout_s) SILENCE_TIMEOUT_MS=Number(cfg.silence_timeout_s)*1000;
     if(cfg.shop_name){ document.getElementById('shopName').textContent=cfg.shop_name;
       document.getElementById('heroShop').textContent=cfg.shop_name; } }catch(e){}
+  showTab('dashboard');
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
@@ -3137,7 +3168,7 @@ function filterStockRows(q){
   });
 }
 // ---------- Customers / credit ----------
-let CRM_CUSTOMERS=[], CRM_SELECTED=null, CRM_ANALYTICS={};
+let CRM_CUSTOMERS=[], CRM_SELECTED=null;
 let CUSTOMER_DELETE_TARGET=null;
 function toggleCustomerCreate(force){
   const panel=document.getElementById('customerCreatePanel');
@@ -3168,26 +3199,9 @@ async function createCustomer(){
   }
 }
 async function loadCustomers(){
-  const r=await api('/api/customers'); CRM_CUSTOMERS=r.customers||[]; CRM_ANALYTICS=r.analytics||{};
+  const r=await api('/api/customers'); CRM_CUSTOMERS=r.customers||[];
   if(!CRM_SELECTED || !CRM_CUSTOMERS.some(c=>c.customer_id===CRM_SELECTED)) CRM_SELECTED=CRM_CUSTOMERS[0]?.customer_id||null;
-  const outstanding=CRM_CUSTOMERS.reduce((n,c)=>n+c.outstanding,0);
-  const growth=CRM_ANALYTICS.acquisition_growth_pct;
-  document.getElementById('customerSummary').innerHTML=`
-    <div class="metric-tile"><div class="label">New customers · 30 days</div><div class="value">${CRM_ANALYTICS.new_customers||0}</div><div class="muted">${growth==null?'No prior comparison':`${growth>=0?'+':''}${growth}% vs previous 30 days`}</div></div>
-    <div class="metric-tile"><div class="label">Repeat buyers</div><div class="value">${CRM_ANALYTICS.repeat_buyers||0}</div><div class="muted">${CRM_ANALYTICS.repeat_rate_pct||0}% of buyers</div></div>
-    <div class="metric-tile"><div class="label">Average order value</div><div class="value">₹${(CRM_ANALYTICS.average_order_value||0).toLocaleString('en-IN')}</div><div class="muted">${CRM_ANALYTICS.active_buyers||0} active buyers</div></div>
-    <div class="metric-tile"><div class="label">Outstanding credit</div><div class="value text-amber-700">₹${outstanding.toLocaleString('en-IN')}</div><div class="muted">${CRM_CUSTOMERS.filter(c=>c.outstanding>0).length} open accounts</div></div>`;
-  renderCRMInsights();
   renderCustomerCRM(CRM_CUSTOMERS);
-}
-function renderCRMInsights(){
-  const customers=(CRM_ANALYTICS.top_customers||[]).map((row,index)=>`
-    <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.name)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.total_sales.toLocaleString('en-IN')}</b></div>`).join('');
-  const products=(CRM_ANALYTICS.best_products||[]).map((row,index)=>`
-    <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.canonical)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.revenue.toLocaleString('en-IN')}</b></div>`).join('');
-  document.getElementById('customerInsights').innerHTML=`
-    <div class="crm-insight-card"><h3>Most valuable customers</h3>${customers||'<div class="p-4 muted">Orders record hone par ranking dikhegi.</div>'}</div>
-    <div class="crm-insight-card"><h3>Best products · last 30 days</h3>${products||'<div class="p-4 muted">Recent sales ke baad ranking dikhegi.</div>'}</div>`;
 }
 function renderCustomerCRM(rows){
   const list=rows.map(c=>{
@@ -3392,9 +3406,10 @@ async function speakToday(){
 }
 
 // ---------- Dashboard ----------
-let trendChartObj=null;
+let trendChartObj=null, acquisitionChartObj=null, productMixChartObj=null;
 async function loadDashboard(){
   const d=await api('/api/dashboard');
+  const crm=d.customer_analytics||{};
   const labels=d.margin_trend.map(x=>x.date.slice(5)); const data=d.margin_trend.map(x=>x.margin);
   const riseIdx=d.margin_trend.findIndex(x=>x.date===d.steel_rise_date);
   if(trendChartObj) trendChartObj.destroy();
@@ -3412,6 +3427,12 @@ async function loadDashboard(){
     <div class="metric-tile"><div class="label">Outstanding credit</div><div class="value">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div></div>
     <div class="metric-tile"><div class="label">Inventory value</div><div class="value">₹${mp.inventory_value.toLocaleString('en-IN')}</div></div>
     <div class="metric-tile"><div class="label">Frozen capital</div><div class="value">₹${d.frozen_total.toLocaleString('en-IN')}</div></div>`;
+  const growth=crm.acquisition_growth_pct;
+  document.getElementById('crmDashboardMetrics').innerHTML=`
+    <div class="metric-tile"><div class="label">New customers · 30 days</div><div class="value">${crm.new_customers||0}</div><div class="muted">${growth==null?'No prior comparison':`${growth>=0?'+':''}${growth}% vs previous period`}</div></div>
+    <div class="metric-tile"><div class="label">Repeat buyers</div><div class="value">${crm.repeat_buyers||0}</div><div class="muted">${crm.repeat_rate_pct||0}% of buyers</div></div>
+    <div class="metric-tile"><div class="label">Average order value</div><div class="value">₹${(crm.average_order_value||0).toLocaleString('en-IN')}</div><div class="muted">${crm.active_buyers||0} active buyers</div></div>
+    <div class="metric-tile"><div class="label">Open credit accounts</div><div class="value">${crm.open_credit_accounts||0}</div><div class="muted">₹${(crm.outstanding_credit||0).toLocaleString('en-IN')} receivable</div></div>`;
   document.getElementById('moneyBody').innerHTML=`
     <div class="mb-5"><div class="text-3xl font-bold text-slate-950">₹${mp.outstanding_credit.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Outstanding udhaar (contractors)</div></div>
     <div class="mb-3"><div class="text-3xl font-bold text-emerald-800">₹${mp.inventory_value.toLocaleString('en-IN')}</div><div class="text-slate-500 text-sm">Inventory value at landed cost</div></div>
@@ -3430,6 +3451,37 @@ async function loadDashboard(){
       <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
       <tbody>${frozenRows||'<tr><td colspan="3" class="muted">No frozen stock.</td></tr>'}</tbody>
     </table></div>`;
+  const acquisitions=crm.acquisition_trend||[];
+  if(acquisitionChartObj) acquisitionChartObj.destroy();
+  acquisitionChartObj=new Chart(document.getElementById('acquisitionChart'),{
+    type:'bar',
+    data:{
+      labels:acquisitions.map(x=>new Date(`${x.end}T00:00:00`).toLocaleDateString('en-IN',{day:'numeric',month:'short'})),
+      datasets:[{label:'New customers',data:acquisitions.map(x=>x.new_customers),
+        backgroundColor:'#047857',borderRadius:6,maxBarThickness:36}]
+    },
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{grid:{display:false},ticks:{color:'#6b7280'}},
+        y:{beginAtZero:true,ticks:{precision:0,color:'#6b7280'},grid:{color:'#eef0f2'}}}}
+  });
+  const products=crm.best_products||[];
+  if(productMixChartObj) productMixChartObj.destroy();
+  productMixChartObj=new Chart(document.getElementById('productMixChart'),{
+    type:'bar',
+    data:{
+      labels:products.map(x=>x.canonical),
+      datasets:[{label:'Sales ₹',data:products.map(x=>x.revenue),
+        backgroundColor:'#111827',borderRadius:5,maxBarThickness:24}]
+    },
+    options:{indexAxis:'y',maintainAspectRatio:false,plugins:{legend:{display:false},
+      tooltip:{callbacks:{label:ctx=>` ₹${Number(ctx.raw||0).toLocaleString('en-IN')}`}}},
+      scales:{x:{beginAtZero:true,ticks:{color:'#6b7280',callback:v=>`₹${Number(v).toLocaleString('en-IN')}`},
+        grid:{color:'#eef0f2'}},y:{grid:{display:false},ticks:{color:'#374151'}}}}
+  });
+  const topCustomers=(crm.top_customers||[]).map((row,index)=>`
+    <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.name)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.total_sales.toLocaleString('en-IN')}</b></div>`).join('');
+  document.getElementById('topCustomersBody').innerHTML=
+    topCustomers||'<div class="p-5 muted">Customer orders record hone par ranking dikhegi.</div>';
 }
 
 // ---------- Settings ----------

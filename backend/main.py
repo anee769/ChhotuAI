@@ -1208,12 +1208,10 @@ def dashboard():
                 rise_date = b["occurred_on"]
                 break
 
-    # money position — outstanding credit + inventory value at landed cost
-    outstanding = sum((float(e["rate"]) *
-                       L.to_base(float(e["qty"]), e.get("unit"), catalogue_by[e["sku_id"]]))
-                      for e in events if e["type"] == "sale"
-                      and e.get("payment") == "credit" and e.get("rate")
-                      and e["sku_id"] in catalogue_by)
+    # CRM analytics also gives the current receivable balance after payments,
+    # unlike a raw sum of every historical credit sale.
+    customer_analytics = crm.analytics(repo, clock.today())
+    outstanding = customer_analytics["outstanding_credit"]
     inv_value = 0.0
     excluded = 0
     frozen = []
@@ -1243,6 +1241,7 @@ def dashboard():
                            "uncounted_excluded": excluded},
         "frozen_capital": frozen[:12],
         "frozen_total": round(sum(f["value"] for f in frozen), 0),
+        "customer_analytics": customer_analytics,
     }
 
 
