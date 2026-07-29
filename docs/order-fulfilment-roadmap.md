@@ -1,8 +1,24 @@
 # Chhotu.ai Order, Fulfilment, Restocking and Invoice Roadmap
 
 **Implementation status — 29 July 2026:** Phase 1 and Phase 2 are implemented
-in the current codebase. Later phases remain planned and are intentionally not
-silently simulated by the assistant.
+and tested on the `dev` branch. The existing shop operating system remains on
+`main`. Later phases remain planned and are intentionally not silently
+simulated by the assistant.
+
+## Release status
+
+| Area | Status | Release |
+| --- | --- | --- |
+| Existing inventory, CRM, billing, analytics and multilingual voice system | Live | `main` / production |
+| Manual customer orders, reservations and fulfilment state machine | Implemented and tested | `dev` |
+| Order-taking tools for the Sarvam agent | Implemented and contract-tested | `dev` |
+| Dev Vercel preview | Deployed and protected by Vercel authentication | `dev` |
+| Isolated Preview configuration and database | Setup pending | Before shared testing |
+| Dispatch operations, provider booking and supplier automation | Planned | Phases 3–7 |
+
+The `dev` implementation currently passes 206 backend tests. `main` remains
+unchanged until the new order lifecycle has been exercised in an isolated
+Preview environment and accepted.
 
 ## Product direction
 
@@ -22,6 +38,86 @@ The design separates four business facts:
    ledger written.
 4. **A supplier delivery is incoming stock.** A purchase order or supplier
    promise never increases stock; a confirmed goods receipt does.
+
+## Knowledge architecture: global intelligence, private shop learning
+
+Yes: every Chhotu shop/workspace has its own knowledge graph. In the database,
+that boundary is the authenticated tenant `user_id`; knowledge entities and
+edges cannot reference entities from another tenant. A phrase learned by one
+shop—such as `patla sariya → TMT 12mm`—must never silently affect another
+shop.
+
+Here, **Chhotu workspace** means a shop/warehouse tenant. It is different from
+a Sarvam platform workspace, which is only an agent-deployment container.
+
+The scalable model has two layers:
+
+### 1. Global domain taxonomy
+
+Chhotu ships a shared, versioned base of non-private industry knowledge:
+
+- product families and common attributes;
+- standard units, pack sizes and deterministic conversions;
+- common multilingual category synonyms;
+- safe product-type relationships and validation rules;
+- provider capabilities, delivery classes and generic operational concepts.
+
+This layer may suggest candidates, but it does not know a shop's catalogue,
+customers, prices, balances, sales, aliases or preferences. A global term can
+never prove that a tenant stocks a product.
+
+### 2. Workspace-local knowledge graph
+
+Each tenant graph can learn verified relationships such as:
+
+- spoken term → catalogue SKU;
+- product → preferred unit or packaging;
+- customer → repeatedly purchased product;
+- customer → delivery address or payment preference;
+- supplier → supplied SKU, lead-time band or pack convention;
+- local term → delivery vehicle/service class;
+- correction → rejected and accepted candidate.
+
+Only confirmed actions reinforce these relationships. The graph ranks,
+resolves and explains; transactional tables remain authoritative for stock,
+money, orders, deliveries, invoices and credit.
+
+### Generalising learning safely
+
+Useful patterns can eventually improve Chhotu for everybody through a
+controlled promotion pipeline:
+
+1. Collect a candidate only after repeated confirmations within a tenant.
+2. Remove tenant IDs, names, phone numbers, prices and transaction facts.
+3. Aggregate the pattern across multiple unrelated tenants.
+4. Reject conflicting, overly local or low-support patterns.
+5. Human-review the candidate before publishing a new taxonomy version.
+6. Roll out the version with provenance, confidence and rollback support.
+
+Raw tenant edges are never copied into another workspace. Customer, supplier,
+commercial and behavioral relationships always remain private. Globalisation
+is limited to anonymous domain concepts that are broadly reusable.
+
+### Knowledge roadmap
+
+1. **Current foundation:** tenant-scoped product aliases, families and units
+   stored in PostgreSQL with confidence and evidence.
+2. **Order learning:** verified customer-product and order-language edges from
+   confirmed orders.
+3. **Supplier learning:** verified supplier-SKU, packaging and lead-time edges
+   from purchase orders and goods receipts.
+4. **Delivery learning:** address/service/vehicle preferences from completed
+   deliveries, with expiry for stale patterns.
+5. **Contradiction handling:** decay, supersession and explicit correction of
+   outdated edges.
+6. **Explainability:** show why a SKU, supplier or delivery option was
+   suggested.
+7. **Taxonomy promotion:** anonymised cross-tenant candidate aggregation and
+   reviewed global releases.
+
+PostgreSQL remains the graph store for now. Its compound tenant keys,
+transactions and indexed neighbor queries are sufficient; a dedicated graph
+database is warranted only if measured multi-hop workloads exceed it.
 
 ## Target workflow
 
@@ -148,6 +244,8 @@ Official references:
 
 ### Phase 1 — Manual order and fulfilment foundation
 
+**Status: implemented on `dev`.**
+
 Goal: make orders and delivery status reliable without depending on an LLM or
 external logistics provider.
 
@@ -172,6 +270,9 @@ Exit criteria:
 - Invalid transitions return a clear error and make no changes
 
 ### Phase 2 — Customer orders through Chhotu
+
+**Status: implemented and contract-tested on `dev`; live-agent acceptance in
+the isolated Preview environment remains before release.**
 
 Goal: let the existing Sarvam assistant safely create and manage the same
 orders through tools.
@@ -207,6 +308,7 @@ Exit criteria:
 - Failed-delivery and reattempt workflow
 - Proof of delivery
 - On-time delivery, ageing and failure analytics
+- Workspace-graph reinforcement only after a delivery is completed
 
 ### Phase 4 — Inbound customer calls
 
@@ -228,6 +330,7 @@ can buy from multiple Chhotu shops.
 - Outbound supplier call tasks
 - Supplier confirmation, rate, freight and promised date
 - Partial goods receipts
+- Tenant-local supplier terminology, pack-size and lead-time learning
 
 ### Phase 6 — Invoice retrieval and reconciliation
 
@@ -259,8 +362,50 @@ can buy from multiple Chhotu shops.
 
 ## Rollout strategy
 
-1. Ship Phase 1 behind manual controls.
-2. Run the complete order lifecycle with seeded and real demo orders.
-3. Expose those same domain operations as Phase 2 tools.
-4. Enable customer calls only after tool-contract and interruption tests pass.
-5. Add one delivery provider through the adapter; retain manual fallback.
+1. Keep production on `main`; develop and validate the roadmap on `dev`.
+2. Configure Vercel Preview with copied non-data settings and a separate Neon
+   database branch. Never point routine dev testing at production data.
+3. Point a separate Sarvam agent version at the Preview tool URLs and retain
+   Twilio sandbox restrictions.
+4. Run the complete order lifecycle with seeded demo orders: draft,
+   confirmation, reservation, cancellation, dispatch and exactly-once
+   delivery-to-sale conversion.
+5. Run live multilingual agent acceptance for every Phase 2 order tool,
+   including ambiguous, unavailable and multi-item orders.
+6. Merge `dev` into `main` only after automated tests, mobile UX, tenant
+   isolation, Preview smoke tests and rollback checks pass.
+7. Enable inbound customer calls only after tool-contract, interruption,
+   consent and tenant-resolution tests pass.
+8. Add one delivery provider through the adapter; retain manual/own-fleet
+   fallback.
+9. Add supplier and invoice automation only after order and delivery telemetry
+   is stable.
+
+## Dev environment checklist
+
+- Vercel Preview deployment is generated from `dev` and requires team login.
+- Copy non-database Production variables into the Preview scope.
+- Create a Neon branch/clone and set Preview `DATABASE_URL` to that database.
+- Set `CHHOTU_URL` and `CHHOTU_PUBLIC_URL` to the Preview origin.
+- Use a separate `CHHOTU_SECRET`/agent secret for Preview.
+- Configure a separate Samvaad agent version whose tools target Preview.
+- Keep Twilio on sandbox/test recipients and prevent scheduled reminders from
+  contacting production customers.
+- Seed synthetic shops, customers, inventory, learning edges and orders.
+- Verify health, authentication, tenant isolation, tool contracts, PDFs,
+  presentation expiry and mobile layouts.
+- Document promotion/rollback steps before merging to `main`.
+
+## Merge gates for production
+
+- All automated tests pass from a clean checkout.
+- Preview health and authenticated signup/onboarding pass.
+- No Preview request reads or writes the production database.
+- All order transitions and reservations remain deterministic and idempotent.
+- Agent tools report missing, ambiguous and unavailable items without
+  hallucinating replacements.
+- Every customer-visible message requires the expected confirmation.
+- Tenant knowledge remains isolated under cross-tenant tests.
+- Mobile order, customer and dispatch screens work without clipped controls.
+- Existing inventory, CRM, billing, invoice, dashboard and Voice Entry flows
+  pass regression smoke tests.
