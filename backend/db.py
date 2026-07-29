@@ -132,6 +132,47 @@ CREATE TABLE IF NOT EXISTS learning (
     PRIMARY KEY (user_id, state)
 );
 
+-- Structured shop vocabulary. These relationships support matching and
+-- clarification only; transactional truth remains in events and receivables.
+CREATE TABLE IF NOT EXISTS knowledge_entities (
+    user_id    TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    entity_id  TEXT NOT NULL,
+    kind       TEXT NOT NULL,
+    canonical  TEXT NOT NULL,
+    ref_id     TEXT NOT NULL DEFAULT '',
+    attributes JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (user_id, entity_id)
+);
+CREATE INDEX IF NOT EXISTS knowledge_entities_user_kind
+    ON knowledge_entities(user_id, kind);
+CREATE INDEX IF NOT EXISTS knowledge_entities_user_ref
+    ON knowledge_entities(user_id, ref_id);
+
+CREATE TABLE IF NOT EXISTS knowledge_edges (
+    user_id           TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    edge_id           TEXT NOT NULL,
+    source_entity_id  TEXT NOT NULL,
+    relation          TEXT NOT NULL,
+    target_entity_id  TEXT NOT NULL,
+    confidence        NUMERIC NOT NULL,
+    evidence_count    INTEGER NOT NULL DEFAULT 1,
+    evidence          JSONB NOT NULL DEFAULT '[]'::jsonb,
+    first_seen_at     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    last_confirmed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    status             TEXT NOT NULL DEFAULT 'active',
+    PRIMARY KEY (user_id, edge_id),
+    FOREIGN KEY (user_id, source_entity_id)
+        REFERENCES knowledge_entities(user_id, entity_id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id, target_entity_id)
+        REFERENCES knowledge_entities(user_id, entity_id) ON DELETE CASCADE
+);
+CREATE INDEX IF NOT EXISTS knowledge_edges_user_source
+    ON knowledge_edges(user_id, source_entity_id, relation);
+CREATE INDEX IF NOT EXISTS knowledge_edges_user_target
+    ON knowledge_edges(user_id, target_entity_id, relation);
+
 -- Generated PDFs, held just long enough for Twilio to fetch them. Twilio
 -- pulls media from a public URL, so the token is the only thing guarding a
 -- customer's bill: 32 random bytes, and the row expires within days.

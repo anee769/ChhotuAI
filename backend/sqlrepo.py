@@ -27,6 +27,7 @@ from typing import Optional
 
 import db
 import translit
+import knowledge_graph as KG
 from learning import merge_learning, merge_seed_learning
 
 _EVENT_COLUMNS = (
@@ -271,6 +272,80 @@ class SqlRepo:
             "priors": len(L.get("attribute_priors", [])) + len(L.get("unit_priors", [])),
             "corrections": len(L.get("corrections", [])),
         }
+
+    # ---- knowledge graph ---------------------------------------------
+    def load_knowledge_graph(self) -> dict:
+        with db.connect() as conn:
+            entities = db.rows_to_dicts(conn.execute(
+                "SELECT entity_id, kind, canonical, ref_id, attributes,"
+                " created_at, updated_at FROM knowledge_entities"
+                " WHERE user_id = %s ORDER BY entity_id", (self.user_id,)))
+            edges = db.rows_to_dicts(conn.execute(
+                "SELECT edge_id, source_entity_id, relation, target_entity_id,"
+                " confidence, evidence_count, evidence, first_seen_at,"
+                " last_confirmed_at, status FROM knowledge_edges"
+                " WHERE user_id = %s ORDER BY edge_id", (self.user_id,)))
+        return {
+            "entities": [_clean_row(row) for row in entities],
+            "edges": [_clean_row(row) for row in edges],
+        }
+
+    def reinforce_knowledge(self, source: dict, relation: str, target: dict,
+                            **kwargs) -> dict:
+        with db.connect() as conn:
+            for incoming in (source, target):
+                conn.execute(
+                    "INSERT INTO knowledge_entities"
+                    " (user_id, entity_id, kind, canonical, ref_id, attributes)"
+                    " VALUES (%s,%s,%s,%s,%s,%s::jsonb)"
+                    " ON CONFLICT (user_id, entity_id) DO UPDATE SET"
+                    " canonical = EXCLUDED.canonical,"
+                    " attributes = knowledge_entities.attributes"
+                    " || EXCLUDED.attributes, updated_at = now()",
+                    (self.user_id, incoming["entity_id"], incoming["kind"],
+                     incoming["canonical"], incoming.get("ref_id") or "",
+                     json.dumps(incoming.get("attributes") or {},
+                                ensure_ascii=False)))
+            eid = KG.edge_id(source["entity_id"], relation,
+                             target["entity_id"])
+            existing = conn.execute(
+                "SELECT edge_id, source_entity_id, relation, target_entity_id,"
+                " confidence, evidence_count, evidence,"
+                " first_seen_at, last_confirmed_at, status"
+                " FROM knowledge_edges WHERE user_id = %s AND edge_id = %s"
+                " FOR UPDATE", (self.user_id, eid)).fetchone()
+            graph = {"entities": [], "edges": []}
+            if existing:
+                columns = ("edge_id", "source_entity_id", "relation",
+                           "target_entity_id", "confidence", "evidence_count",
+                           "evidence", "first_seen_at", "last_confirmed_at",
+                           "status")
+                graph["edges"].append(_clean_row(dict(zip(columns, existing))))
+            edge = KG.reinforce(
+                graph, source, relation, target,
+                evidence=kwargs.get("evidence"),
+                confidence=kwargs.get("confidence", 0.65),
+                observed_at=kwargs.get("observed_at"),
+            )
+            conn.execute(
+                "INSERT INTO knowledge_edges"
+                " (user_id, edge_id, source_entity_id, relation,"
+                " target_entity_id, confidence, evidence_count, evidence,"
+                " first_seen_at, last_confirmed_at, status)"
+                " VALUES (%s,%s,%s,%s,%s,%s,%s,%s::jsonb,%s,%s,%s)"
+                " ON CONFLICT (user_id, edge_id) DO UPDATE SET"
+                " confidence = EXCLUDED.confidence,"
+                " evidence_count = EXCLUDED.evidence_count,"
+                " evidence = EXCLUDED.evidence,"
+                " last_confirmed_at = EXCLUDED.last_confirmed_at,"
+                " status = EXCLUDED.status",
+                (self.user_id, edge["edge_id"], edge["source_entity_id"],
+                 edge["relation"], edge["target_entity_id"],
+                 edge["confidence"], edge["evidence_count"],
+                 json.dumps(edge.get("evidence") or [], ensure_ascii=False),
+                 edge["first_seen_at"], edge["last_confirmed_at"],
+                 edge["status"]))
+        return edge
 
     # ---- config --------------------------------------------------------
     def _load_config(self) -> dict:

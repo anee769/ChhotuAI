@@ -17,6 +17,7 @@ from typing import Optional
 
 import store
 import translit
+import knowledge_graph as KG
 from learning import merge_learning, merge_seed_learning
 
 DATA_DIR = Path(os.environ.get("CHHOTU_DATA_DIR",
@@ -72,6 +73,9 @@ class Repo:
     def upsert_learning(self, patch: dict) -> None: ...
     def seed_learning(self, seed: dict) -> None: ...
     def set_learning_state(self, which: str) -> None: ...
+    def reinforce_knowledge(self, source: dict, relation: str, target: dict,
+                            **kwargs) -> dict: ...
+    def load_knowledge_graph(self) -> dict: ...
 
 
 class JsonRepo(Repo):
@@ -89,6 +93,8 @@ class JsonRepo(Repo):
         self._payments = self._read("payments.json", default=[])
         self._learning_state = "day1"  # active toggle position
         self._learning = self._read("learning.json", default=self._empty_learning())
+        self._knowledge_graph = self._read(
+            "knowledge_graph.json", default={"entities": [], "edges": []})
         self._config = self._read("config.json", default={
             "gst_default": 18, "gst_by_family": {}})
         self._counter = self._max_event_num()
@@ -129,6 +135,8 @@ class JsonRepo(Repo):
             if self._learning_state == "day1":
                 self._learning = self._store.read(
                     "learning.json", self._empty_learning())
+            self._knowledge_graph = self._store.read(
+                "knowledge_graph.json", {"entities": [], "edges": []})
             self._counter = _max_event_num(self._events)
 
     def _max_event_num(self) -> int:
@@ -282,6 +290,26 @@ class JsonRepo(Repo):
             "priors": len(L.get("attribute_priors", [])) + len(L.get("unit_priors", [])),
             "corrections": len(L.get("corrections", [])),
         }
+
+    # ---- knowledge graph ----------------------------------------------
+    def load_knowledge_graph(self) -> dict:
+        return self._knowledge_graph
+
+    def reinforce_knowledge(self, source: dict, relation: str, target: dict,
+                            **kwargs) -> dict:
+        def _reinforce(graph):
+            return KG.reinforce(
+                graph, source, relation, target,
+                evidence=kwargs.get("evidence"),
+                confidence=kwargs.get("confidence", 0.65),
+                observed_at=kwargs.get("observed_at"),
+            )
+
+        with self._lock:
+            self._knowledge_graph, row = self._store.mutate(
+                "knowledge_graph.json", {"entities": [], "edges": []},
+                _reinforce)
+        return row
 
     # ---- customers / credit ledger ----
     @staticmethod

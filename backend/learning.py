@@ -12,6 +12,7 @@ Writes go through Repo.upsert_learning so persistence stays swappable.
 from __future__ import annotations
 
 from datetime import datetime
+import knowledge_graph as KG
 
 
 def merge_learning(current: dict, patch: dict) -> dict:
@@ -127,3 +128,12 @@ def record_confirmation(repo, spoken: str, chosen_sku: str, *,
 
     if patch:
         repo.upsert_learning(patch)
+    # The graph is an additive learning index. A missing graph migration must
+    # never block the existing alias memory or a confirmed ledger operation.
+    if spoken and sku and hasattr(repo, "reinforce_knowledge"):
+        try:
+            KG.record_product_confirmation(
+                repo, spoken, sku, unit=unit or "", was_tap=was_tap)
+        except Exception as exc:
+            print(f"[knowledge-graph] confirmation mirror failed: "
+                  f"{type(exc).__name__}", flush=True)
