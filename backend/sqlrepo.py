@@ -28,7 +28,7 @@ from typing import Optional
 import db
 import translit
 import knowledge_graph as KG
-from learning import merge_learning, merge_seed_learning
+from learning import merge_learning, merge_learning_sources, merge_seed_learning
 
 _EVENT_COLUMNS = (
     "event_id", "type", "sku_id", "qty", "unit", "rate", "quoted_rate",
@@ -220,18 +220,29 @@ class SqlRepo:
         return (row[0] if row else None) or _empty_learning()
 
     def learning_state(self) -> str:
-        return self._cached("learning_state", lambda: self._read_state())
+        return "continuous"
 
-    def _read_state(self) -> str:
-        cfg = self.load_config()
-        return cfg.get("learning_state", "day1")
+    def _load_continuous_learning(self) -> dict:
+        with db.connect() as conn:
+            rows = conn.execute(
+                "SELECT state, data FROM learning WHERE user_id = %s"
+                " AND state IN ('day1','day60','continuous')",
+                (self.user_id,)).fetchall()
+        by_state = {str(state): (data or _empty_learning())
+                    for state, data in rows}
+        legacy_active = self.load_config().get("learning_state", "day1")
+        legacy_other = "day60" if legacy_active == "day1" else "day1"
+        return merge_learning_sources(
+            by_state.get(legacy_other),
+            by_state.get(legacy_active),
+            by_state.get("continuous"),
+        )
 
     def load_learning(self) -> dict:
-        return self._cached(
-            "learning", lambda: self._load_learning_row(self.learning_state()))
+        return self._cached("learning", self._load_continuous_learning)
 
     def upsert_learning(self, patch: dict) -> None:
-        state = self.learning_state()
+        state = "continuous"
         with db.connect() as conn:
             row = conn.execute(
                 "SELECT data FROM learning WHERE user_id = %s AND state = %s"
@@ -246,8 +257,8 @@ class SqlRepo:
         self._invalidate("learning")
 
     def seed_learning(self, seed: dict) -> None:
-        """Fill missing baseline memories without overwriting shop learning."""
-        state = self.learning_state()
+        """Compatibility import into the continuous memory."""
+        state = "continuous"
         with db.connect() as conn:
             row = conn.execute(
                 "SELECT data FROM learning WHERE user_id = %s AND state = %s"
@@ -262,8 +273,8 @@ class SqlRepo:
         self._invalidate("learning")
 
     def set_learning_state(self, which: str) -> None:
-        self.save_config({"learning_state": "day60" if which == "day60" else "day1"})
-        self._invalidate("learning", "learning_state")
+        """Legacy no-op: learning is continuous and can no longer be reset."""
+        return None
 
     def learning_counts(self) -> dict:
         L = self.load_learning()
@@ -363,7 +374,7 @@ class SqlRepo:
 
     _SETTING_KEYS = ("shop_name", "shop_type", "gstin", "address", "phone",
                      "reply_language", "silence_timeout_s",
-                     "confirm_new_items", "learning_state")
+                     "confirm_new_items")
 
     def save_config(self, patch: dict) -> None:
         with db.connect() as conn:

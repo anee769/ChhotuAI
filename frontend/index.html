@@ -92,10 +92,6 @@
   }
   .app-header .header-tools { position:absolute; left:20px; right:20px; bottom:24px; }
   .learning-counters, .wake-control { display:none !important; }
-  .day-control {
-    justify-content:space-between; width:100%; padding:11px 12px !important;
-    border-radius:10px !important; background:#fff !important;
-  }
   .app-nav {
     position:fixed; z-index:40; left:10px; top:164px; width:248px;
     display:flex; flex-direction:column; gap:5px; padding:0;
@@ -161,7 +157,6 @@
     }
     .app-header > div { display:flex; }
     .app-header .header-tools { position:static; margin-left:auto; }
-    .day-control { width:auto; min-width:190px; }
     .app-nav {
       position:sticky; top:76px; left:auto; width:100%; overflow-x:auto;
       flex-direction:row; padding:10px 16px; background:rgba(247,249,251,.96);
@@ -210,7 +205,6 @@
   .app-header .header-tools {
     position:static; justify-self:end; display:flex !important; flex-wrap:nowrap;
   }
-  .day-control { width:auto; min-width:190px; padding:8px 11px !important; }
   .wake-control { display:grid !important; }
   .icon-button {
     width:40px; height:40px; place-items:center; border:1px solid #d4d7db;
@@ -890,7 +884,7 @@
       padding:0 max(14px,env(safe-area-inset-left));
     }
     .app-header > .topbar-inner { grid-template-columns:1fr auto; gap:12px; }
-    .brand-tagline, .day-control, .learning-counters { display:none !important; }
+    .brand-tagline, .learning-counters { display:none !important; }
     .app-nav {
       position:fixed; inset:auto 0 0 0; z-index:60;
       width:100%; height:calc(68px + env(safe-area-inset-bottom));
@@ -1788,13 +1782,6 @@
         <div><div id="cPrior" class="text-lg font-bold text-emerald-600">0</div><div class="text-[10px] uppercase text-slate-500">priors</div></div>
         <div><div id="cCorr" class="text-lg font-bold text-emerald-600">0</div><div class="text-[10px] uppercase text-slate-500">corrections</div></div>
       </div>
-      <div class="day-control flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2">
-        <span class="text-sm font-semibold text-slate-700" id="dayLabel">Day 1</span>
-        <button id="dayToggle" onclick="toggleDay()" class="relative h-7 w-14 rounded-full bg-slate-200 transition">
-          <span id="dayKnob" class="absolute left-1 top-1 h-5 w-5 rounded-full bg-white transition"></span>
-        </button>
-        <span class="text-xs text-slate-500">Day 60</span>
-      </div>
       <div class="mobile-account-menu">
         <button id="mobileAccountTrigger" class="mobile-account-trigger"
                 aria-label="Account menu" aria-expanded="false"
@@ -1848,8 +1835,8 @@
     </div>
     <div class="mt-6 grid gap-3 md:grid-cols-3">
       <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Learning mode</div>
-        <div id="heroMode" class="mt-2 text-xl font-bold text-slate-900">Day 1</div>
+        <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Shop memory</div>
+        <div class="mt-2 text-xl font-bold text-slate-900">Always learning</div>
       </div>
       <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4">
         <div class="text-[11px] uppercase tracking-[0.2em] text-slate-500">Live shop</div>
@@ -2096,20 +2083,6 @@
       </div>
     </div>
 
-    <div class="card overflow-hidden mt-4">
-      <div class="section-card-head">
-        <div><h2>Learning</h2><p>How much Chhotu has been taught so far</p></div>
-        <span class="material-symbols-outlined text-slate-400">school</span>
-      </div>
-      <div class="p-5">
-        <div class="setting-row">
-          <div><div class="setting-label">Learning state</div>
-            <div class="setting-hint" id="set-learnHint">—</div></div>
-          <button onclick="toggleDay()" class="btn-secondary px-4 py-2">Switch</button>
-        </div>
-      </div>
-    </div>
-
     <div class="mt-4 flex items-center gap-3">
       <button onclick="saveSettings()" class="btn-primary px-5 py-2.5">Save settings</button>
       <span id="set-status" class="setting-hint"></span>
@@ -2208,7 +2181,7 @@
 <script src="/assets/samvaad.bundle.js"></script>
 <script>
 const GATES = {live_sale:0.80, delivery:0.92, recall:0.88, count:0.92, stock_take:0.92};
-let STATE = {catalogue:[], byId:{}, today:'2026-07-26', learning_state:'day1'};
+let STATE = {catalogue:[], byId:{}, today:'2026-07-26'};
 let PENDING = {}; // per-tab pending resolution
 
 function toast(msg, ok=true){ const t=document.getElementById('toast'); t.textContent=msg;
@@ -2251,11 +2224,11 @@ function escHtml(value){ return String(value??'').replace(/[&<>"']/g,c=>({'&':'&
 async function boot(){
   const s = await api('/api/state');
   STATE.catalogue=s.catalogue; STATE.byId={}; s.catalogue.forEach(x=>STATE.byId[x.sku_id]=x);
-  STATE.today=s.today; STATE.learning_state=s.learning_state;
+  STATE.today=s.today;
   document.getElementById('shopName').textContent=s.shop;
   document.getElementById('heroShop').textContent=s.shop;
   document.getElementById('heroToday').textContent=new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short'});
-  setCounts(s.learning_counts); setDayUI(s.learning_state);
+  setCounts(s.learning_counts);
   renderVoiceUI('sale','auto'); renderVoiceUI('count','count');
   // The mic timeout is a saved setting, so it has to be live from the first
   // conversation — not only after someone visits the Settings tab.
@@ -2267,19 +2240,6 @@ async function boot(){
 }
 function setCounts(c){ document.getElementById('cAlias').textContent=c.aliases;
   document.getElementById('cPrior').textContent=c.priors; document.getElementById('cCorr').textContent=c.corrections; }
-function setDayUI(st){ const on=st==='day60'; document.getElementById('dayLabel').textContent=on?'Day 60':'Day 1';
-  document.getElementById('heroMode').textContent=on?'Day 60':'Day 1';
-  document.getElementById('dayToggle').classList.toggle('bg-emerald-500',on);
-  document.getElementById('dayKnob').style.transform=on?'translateX(28px)':'translateX(0)'; }
-async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'day60';
-  const r=await api('/api/toggle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({which:next})});
-  STATE.learning_state=r.learning_state; setDayUI(r.learning_state); setCounts(r.learning_counts);
-  const hint=document.getElementById('set-learnHint');
-  if(hint) hint.textContent = r.learning_state==='day60'
-    ? 'Day 60 — aliases and priors the shop has taught Chhotu are active'
-    : 'Day 1 — nothing learned yet, every product is asked about';
-  toast(r.learning_state==='day60'?'Day 60 — seekha hua sab yaad hai':'Day 1 — kuch nahi seekha abhi'); }
-
 function showTab(t){
   if(SAMVAAD?.agent && SAMVAAD.tab && SAMVAAD.tab!==t) endSamvaadConversation(SAMVAAD.tab, false);
   closeMobileAccountMenu();
@@ -2716,8 +2676,8 @@ async function refreshAfterSamvaad(){
   try{
     const s=await api('/api/state');
     STATE.catalogue=s.catalogue; STATE.byId={}; s.catalogue.forEach(x=>STATE.byId[x.sku_id]=x);
-    STATE.today=s.today; STATE.learning_state=s.learning_state;
-    setCounts(s.learning_counts); setDayUI(s.learning_state);
+    STATE.today=s.today;
+    setCounts(s.learning_counts);
   }catch(e){}
 }
 async function endSamvaadConversation(tab='sale', showEnded=true){
@@ -2765,7 +2725,7 @@ async function startSamvaadConversation(tab){
       shop_key:session.shop_key,
       shop_name:session.shop||'',
       owner_name:session.owner||'',
-      learning_state:session.learning_state||'day1',
+      learning_state:'continuous',
       learned_alias_count:String(session.learning_counts?.aliases||0),
       learned_product_names:JSON.stringify(session.learned_product_names||[]),
       learned_product_defaults:JSON.stringify(session.learned_product_defaults||[])
@@ -3748,10 +3708,6 @@ async function loadSettings(){
   document.getElementById('set-silence').value = GSTCFG.silence_timeout_s ?? 10;
   document.getElementById('set-confirmNew').checked = GSTCFG.confirm_new_items!==false;
   SILENCE_TIMEOUT_MS = (Number(GSTCFG.silence_timeout_s)||10)*1000;
-  const on = STATE.learning_state==='day60';
-  document.getElementById('set-learnHint').textContent = on
-    ? 'Day 60 — aliases and priors the shop has taught Chhotu are active'
-    : 'Day 1 — nothing learned yet, every product is asked about';
 }
 async function saveSettings(){
   const by={};
@@ -3939,7 +3895,7 @@ async function logout(){
     headers:{Authorization:'Bearer '+getToken()}}); }catch(e){}
   setToken('');
   // Clear in-memory shop data so the next login can't see the last one's.
-  STATE={catalogue:[], byId:{}, today:'', learning_state:'day1'}; CONV={};
+  STATE={catalogue:[], byId:{}, today:''}; CONV={};
   document.getElementById('authPhone').value='';
   document.getElementById('authPassword').value='';
   document.getElementById('signupPassword').value='';

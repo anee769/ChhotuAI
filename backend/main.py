@@ -621,10 +621,15 @@ def index():
 
 
 # ---------------------------------------------------------------------------
-# State / learning toggle
+# State
 # ---------------------------------------------------------------------------
 @app.get("/api/state")
 def state():
+    try:
+        LEARN.backfill_knowledge_graph(repo)
+    except Exception as exc:
+        print(f"[knowledge-graph] state backfill failed: "
+              f"{type(exc).__name__}", flush=True)
     return {
         "shop": repo.load_config().get("shop_name") or "My Shop",
         "today": clock.today().isoformat(),
@@ -643,18 +648,6 @@ def get_config():
 def set_config(payload: dict = Body(...)):
     repo.save_config(payload)
     return repo.load_config()
-
-
-@app.post("/api/toggle")
-def toggle(payload: dict = Body(...)):
-    which = payload.get("which", "day1")
-    repo.set_learning_state("day60" if which == "day60" else "day1")
-    if repo.learning_state() == "day60":
-        seed_path = DATA / "learning_day60.json"
-        if seed_path.exists():
-            repo.seed_learning(json.loads(seed_path.read_text(encoding="utf-8")))
-    return {"learning_state": repo.learning_state(),
-            "learning_counts": repo.learning_counts()}
 
 
 # ---------------------------------------------------------------------------

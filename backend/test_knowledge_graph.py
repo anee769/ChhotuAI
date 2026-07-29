@@ -73,6 +73,37 @@ class KnowledgeGraphTests(unittest.TestCase):
         self.assertIn("alias_for",
                       {edge["relation"] for edge in graph["edges"]})
 
+    def test_legacy_aliases_are_backfilled_once_into_graph(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repo = JsonRepo(Path(directory))
+            repo.upsert_sku({
+                "sku_id": "TMT_12",
+                "canonical": "Tata Tiscon TMT Bar 12mm Fe500D",
+                "family": "tmt", "attributes": {"diameter_mm": 12},
+                "default_unit": "tonne", "units": {"tonne": 1000},
+                "aliases": [],
+            })
+            repo.seed_learning({
+                "aliases_learned": [
+                    {"phrase": "patla sariya", "sku_id": "TMT_12", "count": 9}
+                ],
+                "unit_priors": [
+                    {"sku_id": "TMT_12", "unit": "tonne", "count": 5}
+                ],
+            })
+            self.assertEqual(learning.backfill_knowledge_graph(repo), 3)
+            self.assertEqual(learning.backfill_knowledge_graph(repo), 0)
+            edges = repo.load_knowledge_graph()["edges"]
+            aliases = [edge for edge in edges
+                       if edge["relation"] == "alias_for"]
+
+        self.assertEqual(len(aliases), 1)
+        self.assertEqual(aliases[0]["evidence_count"], 1)
+        self.assertEqual(
+            {edge["relation"] for edge in edges},
+            {"alias_for", "belongs_to", "uses_unit"},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

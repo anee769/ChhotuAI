@@ -46,6 +46,12 @@ Each edge stores:
 5. Repeated confirmations strengthen the same edge instead of creating
    duplicates.
 
+Learning is continuous. There is no Day 1/Day 60 mode or dashboard switch.
+Legacy demo memories are merged into the shop's durable learning record, and
+their product aliases are backfilled into the tenant's knowledge graph once.
+Newer shop confirmations take priority if an old seeded phrase conflicts with
+what the owner subsequently teaches Chhotu.
+
 Graph persistence failures are deliberately non-blocking during the rollout.
 They must never prevent an already-confirmed ledger operation.
 

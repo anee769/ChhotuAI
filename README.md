@@ -67,6 +67,9 @@ its clean starting state.
 - Confirmed units and product attributes build per-shop priors that reduce
   repeated questions as usage grows.
 - Learning is tenant-scoped: one shop's vocabulary never affects another shop.
+- Learning is continuous; there is no Day 1/Day 60 mode or manual reset toggle.
+- Confirmed aliases are also preserved as explainable relationships in the
+  tenant's knowledge graph.
 - Learning improves interpretation and matching only. Stock, rates, GST,
   margin, credit, and other business calculations remain deterministic.
 
@@ -137,7 +140,7 @@ Delivery status is checked before the UI or agent claims success.
   or an exact date range.
 - `show_summary` displays the latest summary in Voice Entry without sending it.
 - Only the latest bill or summary preview is visible, and it dismisses
-  automatically after 10 seconds.
+  automatically after 20 seconds.
 
 ### Accounts and tenancy
 
@@ -146,7 +149,7 @@ Delivery status is checked before the UI or agent claims success.
 - Company name, GSTIN, and address collected during onboarding/settings.
 - Passwords stored as salted PBKDF2 hashes.
 - Session tokens stored as hashes and scoped to a single user.
-- Every SKU, event, customer, receivable, payment, learning state, document,
+- Every SKU, event, customer, receivable, payment, learned memory, document,
   configuration, and voice presentation belongs to one tenant.
 - Agent calls resolve the tenant through a verified caller number or a signed
   per-shop key. The backend never guesses a shop.
@@ -227,6 +230,7 @@ PostgreSQL is the operational database. A Neon PostgreSQL URL works directly.
 | `receivables` | Credit created by sales |
 | `payments` | Immutable customer payment receipts |
 | `learning` | Per-shop aliases, priors, and corrections |
+| `knowledge_entities`, `knowledge_edges` | Explainable tenant-specific aliases and product relationships |
 | `user_config` | Shop, GSTIN, address, and operating settings |
 | `documents` | Expiring generated PDFs used by WhatsApp |
 | `voice_presentations` | Expiring in-app bill and summary previews |

@@ -18,7 +18,7 @@ from typing import Optional
 import store
 import translit
 import knowledge_graph as KG
-from learning import merge_learning, merge_seed_learning
+from learning import merge_learning, merge_learning_sources, merge_seed_learning
 
 DATA_DIR = Path(os.environ.get("CHHOTU_DATA_DIR",
                                Path(__file__).resolve().parent.parent / "data"))
@@ -91,8 +91,7 @@ class JsonRepo(Repo):
         self._customers = self._read("customers.json", default=[])
         self._receivables = self._read("receivables.json", default=[])
         self._payments = self._read("payments.json", default=[])
-        self._learning_state = "day1"  # active toggle position
-        self._learning = self._read("learning.json", default=self._empty_learning())
+        self._learning = self._continuous_learning()
         self._knowledge_graph = self._read(
             "knowledge_graph.json", default={"entities": [], "edges": []})
         self._config = self._read("config.json", default={
@@ -114,6 +113,14 @@ class JsonRepo(Repo):
         return {"aliases_learned": [], "attribute_priors": [],
                 "unit_priors": [], "corrections": []}
 
+    def _continuous_learning(self) -> dict:
+        """Read old demo files as one memory while new learning stays durable."""
+        return merge_learning_sources(
+            self._read("learning_day1.json", default=self._empty_learning()),
+            self._read("learning_day60.json", default=self._empty_learning()),
+            self._read("learning.json", default=self._empty_learning()),
+        )
+
     def refresh(self) -> None:
         """Reload every cached document from the store.
 
@@ -132,9 +139,7 @@ class JsonRepo(Repo):
             self._payments = self._store.read("payments.json", [])
             self._config = self._store.read(
                 "config.json", {"gst_default": 18, "gst_by_family": {}})
-            if self._learning_state == "day1":
-                self._learning = self._store.read(
-                    "learning.json", self._empty_learning())
+            self._learning = self._continuous_learning()
             self._knowledge_graph = self._store.read(
                 "knowledge_graph.json", {"entities": [], "edges": []})
             self._counter = _max_event_num(self._events)
@@ -223,32 +228,38 @@ class JsonRepo(Repo):
         return self._learning
 
     def learning_state(self) -> str:
-        return self._learning_state
+        return "continuous"
 
     def upsert_learning(self, patch: dict) -> None:
         def _merge(learning):
             merge_learning(learning, patch)
 
         with self._lock:
-            if self._learning_state == "day1":
-                self._learning, _ = self._store.mutate(
-                    "learning.json", self._empty_learning(), _merge)
-            else:
-                # Day60 is a read-only demo overlay; keep it in memory only.
-                _merge(self._learning)
+            durable, _ = self._store.mutate(
+                "learning.json", self._empty_learning(), _merge)
+            self._learning = merge_learning_sources(
+                self._read("learning_day1.json", self._empty_learning()),
+                self._read("learning_day60.json", self._empty_learning()),
+                durable,
+            )
 
     def seed_learning(self, seed: dict) -> None:
-        """Fill missing memories in the active demo state, idempotently."""
+        """Compatibility import: preserve old learned memories durably."""
+        def _seed(learning):
+            merge_seed_learning(learning, seed)
+
         with self._lock:
-            merge_seed_learning(self._learning, seed)
+            durable, _ = self._store.mutate(
+                "learning.json", self._empty_learning(), _seed)
+            self._learning = merge_learning_sources(
+                self._read("learning_day1.json", self._empty_learning()),
+                self._read("learning_day60.json", self._empty_learning()),
+                durable,
+            )
 
     def set_learning_state(self, which: str) -> None:
-        """Toggle Day1/Day60 — swaps the active learning file at runtime."""
-        with self._lock:
-            fname = "learning_day60.json" if which == "day60" else "learning_day1.json"
-            loaded = self._read(fname, default=self._empty_learning())
-            self._learning = loaded
-            self._learning_state = which
+        """Legacy no-op: learning is continuous and can no longer be reset."""
+        return None
 
     # ---- config (GST rates) ----
     def load_config(self) -> dict:

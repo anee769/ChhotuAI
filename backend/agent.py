@@ -339,6 +339,12 @@ def learning_context(repo, limit: int = 100) -> dict:
     tool is called.
     """
     learning = repo.load_learning()
+    try:
+        import learning as LEARN
+        LEARN.backfill_knowledge_graph(repo, learning)
+    except Exception as exc:
+        print(f"[knowledge-graph] legacy backfill failed: "
+              f"{type(exc).__name__}", flush=True)
     catalogue = {sku["sku_id"]: sku for sku in repo.load_catalogue()}
     aliases = []
     for row in learning.get("aliases_learned", []):
@@ -609,8 +615,8 @@ def shop_profile(repo, user, args):
         "product_resolution_policy": (
             "Pass the caller's exact local item phrase to the relevant tool "
             "before asking size, brand, or type. Ask only when that tool "
-            "returns needs. If learned_product_names contains the phrase, use "
-            "its sku_id and product directly."
+            "returns needs. Learning is continuous. If learned_product_names "
+            "contains the phrase, use its sku_id and product directly."
         ),
         "speak": f"{cfg.get('shop_name') or 'Dukaan'} mein {len(catalogue)} item, "
                  f"{len(accounts)} customer, {_say_number(outstanding)} rupaye "
@@ -1605,7 +1611,7 @@ def send_reminders(repo, user, args):
 TOOLS = {
     "shop_profile": (shop_profile,
                      "Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur "
-                     "customer hain, kul udhaar, Day 1/Day 60 state aur grounded "
+                     "customer hain, kul udhaar, continuous learning aur grounded "
                      "local-name-to-SKU mappings. Call ke shuru mein zaroor chalao."),
     "list_inventory": (list_inventory,
                        "Poori inventory: har item ka naam, stock, unit, rate. "

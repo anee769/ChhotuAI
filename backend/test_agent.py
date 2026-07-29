@@ -41,7 +41,7 @@ class FakeRepo:
         self.events, self._customers, self._recv, self._pay = [], [], [], []
         self.learning = {"aliases_learned": [], "attribute_priors": [],
                          "unit_priors": [], "corrections": []}
-        self._learning_state = "day1"
+        self._learning_state = "continuous"
 
     # --- catalogue -------------------------------------------------------
     def load_catalogue(self):
@@ -183,14 +183,13 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("shop_profile")
         self.assertEqual(out["shop"], "Test Traders")
         self.assertGreater(out["item_count"], 0)
-        self.assertEqual(out["learning_state"], "day1")
+        self.assertEqual(out["learning_state"], "continuous")
         self.assertIn("exact local item phrase",
                       out["product_resolution_policy"])
 
-    def test_day60_local_alias_reaches_record_sale_without_size_question(self):
+    def test_continuous_alias_reaches_record_sale_without_size_question(self):
         seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
         self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
-        self.repo._learning_state = "day60"
         out = self.call("record_sale", item="chhota sariya", qty=1,
                         unit="tonne", payment="cash",
                         request_id="day60-chhota-sariya-demo")
@@ -198,20 +197,18 @@ class AgentToolTests(unittest.TestCase):
         self.assertNotIn("needs", out)
         self.assertEqual(out["lines"][0]["sku_id"], TMT_12)
 
-    def test_day60_profile_returns_grounded_alias_map_to_agent(self):
+    def test_profile_returns_grounded_alias_map_to_agent(self):
         seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
         self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
-        self.repo._learning_state = "day60"
         out = self.call("shop_profile")
         mapping = {row["phrase"]: row for row in out["learned_product_names"]}
         self.assertEqual(mapping["patla sariya"]["sku_id"], TMT_12)
         self.assertIn("12mm", mapping["patla sariya"]["product"])
-        self.assertEqual(out["learning_state"], "day60")
+        self.assertEqual(out["learning_state"], "continuous")
 
-    def test_day60_alias_and_asr_variation_resolve_in_read_and_write_tools(self):
+    def test_alias_and_asr_variation_resolve_in_read_and_write_tools(self):
         seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
         self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
-        self.repo._learning_state = "day60"
 
         stock = self.call("check_stock", item="patla sariyaa")
         self.assertTrue(stock["found"], stock)

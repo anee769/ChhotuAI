@@ -239,6 +239,29 @@ class ConcurrentInstanceTests(unittest.TestCase):
         self.assertEqual(len(learned["aliases_learned"]), 1)
         self.assertEqual(learned["unit_priors"][0]["count"], 8)
 
+    def test_legacy_day60_memory_becomes_continuous_and_stays_writable(self):
+        (self.dir / "learning_day60.json").write_text(json.dumps({
+            "aliases_learned": [
+                {"phrase": "patla sariya", "sku_id": "TMT_12", "count": 8}
+            ],
+            "attribute_priors": [], "unit_priors": [], "corrections": [],
+        }), encoding="utf-8")
+        repo = self.R.JsonRepo(self.dir)
+        self.assertEqual(repo.learning_state(), "continuous")
+        self.assertEqual(repo.load_learning()["aliases_learned"][0]["sku_id"],
+                         "TMT_12")
+
+        repo.upsert_learning({
+            "aliases_learned": [{"phrase": "mota sariya", "sku_id": "TMT_16"}]
+        })
+        fresh = self.R.JsonRepo(self.dir)
+        aliases = {row["phrase"]: row["sku_id"]
+                   for row in fresh.load_learning()["aliases_learned"]}
+        self.assertEqual(aliases, {
+            "patla sariya": "TMT_12",
+            "mota sariya": "TMT_16",
+        })
+
     def test_receivables_and_payments_survive_both_instances(self):
         a, b = self._two()
         ra = a.add_receivable("c1", 100, "2026-08-01", [])

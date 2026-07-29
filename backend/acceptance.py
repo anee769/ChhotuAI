@@ -139,15 +139,14 @@ t = call("/api/today")
 check("today has margin + cash + credit", all(k in t for k in ("margin", "cash", "credit")),
       f'margin={t["margin"]} cash={t["cash"]} credit={t["credit"]}')
 
-# --- #12 Day60 zero questions ---
-print("\n#12 Day60 replay -> zero questions")
-call("/api/toggle", {"which": "day60"})
+# --- #12 continuous learning ---
+print("\n#12 Continuous learning resolves known shop terms")
 r = call("/api/parse", {"text": "sariya do ton", "flow": "live_sale"})
 m = r["items"][0]["match"]
-check("Day60 sariya resolves with zero questions", m["status"] == "matched", m.get("sku_id"))
+check("learned sariya resolves with zero questions",
+      m["status"] == "matched", m.get("sku_id"))
 counts = call("/api/state")["learning_counts"]
-check("Day60 counters jumped", counts["aliases"] > 20, str(counts))
-call("/api/toggle", {"which": "day1"})
+check("continuous memory is populated", counts["aliases"] > 0, str(counts))
 
 print(f"\n==== {len(PASS)} passed, {len(FAIL)} failed ====")
 if FAIL:

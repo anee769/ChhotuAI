@@ -127,7 +127,7 @@ CREATE INDEX IF NOT EXISTS payments_user_customer
 -- new kind of prior.
 CREATE TABLE IF NOT EXISTS learning (
     user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    state   TEXT NOT NULL DEFAULT 'day1',
+    state   TEXT NOT NULL DEFAULT 'continuous',
     data    JSONB NOT NULL DEFAULT '{}'::jsonb,
     PRIMARY KEY (user_id, state)
 );

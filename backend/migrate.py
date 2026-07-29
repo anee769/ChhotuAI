@@ -23,7 +23,7 @@ import auth
 import db
 import store
 import sqlrepo
-from learning import merge_seed_learning
+from learning import merge_learning_sources, merge_seed_learning
 
 
 def _load_documents(data_dir: Path, force_files: bool = False) -> dict:
@@ -125,25 +125,27 @@ def migrate(phone: str, shop_name: str = "", data_dir: Path = None) -> dict:
                  p.get("created_at")))
         counts["payments"] = len(docs["payments.json"] or [])
 
-        # --- learning (both toggle positions) + config ---
-        for state, doc in (("day1", docs["learning.json"]),
-                           ("day60", docs["learning_day60.json"])):
-            if doc:
-                existing = conn.execute(
-                    "SELECT data FROM learning WHERE user_id = %s AND state = %s"
-                    " FOR UPDATE", (uid, state)).fetchone()
-                merged = merge_seed_learning(
-                    (existing[0] if existing else None)
-                    or {"aliases_learned": [], "attribute_priors": [],
-                        "unit_priors": [], "corrections": []},
-                    doc,
-                )
-                conn.execute(
-                    "INSERT INTO learning (user_id, state, data)"
-                    " VALUES (%s,%s,%s::jsonb)"
-                    " ON CONFLICT (user_id, state)"
-                    " DO UPDATE SET data = EXCLUDED.data",
-                    (uid, state, json.dumps(merged, ensure_ascii=False)))
+        # --- continuous learning + config ---
+        incoming = merge_learning_sources(
+            docs.get("learning_day1.json"),
+            docs.get("learning_day60.json"),
+            docs.get("learning.json"),
+        )
+        existing = conn.execute(
+            "SELECT data FROM learning WHERE user_id = %s"
+            " AND state = 'continuous' FOR UPDATE", (uid,)).fetchone()
+        merged = merge_seed_learning(
+            (existing[0] if existing else None)
+            or {"aliases_learned": [], "attribute_priors": [],
+                "unit_priors": [], "corrections": []},
+            incoming,
+        )
+        conn.execute(
+            "INSERT INTO learning (user_id, state, data)"
+            " VALUES (%s,'continuous',%s::jsonb)"
+            " ON CONFLICT (user_id, state)"
+            " DO UPDATE SET data = EXCLUDED.data",
+            (uid, json.dumps(merged, ensure_ascii=False)))
 
         cfg = dict(docs["config.json"] or {})
         if effective_shop:

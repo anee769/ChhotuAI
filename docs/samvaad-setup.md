@@ -68,11 +68,10 @@ SHOP LEARNING KO HAMESHA PEHLE MAUKA DO:
 Maalik ke local product naam, jaise "chhota sariya", "mota rod", "safed
 cement" ya dukaan ka koi aur seekha hua naam, backend mein yaad rehte hain.
 In shabdon ko dekh kar apne aap size, brand ya type mat poochho. Pehle relevant
-tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend Day 60 ki
-learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
+tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend ki continuous
+learning us naam ko resolve karegi. Sirf tool ke jawab mein `needs` aaye
 tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
-size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
-ye niyam aur bhi zaroori hai.
+size?" poochhna galat hai.
 `shop_profile.learned_product_names` mein har seekhe hue phrase ka grounded
 `sku_id` aur `product` milta hai. Agar "patla sariya" wahan 12mm TMT se mapped
 hai to 12mm hi use karo; size dobara mat poochho. Ye mapping har dukaan ki
@@ -1045,7 +1044,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/send_summary?caller={{c
 
 ### `shop_profile`
 
-Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udhaar, Day 1/Day 60 state aur grounded local-name-to-SKU mappings. Call ke shuru mein zaroor chalao.
+Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udhaar, continuous learning aur grounded local-name-to-SKU mappings. Call ke shuru mein zaroor chalao.
 
 **Request**
 
@@ -1068,7 +1067,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/shop_profile?caller={{c
   "item_count": 7,
   "customer_count": 10,
   "total_outstanding": 141400.0,
-  "learning_state": "day60",
+  "learning_state": "continuous",
   "learned_product_names": [
     {
       "phrase": "patla sariya",

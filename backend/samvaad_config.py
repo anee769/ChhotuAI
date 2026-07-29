@@ -75,11 +75,10 @@ SHOP LEARNING KO HAMESHA PEHLE MAUKA DO:
 Maalik ke local product naam, jaise "chhota sariya", "mota rod", "safed
 cement" ya dukaan ka koi aur seekha hua naam, backend mein yaad rehte hain.
 In shabdon ko dekh kar apne aap size, brand ya type mat poochho. Pehle relevant
-tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend Day 60 ki
-learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
+tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend ki continuous
+learning us naam ko resolve karegi. Sirf tool ke jawab mein `needs` aaye
 tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
-size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
-ye niyam aur bhi zaroori hai.
+size?" poochhna galat hai.
 `shop_profile.learned_product_names` mein har seekhe hue phrase ka grounded
 `sku_id` aur `product` milta hai. Agar "patla sariya" wahan 12mm TMT se mapped
 hai to 12mm hi use karo; size dobara mat poochho. Ye mapping har dukaan ki
@@ -280,7 +279,7 @@ EXAMPLES = {
         "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
         "gstin": "01AABCS4521M1ZM", "shop_kind": "building material",
         "today": "2026-07-28", "item_count": 7, "customer_count": 10,
-        "total_outstanding": 141400.0, "learning_state": "day60",
+        "total_outstanding": 141400.0, "learning_state": "continuous",
         "learned_product_names": [
             {"phrase": "patla sariya", "sku_id": "TMT_12_FE500D_TATA",
              "product": "Tata Tiscon TMT Bar 12mm Fe500D"}]}),
