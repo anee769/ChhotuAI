@@ -661,6 +661,39 @@ def main() -> None:
     print("Leaving the version unset tests the unversioned draft, which can "
           "have different tools and variables. After any dashboard edit, "
           "commit it and update this version deliberately.\n")
+    print("## Required body migration after version 6\n")
+    print("Update these three existing tools in the Sarvam dashboard before "
+          "committing the next agent version. Every value below must use "
+          "**Let the agent decide**, with type **Text**. Do not use Fixed "
+          "value, do not put the fields under `args`, and do not create "
+          "nested body rows. `items` itself is Text containing a JSON array.\n")
+    print("### `record_sale` Body\n")
+    print("```json\n" + body("record_sale") + "\n```\n")
+    print("New or changed fields are `items` and `rate_unit`. For a three-item "
+          "sale, `items` must contain all three lines in one JSON array; the "
+          "flat fields remain only as backward-compatible single-item "
+          "fallbacks.\n")
+    print("### `record_purchase` Body\n")
+    print("```json\n" + body("record_purchase") + "\n```\n")
+    print("New or changed fields are `items` and `rate_unit`. Multiple incoming "
+          "stock lines must be sent together in `items`.\n")
+    print("### `send_bill` Body\n")
+    print("```json\n" + body("send_bill") + "\n```\n")
+    print("The important new field is `presentation_id`. After `show_bill`, "
+          "pass its exact returned `presentation_id` to `send_bill`; do not "
+          "reconstruct the bill lines from conversation memory. Keep the "
+          "remaining fields as compatibility fallbacks.\n")
+    print("Example value composed by the agent for the `items` Text field:\n")
+    print("```json\n"
+          "[{\"sku_id\":\"CEM_ULTRATECH_PPC\",\"qty\":\"10\","
+          "\"unit\":\"bori\",\"rate\":\"420\"},"
+          "{\"sku_id\":\"TMT_12_FE500D_TATA\",\"qty\":\"1\","
+          "\"unit\":\"tonne\",\"rate\":\"55000\"}]\n"
+          "```\n")
+    print("After saving the three tools, replace the agent instructions with "
+          "the instructions below, commit the new dashboard version, and set "
+          "`SAMVAAD_AGENT_VERSION` to that committed version in both the "
+          "production and dev deployments.\n")
     print("## Agent instructions\n")
     print("```\n" + INSTRUCTIONS + "```\n")
     print("## Variables\n")
