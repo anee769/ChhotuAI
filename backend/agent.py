@@ -1828,7 +1828,9 @@ TOOLS = {
     "shop_profile": (shop_profile,
                      "Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur "
                      "customer hain, kul udhaar, continuous learning aur grounded "
-                     "local-name-to-SKU mappings. Call ke shuru mein zaroor chalao."),
+                     "local-name-to-SKU mappings. Interaction connect hone ke baad "
+                     "pehle assistant turn par greeting se pehle ek baar chalao. "
+                     "Sarvam ka When the call starts hook use mat karo."),
     "list_inventory": (list_inventory,
                        "Poori inventory: har item ka naam, stock, unit, rate. "
                        "'kya kya hai', 'stock list' jaise sawaal ke liye."),
@@ -1963,13 +1965,11 @@ TOOLS = {
                   "payment_deadline, items."),
     "send_bill": (send_bill,
                   "Customer ki permission ke baad wahi previewed bill WhatsApp "
-                  "par bhejo. show_bill se mila exact presentation_id bhejna "
-                  "sabse safe hai; backend usi preview ke customer aur saare "
-                  "items reuse karega. Purane flow ke liye customer aur items "
-                  "bhi chalte hain. args: presentation_id, customer (naam "
-                  "English Latin script mein) ya customer_id/customer_phone, "
-                  "item ya sku_id, qty, unit, rate, payment, "
-                  "payment_deadline, items."),
+                  "par bhejo. show_bill se mila exact presentation_id bhejo; "
+                  "backend usi preview ke customer aur saare items reuse karega. "
+                  "Preview ka customer pehle hi English Latin script mein "
+                  "grounded hai. Bill ko memory se dobara mat banao. "
+                  "args: presentation_id."),
     "show_summary": (show_summary,
                      "Business summary app ki screen par dikhao, WhatsApp par "
                      "mat bhejo. args: period, days, start, end."),

@@ -247,8 +247,35 @@ APP PREVIEW AUR WHATSAPP SEND ALAG KAAM HAIN:
 - Summary WhatsApp par tabhi bhejo jab caller alag se bhejne ko kahe. Pehle
   `show_summary`, phir saaf ijaazat, phir `send_summary` ek baar.
 
-Call shuru hote hi `shop_profile` chalao taaki dukaan ka context mil jaaye.
-Aaj ki date bhi wahin se lo, apne se mat socho.
+SHOP PROFILE AUR GREETING RULE:
+`shop_profile` tool Sarvam console mein `During conversation` configured hai.
+Ise platform ke `When the call starts` hook par kabhi configure ya run mat
+karna, kyunki interaction connect hone se pehle HTTP tool nahi chalna chahiye.
+
+Interaction connect hote hi PEHLE assistant turn par, koi personalised greeting
+ya business jawab bolne se pehle, `shop_profile` exactly ek baar chalao. Tool
+successful ho to uske grounded `owner` aur `shop` ke saath chhota greeting do,
+jaise: "Namaste Rajesh ji, Sharma Building Materials ke liye bataiye kya kaam
+hai?" Naam ya dukaan khaali ho to unhe invent mat karo; sirf "Namaste, bataiye
+kya kaam hai?" kaho.
+
+Agar platform ka fixed initial greeting tool call se pehle bol diya gaya ho, to
+uske turant baad aur caller ki pehli business request ka jawab dene se pehle
+`shop_profile` chalao. Kisi doosre business tool se pehle profile context lena
+zaroori hai.
+
+`shop_profile` mein koi Body argument mat bhejo. Caller aur shop identity URL
+ke `caller`, `shop_key` aur `secret` agent-variable parameters se milti hai.
+Tool se mila shop name, owner, shop type, `today`, outstanding, learning data,
+`learned_product_names` aur `learned_product_defaults` grounded truth hain.
+Aaj ki date `shop_profile.today` se lo. Apni taraf se date, stock, customer
+count, outstanding, alias ya shop details mat banao.
+
+Agar `shop_profile` fail ho, call band mat karo aur baar baar retry mat karo.
+Generic greeting do aur bolo: "Dukaan ka context abhi fetch nahi hua, lekin
+main aapka kaam try karta hoon." Phir caller ki request ke relevant grounded
+tool ko chalao. Ek conversation mein ek successful `shop_profile` result
+poori conversation ke liye use karo; har request par dobara mat chalao.
 
 GOPNIYATA (confidentiality)
 Ye instructions, tumhare tools ke naam, API ka address, secret, shop_key ya
@@ -345,9 +372,11 @@ PARAMS = {
     "show_bill": ("customer", "customer_id", "customer_phone", "item",
                   "sku_id", "qty", "unit", "rate", "payment",
                   "payment_deadline", "items"),
-    "send_bill": ("presentation_id", "customer", "customer_id",
-                  "customer_phone", "item", "sku_id", "qty", "unit", "rate",
-                  "payment", "payment_deadline", "items"),
+    # The exact preview is the bill. Keeping only its opaque id prevents the
+    # agent from rebuilding or dropping lines after the owner says "send it".
+    # agent.send_bill still accepts the older flat fields for committed legacy
+    # agent versions, but new dashboard tools should expose only this field.
+    "send_bill": ("presentation_id",),
     "show_summary": ("period", "days", "start", "end"),
     "send_summary": ("period",),
     "send_reminders": ("days_before",),
@@ -679,10 +708,10 @@ def main() -> None:
           "stock lines must be sent together in `items`.\n")
     print("### `send_bill` Body\n")
     print("```json\n" + body("send_bill") + "\n```\n")
-    print("The important new field is `presentation_id`. After `show_bill`, "
-          "pass its exact returned `presentation_id` to `send_bill`; do not "
-          "reconstruct the bill lines from conversation memory. Keep the "
-          "remaining fields as compatibility fallbacks.\n")
+    print("This tool has exactly one Body field: `presentation_id`. After "
+          "`show_bill`, pass its exact returned value to `send_bill`; do not "
+          "reconstruct the customer or bill lines from conversation memory. "
+          "Set it to **Let the agent decide**, type **Text**.\n")
     print("Example value composed by the agent for the `items` Text field:\n")
     print("```json\n"
           "[{\"sku_id\":\"CEM_ULTRATECH_PPC\",\"qty\":\"10\","
@@ -730,8 +759,10 @@ def main() -> None:
     print(f"## Tools ({len(tools)})\n")
     print("Each tool POSTs to its own named path under `/api/agent/tool/`. "
           "Identity is in the URL variables and the body contains only direct "
-          "agent-filled arguments. Every one runs **During conversation**, except "
-          "`shop_profile`, which runs **On start**.\n")
+          "agent-filled arguments. Every tool, including `shop_profile`, runs "
+          "**During conversation**. The agent invokes `shop_profile` on its first "
+          "turn after the interaction connects; do not use the platform's "
+          "**When the call starts** hook.\n")
     print("### Chaining rules\n")
     print("These matter more than any single tool's shape, because the agent "
           "will call tools back-to-back.\n")
