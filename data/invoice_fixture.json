@@ -1,32 +1,32 @@
 {
   "supplier": "Shree Balaji Steel & Cement Traders",
-  "invoice_no": "SB/2026-27/0413",
-  "invoice_date": "2026-07-24",
+  "invoice_no": "SB/2026-27/0501",
+  "invoice_date": "2026-07-30",
   "image": "sample_invoice.png",
-  "note": "Deterministic fallback used when SARVAM_API_KEY is absent or the Document Digitization job fails. The 'aapki cost' per unit removes GST and adds a share of freight (spec Section 4).",
+  "note": "Deterministic fallback used when SARVAM_API_KEY is absent or Document Digitization fails. Product descriptions and units intentionally match the inventory schema; landed cost excludes GST and includes prorated freight.",
   "lines": [
     {
       "line_id": "L1",
-      "raw_text": "Tata Tiscon TMT Bar 12mm Fe500D  3.00 MT  @ 57500  1,72,500.00",
-      "product_phrase": "tata tiscon tmt 12mm fe500d",
+      "raw_text": "Tata Tiscon TMT Bar 12mm Fe500D  3.00 tonne  @ 58000  1,74,000.00",
+      "product_phrase": "Tata Tiscon TMT Bar 12mm Fe500D",
       "qty": 3.0, "unit": "tonne",
-      "taxable_value": 172500.0, "gst_rate": 18,
+      "taxable_value": 174000.0, "gst_rate": 18,
       "certain": true,
       "bbox": [0.06, 0.28, 0.94, 0.34]
     },
     {
       "line_id": "L2",
-      "raw_text": "Tata Tiscon TMT Bar 16mm Fe500D  2.00 MT  @ 56500  1,13,000.00",
-      "product_phrase": "tata tiscon tmt 16mm fe500d",
+      "raw_text": "Tata Tiscon TMT Bar 16mm Fe500D  2.00 tonne  @ 57000  1,14,000.00",
+      "product_phrase": "Tata Tiscon TMT Bar 16mm Fe500D",
       "qty": 2.0, "unit": "tonne",
-      "taxable_value": 113000.0, "gst_rate": 18,
+      "taxable_value": 114000.0, "gst_rate": 18,
       "certain": true,
       "bbox": [0.06, 0.35, 0.94, 0.41]
     },
     {
       "line_id": "L3",
-      "raw_text": "UltraTech OPC 53 Cement 50kg  100 Bags  @ 415  41,500.00",
-      "product_phrase": "ultratech opc 53 cement",
+      "raw_text": "UltraTech OPC 53 Cement 50kg  100 bori  @ 415  41,500.00",
+      "product_phrase": "UltraTech OPC 53 Cement 50kg",
       "qty": 100.0, "unit": "bori",
       "taxable_value": 41500.0, "gst_rate": 28,
       "certain": true,
@@ -34,8 +34,8 @@
     },
     {
       "line_id": "L4",
-      "raw_text": "UltraTech PPC Cement 50kg  8̶0 100 Bags (handwritten)  @ 390  39,000.00",
-      "product_phrase": "ultratech ppc cement",
+      "raw_text": "UltraTech PPC Cement 50kg  8̶0 100 bori (handwritten)  @ 390  39,000.00",
+      "product_phrase": "UltraTech PPC Cement 50kg",
       "qty": null, "unit": "bori",
       "taxable_value": 39000.0, "gst_rate": 28,
       "certain": false,
@@ -44,13 +44,12 @@
     },
     {
       "line_id": "L5",
-      "raw_text": "···· ···· (smudged / illegible) ····  @ ····",
-      "product_phrase": null,
-      "qty": null, "unit": null,
-      "taxable_value": null, "gst_rate": null,
-      "certain": false,
-      "uncertain_reason": "row illegible — crop shown, not guessed",
-      "bbox": [0.06, 0.57, 0.94, 0.63]
+      "raw_text": "Kajaria Ceramic Floor Tile 2x2ft  40 Box  @ 700  28,000.00",
+      "product_phrase": "Kajaria Ceramic Floor Tile 2x2ft",
+      "qty": 40.0, "unit": "box",
+      "taxable_value": 28000.0, "gst_rate": 28,
+      "certain": true,
+      "bbox": [0.06, 0.56, 0.94, 0.62]
     },
     {
       "line_id": "F1",

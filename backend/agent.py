@@ -1465,13 +1465,43 @@ def remove_item(repo, user, args):
 # ---------------------------------------------------------------------------
 def send_bill(repo, user, args):
     import notify
-    acc, options = _customer_by_name(repo, _customer_ref(args))
+    import presentations
+
+    bill_args = dict(args)
+    preview = None
+    presentation_id = str(args.get("presentation_id") or "").strip()
+    if presentation_id:
+        preview = presentations.get(
+            user["user_id"], presentation_id, kind="bill")
+        if not preview:
+            return {"sent": False, "error": "bill_preview_not_found",
+                    "speak": "Ye bill preview mil nahi raha. Bill dobara dikha doon?"}
+    elif _customer_ref(args) and not _lines(args):
+        # Older committed agent versions did not expose presentation_id on
+        # send_bill. The latest recent preview is still safer than asking the
+        # model to recreate every line from memory after the user says "haan".
+        preview = presentations.latest(user["user_id"], "bill")
+
+    if preview:
+        payload = preview.get("payload") or {}
+        customer = payload.get("customer") or {}
+        bill_args.update({
+            "customer": customer.get("name"),
+            "customer_id": customer.get("customer_id"),
+            "customer_phone": customer.get("phone"),
+            "items": payload.get("items") or [],
+            "payment": payload.get("payment") or "cash",
+            "payment_deadline": payload.get("payment_deadline") or "",
+        })
+        presentation_id = preview.get("presentation_id") or presentation_id
+
+    acc, options = _customer_by_name(repo, _customer_ref(bill_args))
     if not acc:
         if options:
             return {"sent": False, **_ask_which_customer(options)}
         return {"sent": False, "speak": "Ye customer nahi mila."}
     customer = repo.customer(acc["customer_id"]) or acc
-    rows = _lines(args)
+    rows = _lines(bill_args)
     if not rows:
         return {"sent": False, "needs": {"field": "items"},
                 "speak": "Bill mein kya-kya daalna hai?"}
@@ -1489,12 +1519,13 @@ def send_bill(repo, user, args):
                       "rate": row.get("rate") or _selling_rate(sku) or 0})
     try:
         out = notify.send_bill(repo, user, customer, lines,
-                               payment=args.get("payment") or "cash",
-                               due_on=args.get("payment_deadline"))
+                               payment=bill_args.get("payment") or "cash",
+                               due_on=bill_args.get("payment_deadline"))
     except Exception as e:
         return {"sent": False, "error": str(e)[:200],
                 "speak": "Bill nahi bhej saka."}
-    return {"sent": True, **out,
+    return {"sent": True, **out, "presentation_id": presentation_id or None,
+            "line_count": len(lines),
             "speak": f"{customer.get('name')} ko bill bhej diya, "
                      f"{_say_number(out['total'])} rupaye."}
 
@@ -1658,21 +1689,25 @@ TOOLS = {
                     "record kiye. args: item ya sku_id, qty, unit."),
 
     "record_sale": (record_sale,
-                    "Sale record karo. Ek item ek call mein. Caller ka local "
-                    "naam pehle isi tool ko exact item phrase mein bhejo; "
-                    "size/brand khud tab tak mat poochho jab tak tool needs na de. "
-                    "args: item ya "
-                    "sku_id, qty, "
-                    "unit, rate, payment (cash ya credit), customer (naam, "
+                    "Ek confirmed sale record karo. Caller ne jitne items ek "
+                    "saath beche hain, sabko isi ek call ke items array mein "
+                    "bhejo; alag calls mein mat todo. Har line mein item ya "
+                    "sku_id, qty, unit, rate aur optional rate_unit. Single "
+                    "item ke liye flat fields bhi chalte hain. Caller ka local "
+                    "naam exact item phrase mein bhejo; tool needs de tabhi "
+                    "size/brand poochho. args: items, item, sku_id, qty, unit, "
+                    "rate, rate_unit, payment (cash ya credit), customer (naam, "
                     "English Latin script mein; credit ke liye zaroori), "
                     "customer_phone, "
                     "payment_deadline, occurred_on, request_id."),
     "record_purchase": (record_purchase,
-                        "Supplier se aaya stock record karo. Ek item ek call mein. "
-                        "Caller ka local naam exact item phrase mein bhejo; "
-                        "tool needs de tabhi size/brand poochho. "
-                        "args: item ya sku_id, qty, unit, rate (cost price), "
-                        "occurred_on, request_id."),
+                        "Supplier se ek saath aaye sab items record karo. "
+                        "Saari lines ek items array mein bhejo; single item ke "
+                        "liye flat fields bhi chalte hain. Caller ka local naam "
+                        "exact item phrase mein bhejo; tool needs de tabhi "
+                        "size/brand poochho. args: items, item, sku_id, qty, "
+                        "unit, rate (cost price), rate_unit, occurred_on, "
+                        "request_id."),
     "stock_take": (stock_take,
                    "Ginti ke baad stock theek karo. Ek item ek call mein. "
                    "Caller ka local naam exact item phrase mein bhejo; "
@@ -1705,9 +1740,13 @@ TOOLS = {
                   "customer_phone, item ya sku_id, qty, unit, rate, payment, "
                   "payment_deadline, items."),
     "send_bill": (send_bill,
-                  "Customer ko WhatsApp par bill PDF bhejo. args: customer "
-                  "(naam English Latin script mein) ya customer_id/"
-                  "customer_phone, item ya sku_id, qty, unit, rate, payment, "
+                  "Customer ki permission ke baad wahi previewed bill WhatsApp "
+                  "par bhejo. show_bill se mila exact presentation_id bhejna "
+                  "sabse safe hai; backend usi preview ke customer aur saare "
+                  "items reuse karega. Purane flow ke liye customer aur items "
+                  "bhi chalte hain. args: presentation_id, customer (naam "
+                  "English Latin script mein) ya customer_id/customer_phone, "
+                  "item ya sku_id, qty, unit, rate, payment, "
                   "payment_deadline, items."),
     "show_summary": (show_summary,
                      "Business summary app ki screen par dikhao, WhatsApp par "

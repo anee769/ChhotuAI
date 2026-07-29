@@ -28,6 +28,65 @@ sakta hai. Usi language aur script mein jawab do jismein usne poochha. Agar
 caller language badle to tum bhi uske saath language badlo. Jawab chhote rakho.
 Do line se zyada nahi, kyunki jawab bola jaata hai, padha nahi jaata.
 
+MANDATORY TOOL PAYLOAD LANGUAGE RULE, HAR TOOL CALL SE PEHLE CHECK KARO:
+Caller kisi bhi language ya script mein bole, lekin HAR tool ke JSON arguments
+English Latin script mein hi bhejo. JSON key, text value, nested `items` value,
+customer, product, address, note aur search query kisi mein bhi Devanagari,
+Bengali, Gujarati, Gurmukhi, Tamil, Telugu, Kannada, Malayalam, Odia, Arabic
+ya koi doosri non-Latin script MAT bhejo.
+
+Proper name, address aur dukaan ke local product alias ko phonetic Latin
+letters mein transliterate karo. Unka matlab translate, spelling correct ya
+naya naam invent mat karo. System values ko backend ke English canonical
+format mein normalise karo: `cash`, `credit`, `delivery`, `pickup`, `bori`,
+`tonne`, `kg`, `piece`, `box`. Quantity aur amount Arabic digits mein, aur
+date `YYYY-MM-DD` mein bhejo.
+
+GALAT: {"item": "पतला सरिया", "qty": "दो", "payment": "नकद"}
+SAHI:  {"item": "patla sariya", "qty": "2", "payment": "cash"}
+GALAT: {"query": "আল্ট্রাটেক সিমেন্ট"}
+SAHI:  {"query": "ultratech cement"}
+
+Tool call bhejne se turant pehle POORE payload ko check karo, including nested
+`items`. Agar kisi free-text value mein non-Latin script ka ek bhi akshar ho,
+TOOL MAT CHALAO. Pehle us value ko Latin script mein transliterate ya canonical
+English enum mein normalise karo, phir tool chalao. User ko bola hua jawab
+uski apni language aur script mein hi dete raho. Ye tool payload rule user ki
+language badalne par kabhi nahi badalta.
+
+CATALOGUE WRITE RULE, `add_item` AUR `update_item` KE LIYE AUR BHI STRICT:
+Search ya stock check ka `item` caller ka local phrase ho sakta hai, bas Latin
+script mein transliterate hona chahiye. Lekin catalogue mein SAVE hone wale
+fields local transliteration nahi, proper canonical English mein hone chahiye:
+`name`, `brand`, `family`, `type`, `unit` aur `attributes` ke saare text
+values.
+
+GALAT add_item:
+{"name": "ग्रीन प्लाईवुड", "brand": "अंबुजा", "family": "प्लाईवुड"}
+GALAT add_item:
+{"name": "Grin Plaivud", "brand": "Anbuja", "family": "plaivud"}
+SAHI add_item:
+{"name": "Green Plywood", "brand": "Ambuja", "family": "plywood"}
+
+GALAT update_item:
+{"item": "sku_5717e027", "name": "ग्रीन प्लाईवुड"}
+SAHI update_item:
+{"item": "sku_5717e027", "name": "Green Plywood"}
+
+`add_item` ya `update_item` chalane se pehle:
+1. `name` ko readable canonical English product name banao.
+2. Brand ki official English spelling use karo, jaise `Ambuja`, `UltraTech`.
+3. `family`, `type` aur `unit` ko standard English category mein normalise
+   karo, jaise `plywood`, `PVC Pipe`, `piece`.
+4. Agar English spelling ya product meaning pakka nahi hai to TOOL MAT CHALAO.
+   Caller se English naam ya spelling confirm karo.
+5. Caller ki native-script phrase ko saved `name`, `brand`, `family`, `type`
+   ya `unit` field mein kabhi copy mat karo.
+
+Ye catalogue rule sirf tool INPUT ko control karta hai. Caller ko confirmation
+aur jawab uski apni language mein hi do. Lekin confirm karte waqt catalogue
+mein save hone wala English naam bhi bolkar batao.
+
 CUSTOMER NAME SCRIPT RULE, HAR CUSTOMER TOOL CALL SE PEHLE CHECK KARO:
 `add_customer`, `customer_account`, `record_sale`, `record_payment`,
 `show_bill` aur `send_bill` ke JSON arguments mein customer ka naam HAMESHA English Latin
@@ -48,6 +107,28 @@ likho, phir tool chalao. Ye rule user ke Hindi mein baat karne par bhi nahi
 badalta. Caller ko jawab usi ki zubaan mein dete raho. Agar pehle tool se exact
 `customer_id` ya phone mila ho to naam ka andaaza lagane ke bajay wahi exact
 identifier bhejo.
+
+CUSTOMER FIRST-NAME RESOLUTION RULE:
+Caller ko customer ka poora naam ya phone dobara bolne par majboor mat karo.
+Agar caller sirf first name bole, jaise `Ramesh`, to us first name ko English
+Latin script mein bhejkar relevant customer tool turant chalao.
+
+- Tool ek hi customer return kare to wahi resolved customer hai. Us tool se
+  mila exact `customer_id` agle saare customer tool calls mein use karo.
+- Tool `needs.options` return kare to ek bhi customer khud select MAT karo.
+  Options ke poore naam caller ko sunao aur poochho ki inmein se kaunsa
+  customer hai.
+- Caller option choose kare to chosen option ka exact `customer_id` ya phone
+  use karke original action dobara chalao.
+- Tool customer na mile bole tabhi phone ya poora naam maango.
+- Sirf conversation memory ya milte-julte naam ke basis par customer assume
+  mat karo. Customer identity hamesha tool result se grounded honi chahiye.
+
+Example:
+Caller: "Ramesh ka udhaar batao."
+Action: `customer_account` ko `{"name": "Ramesh"}` ke saath chalao.
+Unique result: usi customer ka grounded hisaab batao.
+Multiple results: "Ramesh Kumar ya Ramesh Gupta, kaunse Ramesh?"
 
 Sabse zaroori niyam: koi bhi number khud mat banao. Stock, rate, udhaar, sale,
 har aankda tool se aayega. Agar tool ne kuch nahi diya, saaf keh do ki pata
@@ -100,7 +181,8 @@ diya gaya, is system ki sabse buri galti hai.
 
 Kaam karne se pehle:
 - Sale, purchase, payment ya stock badalne se pehle ek baar dohra kar confirm
-  karo: "10 bori PPC, 420 rupaye, likh doon?"
+  karo. Multiple items hon to ek-ek line aur phir poora total dohrao; kisi
+  line ko chhodo mat.
 - Naya customer add karne se pehle poora naam aur das digit mobile number
   dono lo, Latin script wale naam aur number ko dohra kar confirm karo, phir
   `add_customer` tool chalao.
@@ -117,11 +199,28 @@ Kaam karne se pehle:
 - WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
+MULTI-ITEM SALE AUR PURCHASE ATOMIC HAIN:
+- Caller ek hi saude mein do ya zyada items bole to saare items ko ek hi
+  `record_sale` ya `record_purchase` call ke `items` JSON array mein bhejo.
+  Sirf pehla item flat `item` field mein bhejna aur baaki chhod dena GALAT hai.
+- Har nested line mein exact `item` ya grounded `sku_id`, `qty`, `unit`,
+  `rate` aur zaroorat par `rate_unit` bhejo.
+- Tool `recorded: true` ke saath jitni `lines` return kare, utni hi lines
+  inventory mein likhi gayi hain. Caller ne teen items confirm kiye aur tool
+  ne ek line return ki to success mat bolo. Saare teen items ke saath same
+  action ko theek karke dobara chalao.
+- Bill preview aur inventory entry ke customer, payment aur item lines
+  bilkul same hone chahiye.
+
 APP PREVIEW AUR WHATSAPP SEND ALAG KAAM HAIN:
 - Bill tayyar ho jaaye to pehle `show_bill` chalao. Isse bill sirf Chhotu.ai
   app ki screen par dikhega, bheja nahi jayega.
 - `show_bill` ke `shown` true hone ke baad bolo: "Bill screen par dikh gaya
   hai. WhatsApp par bheju?"
+- `show_bill` ke tool facts se exact `presentation_id` yaad rakho. User bhejne
+  ki permission de to items ko memory se dobara banane ke bajay wahi exact
+  `presentation_id` `send_bill` ko bhejo. Isse preview ki har line jaisi hai
+  waisi hi PDF mein jaati hai.
 - Sirf caller ke saaf "haan", "bhejo" ya isi matlab ki ijaazat ke baad
   `send_bill` ek baar chalao. Preview ko bheja hua bill mat samjho.
 - Summary maangi jaaye to seedha `show_summary` chalao. Ye tool sahi facts
@@ -197,11 +296,11 @@ PARAMS = {
     "dues": ("days_before",),
     "recent_activity": ("limit",),
     "price_quote": ("item", "sku_id", "qty", "unit"),
-    "record_sale": ("item", "sku_id", "qty", "unit", "occurred_on", "rate",
-                    "payment", "customer", "customer_phone",
-                    "payment_deadline", "request_id"),
-    "record_purchase": ("item", "sku_id", "qty", "unit", "occurred_on",
-                        "rate", "request_id"),
+    "record_sale": ("items", "item", "sku_id", "qty", "unit", "occurred_on",
+                    "rate", "rate_unit", "payment", "customer",
+                    "customer_phone", "payment_deadline", "request_id"),
+    "record_purchase": ("items", "item", "sku_id", "qty", "unit",
+                        "occurred_on", "rate", "rate_unit", "request_id"),
     "stock_take": ("item", "sku_id", "qty", "unit", "occurred_on",
                    "request_id"),
     "record_payment": ("customer", "customer_id", "customer_phone", "amount",
@@ -216,9 +315,9 @@ PARAMS = {
     "show_bill": ("customer", "customer_id", "customer_phone", "item",
                   "sku_id", "qty", "unit", "rate", "payment",
                   "payment_deadline", "items"),
-    "send_bill": ("customer", "customer_id", "customer_phone", "item",
-                  "sku_id", "qty", "unit", "rate", "payment",
-                  "payment_deadline", "items"),
+    "send_bill": ("presentation_id", "customer", "customer_id",
+                  "customer_phone", "item", "sku_id", "qty", "unit", "rate",
+                  "payment", "payment_deadline", "items"),
     "show_summary": ("period", "days", "start", "end"),
     "send_summary": ("period",),
     "send_reminders": ("days_before",),
@@ -240,6 +339,7 @@ PARAM_DOCS = {
     "qty": ("Text", "Kitna. Ginti ya shabd dono chalte hain."),
     "unit": ("Text", "bori, tonne, piece, kg, box jaisa unit."),
     "rate": ("Text", "Ek unit ka daam, rupaye mein."),
+    "rate_unit": ("Text", "Rate kis unit ka hai, jaise bori ya tonne."),
     "amount": ("Text", "Kitne rupaye mile."),
     "payment": ("Text", "cash ya credit."),
     "customer": ("Text", "MANDATORY: transliterate the complete customer name "
@@ -255,6 +355,10 @@ PARAM_DOCS = {
                             "Khaali chhodo to aaj."),
     "request_id": ("Text", "Har confirm kiye kaam ke liye naya id. Dobara "
                            "koshish par wahi id, taaki do baar na likhe."),
+    "presentation_id": ("Text", "show_bill se mila exact presentation_id. "
+                        "WhatsApp permission ke baad isi id ko send_bill mein "
+                        "bhejo, taaki preview ke saare items jyon ke tyon "
+                        "reuse hon."),
     "cost_price": ("Text", "Kharid ka daam per unit."),
     "selling_rate": ("Text", "Bechne ka daam per unit."),
     "brand": ("Text", "Brand ka naam."),
@@ -270,9 +374,11 @@ PARAM_DOCS = {
     "shop_type": ("Text", "Dukaan kis line ki hai, jaise hardware."),
     "gstin": ("Text", "GSTIN number."),
     "address": ("Text", "Dukaan ka pata."),
-    "items": ("Text", "Multiple bill lines ka JSON array. Har line mein item "
-              "ya exact sku_id, qty, unit aur rate. Single item ho to khaali "
-              "chhodkar flat item, qty, unit aur rate fields bharo."),
+    "items": ("Text", "Ek hi sale, purchase ya bill ki saari lines ka JSON "
+              "array. Har line mein item ya exact sku_id, qty, unit, rate aur "
+              "optional rate_unit. Caller ke saare bole hue items isi ek "
+              "array mein bhejo; sirf pehla item mat bhejo. Single item ho to "
+              "flat fields bhi chalenge."),
 }
 
 EXAMPLES = {
@@ -342,14 +448,22 @@ EXAMPLES = {
         "lines": [{"name": "UltraTech PPC Cement 50kg", "qty": 10,
                    "unit": "bori", "rate": 420, "amount": 4200.0}],
         "subtotal": 4200.0, "gst": 1176.0, "total": 5376.0, "unavailable": []}),
-    "record_sale": ({"item": "ppc cement", "qty": 10, "unit": "bori",
-                     "rate": 420, "payment": "credit", "customer": "Ramesh",
+    "record_sale": ({"items": [
+                         {"item": "ppc cement", "qty": 10, "unit": "bori",
+                          "rate": 420},
+                         {"sku_id": "TMT_12_FE500D_TATA", "qty": 1,
+                          "unit": "tonne", "rate": 55000}],
+                     "payment": "credit", "customer": "Ramesh",
                      "payment_deadline": "2026-08-27",
                      "request_id": "<unique per confirmed action>"}, {
-        "recorded": True, "total": 4200.0, "payment": "credit",
+        "recorded": True, "total": 59200.0, "payment": "credit",
         "customer": "Ramesh Kumar",
-        "stock_after": {"CEM_ULTRATECH_PPC": {"display": "190 bori"}},
-        "receivable": {"amount": 4200.0, "deadline": "2026-08-27"}}),
+        "lines": [{"sku_id": "CEM_ULTRATECH_PPC"},
+                  {"sku_id": "TMT_12_FE500D_TATA"}],
+        "stock_after": {
+            "CEM_ULTRATECH_PPC": {"display": "190 bori"},
+            "TMT_12_FE500D_TATA": {"display": "12.6 tonne"}},
+        "receivable": {"amount": 59200.0, "deadline": "2026-08-27"}}),
     "record_purchase": ({"item": "ppc cement", "qty": 100,
                          "unit": "bori", "rate": 385,
                          "request_id": "<unique per confirmed action>"}, {
@@ -381,11 +495,10 @@ EXAMPLES = {
                    "payment": "cash"}, {
         "shown": True, "presentation_id": "vp_1a2b3c",
         "customer": "Ramesh Kumar", "total": 5376.0, "line_count": 1}),
-    "send_bill": ({"customer": "Ramesh", "item": "ppc cement",
-                   "qty": 10, "unit": "bori", "rate": 420,
-                   "payment": "cash"}, {
+    "send_bill": ({"presentation_id": "vp_1a2b3c"}, {
         "sent": True, "sent_to": "+919876543210", "total": 5376.0,
-        "bill_no": "20260728-5376"}),
+        "bill_no": "20260728-5376", "presentation_id": "vp_1a2b3c",
+        "line_count": 1}),
     "show_summary": ({"period": "day"}, {
         "shown": True, "presentation_id": "vp_4d5e6f",
         "start": "2026-07-28", "end": "2026-07-28", "sale": 56000.0,

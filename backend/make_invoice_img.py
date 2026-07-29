@@ -1,6 +1,9 @@
-"""Generate a deliberately HARD sample invoice image (angled, uneven light,
-handwritten correction, one smudged/illegible row) matching invoice_fixture.json
-bboxes. Not a clean scan — that's the point (spec 9.1)."""
+"""Generate a deliberately hard sample supplier invoice image.
+
+The descriptions and units match Gupta Hardware's inventory schema. One
+handwritten quantity remains uncertain so the demo still shows owner review
+instead of pretending the document model is infallible.
+"""
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 import random
 from pathlib import Path
@@ -27,7 +30,7 @@ for y in range(H):
 
 d.text((40, 30), "SHREE BALAJI STEEL & CEMENT TRADERS", font=font(30, True), fill=(20, 20, 30))
 d.text((40, 72), "GSTIN: 09ABCDE1234F1Z5   |   Ph: 98xxxxxx21", font=font(16), fill=(60, 60, 60))
-d.text((40, 96), "Tax Invoice No: SB/2026-27/0413        Date: 24-07-2026", font=font(16), fill=(60, 60, 60))
+d.text((40, 96), "Tax Invoice No: SB/2026-27/0501        Date: 30-07-2026", font=font(16), fill=(60, 60, 60))
 d.line([(40, 128), (W - 40, 128)], fill=(90, 90, 90), width=2)
 
 # header row
@@ -38,11 +41,11 @@ d.text((650, hy), "Rate", font=font(17, True), fill=(0, 0, 0))
 d.text((770, hy), "Amount", font=font(17, True), fill=(0, 0, 0))
 
 rows = [
-    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 MT", "57,500", "1,72,500.00", False),
-    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 MT", "56,500", "1,13,000.00", False),
-    ("UltraTech OPC 53 Cement 50kg", "100 Bags", "415", "41,500.00", False),
-    ("UltraTech PPC Cement 50kg", "80 Bags", "390", "39,000.00", "hand"),
-    ("~~~~  ~~~~~~  (smudged)  ~~~~", "~~", "~~", "~~~~", "smudge"),
+    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 tonne", "58,000", "1,74,000.00", False),
+    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 tonne", "57,000", "1,14,000.00", False),
+    ("UltraTech OPC 53 Cement 50kg", "100 bori", "415", "41,500.00", False),
+    ("UltraTech PPC Cement 50kg", "80 bori", "390", "39,000.00", "hand"),
+    ("Kajaria Ceramic Floor Tile 2x2ft", "40 Box", "700", "28,000.00", False),
 ]
 y = int(0.27 * H)
 step = int(0.07 * H)
@@ -55,10 +58,6 @@ for desc, qty, rate, amt, flag in rows:
         d.text((596, y - 8), "100", font=font(22, True), fill=(20, 40, 160))
         d.text((650, y), rate, font=font(16), fill=(15, 15, 15))
         d.text((770, y), amt, font=font(16), fill=(15, 15, 15))
-    elif flag == "smudge":
-        d.text((55, y), desc, font=font(16), fill=(120, 120, 120))
-        # smudge blob
-        d.ellipse([300, y - 4, 520, y + 26], fill=(200, 195, 180))
     else:
         d.text((560, y), qty, font=font(16), fill=(15, 15, 15))
         d.text((650, y), rate, font=font(16), fill=(15, 15, 15))
@@ -71,11 +70,11 @@ d.text((55, fy), "Transport / Freight (LR No. 2291)", font=font(16), fill=(15, 1
 d.text((770, fy), "6,500.00", font=font(16), fill=(15, 15, 15))
 d.line([(40, fy + 40), (W - 40, fy + 40)], fill=(90, 90, 90), width=1)
 d.text((560, fy + 55), "Sub Total (taxable):", font=font(16, True), fill=(0, 0, 0))
-d.text((770, fy + 55), "3,66,000.00", font=font(16, True), fill=(0, 0, 0))
+d.text((770, fy + 55), "3,96,500.00", font=font(16, True), fill=(0, 0, 0))
 d.text((560, fy + 80), "CGST+SGST/IGST:", font=font(15), fill=(0, 0, 0))
-d.text((770, fy + 80), "73,930.00", font=font(15), fill=(0, 0, 0))
+d.text((770, fy + 80), "82,220.00", font=font(15), fill=(0, 0, 0))
 d.text((560, fy + 108), "GRAND TOTAL:", font=font(18, True), fill=(120, 20, 20))
-d.text((770, fy + 108), "4,46,430.00", font=font(18, True), fill=(120, 20, 20))
+d.text((770, fy + 108), "4,85,220.00", font=font(18, True), fill=(120, 20, 20))
 
 # creases / noise
 for _ in range(3):
