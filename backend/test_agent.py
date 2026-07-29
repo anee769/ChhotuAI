@@ -13,7 +13,7 @@ import io
 import sys
 import unittest
 from contextlib import redirect_stdout
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import patch
 from fastapi.testclient import TestClient
@@ -71,7 +71,10 @@ class FakeRepo:
 
     def append_event(self, event):
         eid = f"evt_{len(self.events) + 1:04d}"
-        self.events.append(dict(event, event_id=eid))
+        self.events.append(dict(
+            event, event_id=eid,
+            recorded_at=event.get("recorded_at")
+            or datetime.now().isoformat(timespec="seconds")))
         return eid
 
     # --- customers and credit -------------------------------------------
@@ -377,6 +380,29 @@ class AgentToolTests(unittest.TestCase):
         self.assertTrue(again.get("duplicate"))
         self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 190)
 
+    def test_a_reused_request_id_with_different_sale_is_not_a_duplicate(self):
+        self.call("record_sale", item="ppc cement", qty=10, rate=420,
+                  payment="cash", request_id="bad-static-id")
+        second = self.call("record_sale",
+                           item="UltraTech OPC 53 Cement 50kg",
+                           qty=4, rate=500,
+                           payment="cash", request_id="bad-static-id")
+
+        self.assertTrue(second["recorded"])
+        self.assertFalse(second.get("duplicate", False))
+
+    def test_an_old_reused_request_id_is_a_new_entry(self):
+        args = dict(item="ppc cement", qty=10, rate=420,
+                    payment="cash", request_id="bad-static-id")
+        self.call("record_sale", **args)
+        self.repo.events[-1]["recorded_at"] = "2026-07-25T10:00:00"
+
+        second = self.call("record_sale", **args)
+
+        self.assertTrue(second["recorded"])
+        self.assertFalse(second.get("duplicate", False))
+        self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 180)
+
     def test_a_retried_credit_sale_does_not_double_the_debt(self):
         self.repo.upsert_customer("9876543210", "Ramesh")
         args = dict(items=[{"item": "ppc cement", "qty": 10, "rate": 420}],
@@ -639,6 +665,13 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(store.call_args.args[1], "bill")
         self.assertEqual(len(store.call_args.args[2]["items"]), 2)
         send.assert_not_called()
+
+    def test_show_bill_card_has_owner_pdf_action(self):
+        page = (Path(__file__).resolve().parent.parent
+                / "frontend" / "index.html").read_text(encoding="utf-8")
+        self.assertIn("View bill PDF", page)
+        self.assertIn("function viewPresentationBill", page)
+        self.assertIn("fetch('/api/bill'", page)
 
     def test_show_summary_previews_without_sending_whatsapp(self):
         import notify

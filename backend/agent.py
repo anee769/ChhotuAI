@@ -41,7 +41,7 @@ import re
 import os
 import secrets
 from collections import defaultdict
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 import auth
 import clock
@@ -914,33 +914,66 @@ def price_quote(repo, user, args):
 # ---------------------------------------------------------------------------
 # Write tools
 # ---------------------------------------------------------------------------
-def _already_written(repo, request_id: str) -> list:
-    """Events from an earlier attempt carrying this exact request_id.
+def _already_written(repo, request_id: str, retry_window_seconds: int = 8) -> list:
+    """Very recent events from a retry carrying this exact request_id.
 
-    Deliberately keyed on an id the agent supplies rather than on "an identical
-    sale in the last two minutes" — two customers really can buy ten bags of
-    the same cement minutes apart, and silently dropping the second sale would
-    be worse than the duplicate it was meant to prevent.
+    Samvaad is instructed to create a fresh id per confirmed action, but an
+    agent version can accidentally reuse an old id. Treating that id as unique
+    forever silently drops real sales. Retry protection therefore only covers
+    the short interval in which an HTTP/tool retry can occur; an old reused id
+    is a new business entry.
     """
     if not request_id:
         return []
-    return [e for e in repo.all_events()
-            if (e.get("evidence") or {}).get("request_id") == request_id]
+    out = []
+    for event in repo.all_events():
+        if (event.get("evidence") or {}).get("request_id") != request_id:
+            continue
+        try:
+            recorded = datetime.fromisoformat(str(event.get("recorded_at") or ""))
+        except ValueError:
+            continue
+        now = datetime.now(recorded.tzinfo) if recorded.tzinfo else datetime.now()
+        if 0 <= (now - recorded).total_seconds() <= retry_window_seconds:
+            out.append(event)
+    return out
+
+
+def _same_retry(prior: list, etype: str, items: list, args: dict) -> bool:
+    """A reused id is a retry only when the recently written payload matches."""
+    if len(prior) != len(items) or not prior:
+        return False
+    remaining = list(prior)
+    for item in items:
+        match = next((
+            event for event in remaining
+            if event.get("type") == etype
+            and event.get("sku_id") == item.get("sku_id")
+            and abs(float(event.get("qty") or 0) - float(item.get("qty") or 0)) < 1e-9
+            and str(event.get("unit") or "") == str(item.get("unit") or "")
+            and (etype != "sale"
+                 or (event.get("payment") or "cash") == (item.get("payment") or "cash"))
+            and (etype != "sale"
+                 or (event.get("customer_id") or "") == (item.get("customer_id") or ""))
+        ), None)
+        if not match:
+            return False
+        requested_rate = item.get("rate")
+        if requested_rate is not None:
+            written_rate = match.get("quoted_rate")
+            if written_rate is None:
+                written_rate = match.get("rate")
+            if written_rate is None or abs(float(written_rate) - float(requested_rate)) > 1e-9:
+                return False
+        remaining.remove(match)
+    return all(str(event.get("occurred_on") or "")[:10] == _when(args)
+               for event in prior)
 
 
 def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> dict:
     """Resolve spoken items to SKUs and append events. Asks before guessing."""
     import main
     request_id = str(args.get("request_id") or "").strip()[:64]
-    prior = _already_written(repo, request_id)
-    if prior:
-        return {"recorded": True, "duplicate": True, "unavailable": [],
-                "_items": [{"sku_id": e["sku_id"], "qty": e.get("qty"),
-                            "unit": e.get("unit")} for e in prior],
-                "_result": {"committed": [{"event_id": e.get("event_id"),
-                                           "sku_id": e["sku_id"], "amount": 0}
-                                          for e in prior],
-                            "affected_stock": {}}}
     items, unknown = [], []
     for row in _lines(args):
         ref = _item_ref(row)
@@ -983,6 +1016,15 @@ def _commit(repo, user, etype: str, args: dict, source: str = "voice_agent") -> 
     if not items:
         return {"recorded": False, "unavailable": unknown,
                 "speak": "Saamaan samajh nahi aaya. Naam aur quantity dobara bataiye."}
+    prior = _already_written(repo, request_id)
+    if _same_retry(prior, etype, items, args):
+        return {"recorded": True, "duplicate": True, "unavailable": [],
+                "_items": [{"sku_id": e["sku_id"], "qty": e.get("qty"),
+                            "unit": e.get("unit")} for e in prior],
+                "_result": {"committed": [{"event_id": e.get("event_id"),
+                                           "sku_id": e["sku_id"], "amount": 0}
+                                          for e in prior],
+                            "affected_stock": {}}}
     result = main._write_events(etype, items, _when(args),
                                 args.get("precision", "exact"), source,
                                 request_id=request_id)
@@ -1035,7 +1077,7 @@ def record_sale(repo, user, args):
         # Already written, receivable included. Re-running either would double
         # the customer's debt, which is the expensive half of this mistake.
         return {**out, "lines": res["committed"],
-                "speak": "Ye entry pehle hi ho chuki hai."}
+                "speak": "Retry mila tha; entry safe hai aur dobara nahi likhi."}
     total = round(sum(c["amount"] for c in res["committed"]), 2)
     receivable = None
     if payment == "credit" and customer:
@@ -1057,6 +1099,10 @@ def record_purchase(repo, user, args):
     if not out.get("recorded"):
         return out
     res, items = out.pop("_result"), out.pop("_items")
+    if out.get("duplicate"):
+        return {**out, "lines": res["committed"],
+                "stock_after": res["affected_stock"],
+                "speak": "Retry mila tha; stock entry safe hai aur dobara nahi likhi."}
     return {**out, "lines": res["committed"],
             "stock_after": res["affected_stock"],
             "speak": f"{_said(repo, items)} stock mein add kar diya."}
@@ -1264,6 +1310,20 @@ def update_item(repo, user, args):
         patch["attributes"] = {**(sku.get("attributes") or {}),
                                "selling_rate": _number(args["selling_rate"])}
         changed.append("rate")
+    if args.get("brand") not in (None, ""):
+        patch["attributes"] = {**(patch.get("attributes") or {}),
+                               "brand": str(args["brand"]).strip()}
+        changed.append("brand")
+    if args.get("type") not in (None, ""):
+        patch["attributes"] = {**(patch.get("attributes") or {}),
+                               "type": str(args["type"]).strip()}
+        changed.append("type")
+    if args.get("family") not in (None, ""):
+        patch["family"] = str(args["family"]).strip().lower()
+        changed.append("family")
+    if args.get("gst_rate") not in (None, ""):
+        patch["gst_rate"] = _number(args["gst_rate"])
+        changed.append("GST")
     if not changed:
         return {"updated": False, "needs": {"field": "what"},
                 "speak": "Kya badalna hai: naam, unit, cost ya rate?"}
@@ -1518,12 +1578,13 @@ TOOLS = {
                             "material'). Yehi bill ke letterhead par chhapta hai."),
     "add_item": (add_item,
                  "Nayi item list mein daalo. args: name, cost_price (zaroori), "
-                 "selling_rate, unit, brand. Add hone ke baad stock_take se "
+                 "selling_rate, unit, family, brand, type, gst_rate. Add hone ke baad stock_take se "
                  "opening ginti likhwana zaroori hai."),
 
     "update_item": (update_item,
-                    "Mojooda item theek karo: naam, unit, cost_price ya "
-                    "selling_rate. args: item (ya sku_id) aur jo badalna hai."),
+                    "Mojooda item theek karo: naam, family, brand, type, unit, "
+                    "cost_price, selling_rate ya gst_rate. args: item (ya "
+                    "exact sku_id) aur jo badalna hai."),
     "remove_item": (remove_item,
                     "Galti se added item ko list se hatao. args: item ya sku_id. Jispe "
                     "koi sale ya stock chal raha ho, wo nahi hatega."),

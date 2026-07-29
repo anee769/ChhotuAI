@@ -644,6 +644,10 @@ def set_config(payload: dict = Body(...)):
 def toggle(payload: dict = Body(...)):
     which = payload.get("which", "day1")
     repo.set_learning_state("day60" if which == "day60" else "day1")
+    if repo.learning_state() == "day60":
+        seed_path = DATA / "learning_day60.json"
+        if seed_path.exists():
+            repo.seed_learning(json.loads(seed_path.read_text(encoding="utf-8")))
     return {"learning_state": repo.learning_state(),
             "learning_counts": repo.learning_counts()}
 
@@ -897,7 +901,10 @@ def _write_events(etype: str, items: list, occurred_on: str, precision: str,
 # ---------------------------------------------------------------------------
 @app.get("/api/customers")
 def customers():
-    return {"customers": crm.accounts(repo)}
+    return {
+        "customers": crm.accounts(repo),
+        "analytics": crm.analytics(repo, clock.today()),
+    }
 
 
 @app.post("/api/customers")
@@ -906,6 +913,30 @@ def save_customer(payload: dict = Body(...)):
         return repo.upsert_customer(payload.get("phone", ""), payload.get("name", ""))
     except ValueError as e:
         raise HTTPException(400, str(e))
+
+
+@app.patch("/api/customers/{customer_id}")
+def update_customer(customer_id: str, payload: dict = Body(...)):
+    if not repo.customer(customer_id):
+        raise HTTPException(404, "Customer not found.")
+    try:
+        return repo.update_customer(
+            customer_id, payload.get("phone", ""), payload.get("name", ""))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.delete("/api/customers/{customer_id}")
+def delete_customer(customer_id: str):
+    if not repo.customer(customer_id):
+        raise HTTPException(404, "Customer not found.")
+    if not repo.delete_customer(customer_id):
+        raise HTTPException(
+            409,
+            "This customer has sales, credit, or payment history and cannot "
+            "be deleted. Historical accounts must remain auditable.",
+        )
+    return {"deleted": True, "customer_id": customer_id}
 
 
 @app.post("/api/customers/{customer_id}/payments")
@@ -1031,8 +1062,37 @@ def stock(as_of: str = None):
                      "type": attrs.get("type") or (
                          f"{attrs['diameter_mm']}mm {attrs.get('grade', '')}".strip()
                          if attrs.get("diameter_mm") else None),
+                     "default_unit": sku.get("default_unit"),
+                     "cost_price": sku.get("opening_cost_per_kg"),
+                     "selling_rate": attrs.get("selling_rate"),
+                     "gst_rate": sku.get("gst_rate"),
                      **_stock_view(sku, det)})
     return {"as_of": (as_of or clock.today().isoformat()), "rows": rows}
+
+
+@app.post("/api/stock")
+def add_stock_item(payload: dict = Body(...)):
+    import agent as AGENT
+    attributes = dict(payload.get("attributes") or {})
+    if payload.get("type"):
+        attributes["type"] = str(payload["type"]).strip()
+    result = AGENT.add_item(
+        repo, current_user(), {**payload, "attributes": attributes})
+    if not result.get("added"):
+        raise HTTPException(400, result.get("speak") or "Product add nahi hua.")
+    return result
+
+
+@app.patch("/api/stock/{sku_id}")
+def update_stock_item(sku_id: str, payload: dict = Body(...)):
+    import agent as AGENT
+    if not repo.sku(sku_id):
+        raise HTTPException(404, "Product inventory mein nahi mila.")
+    result = AGENT.update_item(
+        repo, current_user(), {**payload, "sku_id": sku_id})
+    if not result.get("updated"):
+        raise HTTPException(400, result.get("speak") or "Product update nahi hua.")
+    return result
 
 
 @app.delete("/api/stock/{sku_id}")

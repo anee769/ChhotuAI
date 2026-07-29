@@ -17,6 +17,7 @@ from typing import Optional
 
 import store
 import translit
+from learning import merge_learning, merge_seed_learning
 
 DATA_DIR = Path(os.environ.get("CHHOTU_DATA_DIR",
                                Path(__file__).resolve().parent.parent / "data"))
@@ -65,8 +66,11 @@ class Repo:
     def load_catalogue(self) -> list: ...
     def sku(self, sku_id: str) -> Optional[dict]: ...
     def delete_sku(self, sku_id: str) -> bool: ...
+    def update_customer(self, customer_id: str, phone: str, name: str) -> dict: ...
+    def delete_customer(self, customer_id: str) -> bool: ...
     def load_learning(self) -> dict: ...
     def upsert_learning(self, patch: dict) -> None: ...
+    def seed_learning(self, seed: dict) -> None: ...
     def set_learning_state(self, which: str) -> None: ...
 
 
@@ -215,12 +219,7 @@ class JsonRepo(Repo):
 
     def upsert_learning(self, patch: dict) -> None:
         def _merge(learning):
-            for key, items in patch.items():
-                learning.setdefault(key, [])
-                if isinstance(items, list):
-                    learning[key].extend(items)
-                else:
-                    learning[key].append(items)
+            merge_learning(learning, patch)
 
         with self._lock:
             if self._learning_state == "day1":
@@ -229,6 +228,11 @@ class JsonRepo(Repo):
             else:
                 # Day60 is a read-only demo overlay; keep it in memory only.
                 _merge(self._learning)
+
+    def seed_learning(self, seed: dict) -> None:
+        """Fill missing memories in the active demo state, idempotently."""
+        with self._lock:
+            merge_seed_learning(self._learning, seed)
 
     def set_learning_state(self, which: str) -> None:
         """Toggle Day1/Day60 — swaps the active learning file at runtime."""
@@ -328,6 +332,54 @@ class JsonRepo(Repo):
         with self._lock:
             self._customers, row = self._store.mutate("customers.json", [], _upsert)
             return row
+
+    def update_customer(self, customer_id: str, phone: str, name: str) -> dict:
+        norm = self.normalize_phone(phone)
+        clean = translit.to_latin_name(name).strip() if name else ""
+        if not norm or len(clean) < 2:
+            raise ValueError("valid name and phone number required")
+
+        def _update(customers):
+            row = next((c for c in customers
+                        if c.get("customer_id") == customer_id), None)
+            if not row:
+                raise ValueError("customer not found")
+            collision = next((c for c in customers
+                              if c.get("phone") == norm
+                              and c.get("customer_id") != customer_id), None)
+            if collision:
+                raise ValueError("another customer already uses this phone number")
+            row.update({"name": clean, "phone": norm,
+                        "updated_at": datetime.now().isoformat(timespec="seconds")})
+            return dict(row)
+
+        with self._lock:
+            self._customers, row = self._store.mutate(
+                "customers.json", [], _update)
+        return row
+
+    def delete_customer(self, customer_id: str) -> bool:
+        """Delete only a contact with no financial or sale history."""
+        if any(e.get("customer_id") == customer_id for e in self._events):
+            return False
+        if any(r.get("customer_id") == customer_id for r in self._receivables):
+            return False
+        if any(p.get("customer_id") == customer_id for p in self._payments):
+            return False
+
+        removed = False
+
+        def _delete(customers):
+            nonlocal removed
+            kept = [c for c in customers
+                    if c.get("customer_id") != customer_id]
+            removed = len(kept) != len(customers)
+            customers[:] = kept
+
+        with self._lock:
+            self._customers, _ = self._store.mutate(
+                "customers.json", [], _delete)
+        return removed
 
     def add_receivable(self, customer_id: str, amount: float, deadline: str,
                        sale_event_ids: list) -> dict:

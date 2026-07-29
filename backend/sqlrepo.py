@@ -27,6 +27,7 @@ from typing import Optional
 
 import db
 import translit
+from learning import merge_learning, merge_seed_learning
 
 _EVENT_COLUMNS = (
     "event_id", "type", "sku_id", "qty", "unit", "rate", "quoted_rate",
@@ -235,12 +236,23 @@ class SqlRepo:
                 "SELECT data FROM learning WHERE user_id = %s AND state = %s"
                 " FOR UPDATE", (self.user_id, state)).fetchone()
             data = (row[0] if row else None) or _empty_learning()
-            for key, items in patch.items():
-                data.setdefault(key, [])
-                if isinstance(items, list):
-                    data[key].extend(items)
-                else:
-                    data[key].append(items)
+            merge_learning(data, patch)
+            conn.execute(
+                "INSERT INTO learning (user_id, state, data)"
+                " VALUES (%s,%s,%s::jsonb)"
+                " ON CONFLICT (user_id, state) DO UPDATE SET data = EXCLUDED.data",
+                (self.user_id, state, json.dumps(data, ensure_ascii=False)))
+        self._invalidate("learning")
+
+    def seed_learning(self, seed: dict) -> None:
+        """Fill missing baseline memories without overwriting shop learning."""
+        state = self.learning_state()
+        with db.connect() as conn:
+            row = conn.execute(
+                "SELECT data FROM learning WHERE user_id = %s AND state = %s"
+                " FOR UPDATE", (self.user_id, state)).fetchone()
+            data = (row[0] if row else None) or _empty_learning()
+            merge_seed_learning(data, seed)
             conn.execute(
                 "INSERT INTO learning (user_id, state, data)"
                 " VALUES (%s,%s,%s::jsonb)"
@@ -365,6 +377,49 @@ class SqlRepo:
                     (self.user_id, cid, norm, clean or "", now))
         self._invalidate("customers")
         return self.customer(cid)
+
+    def update_customer(self, customer_id: str, phone: str, name: str) -> dict:
+        norm = self.normalize_phone(phone)
+        clean = translit.to_latin_name(name).strip() if name else ""
+        if not norm or len(clean) < 2:
+            raise ValueError("valid name and phone number required")
+        now = datetime.now().isoformat(timespec="seconds")
+        with db.connect() as conn:
+            existing = conn.execute(
+                "SELECT 1 FROM customers WHERE user_id = %s"
+                " AND customer_id = %s", (self.user_id, customer_id)).fetchone()
+            if not existing:
+                raise ValueError("customer not found")
+            collision = conn.execute(
+                "SELECT 1 FROM customers WHERE user_id = %s AND phone = %s"
+                " AND customer_id <> %s",
+                (self.user_id, norm, customer_id)).fetchone()
+            if collision:
+                raise ValueError("another customer already uses this phone number")
+            conn.execute(
+                "UPDATE customers SET phone = %s, name = %s, updated_at = %s"
+                " WHERE user_id = %s AND customer_id = %s",
+                (norm, clean, now, self.user_id, customer_id))
+        self._invalidate("customers")
+        return self.customer(customer_id)
+
+    def delete_customer(self, customer_id: str) -> bool:
+        """Delete only a contact with no ledger, credit, or payment history."""
+        with db.connect() as conn:
+            for table in ("events", "receivables", "payments"):
+                used = conn.execute(
+                    f"SELECT 1 FROM {table}"
+                    " WHERE user_id = %s AND customer_id = %s LIMIT 1",
+                    (self.user_id, customer_id)).fetchone()
+                if used:
+                    return False
+            cur = conn.execute(
+                "DELETE FROM customers"
+                " WHERE user_id = %s AND customer_id = %s",
+                (self.user_id, customer_id))
+            removed = cur.rowcount > 0
+        self._invalidate("customers")
+        return removed
 
     def _load_receivables(self) -> list:
         with db.connect() as conn:

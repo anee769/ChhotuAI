@@ -81,6 +81,13 @@ Kaam karne se pehle:
 - Jab caller haan kahe, ek naya `request_id` banao aur wahi us kaam ke saath
   bhejo. Agar dobara koshish karni pade to wahi purana id bhejo. System samajh
   jayega ki ye wahi entry hai aur do baar nahi likhega. Naya sauda, naya id.
+- `request_id` ko kabhi example, fixed counter, customer, product ya date se
+  mat banao. Har alag confirmed sale, purchase, payment aur stock take ke liye
+  sach mein naya random id banao, chahe details pichhli entry jaisi hi hon.
+- Tool `duplicate: true` de to caller se "ye pehle hua tha?" mat poochho. Wo
+  sirf isi action ka network retry hai. Saaf bolo ki entry safe hai aur aage
+  badho. Caller khud kahe ki ye nayi entry hai to naya random `request_id`
+  banaakar tool dobara chalao.
 - WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
@@ -223,7 +230,10 @@ The body must contain only the fields listed below, directly at the top level. M
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
+| `family` | Text |  |
 | `brand` | Text | Brand ka naam. |
+| `type` | Text |  |
+| `gst_rate` | Text |  |
 
 **`business_summary`**
 
@@ -416,6 +426,10 @@ The body must contain only the fields listed below, directly at the top level. M
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
 | `cost_price` | Text | Kharid ka daam per unit. |
 | `selling_rate` | Text | Bechne ka daam per unit. |
+| `family` | Text |  |
+| `brand` | Text | Brand ka naam. |
+| `type` | Text |  |
+| `gst_rate` | Text |  |
 
 **`update_shop_profile`**
 
@@ -445,7 +459,7 @@ If you would rather read something human while testing, `{{speak}}` gives the fa
 
 ### `add_item`
 
-Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit, brand. Add hone ke baad stock_take se opening ginti likhwana zaroori hai.
+Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit, family, brand, type, gst_rate. Add hone ke baad stock_take se opening ginti likhwana zaroori hai.
 
 **Request**
 
@@ -453,7 +467,7 @@ Nayi item list mein daalo. args: name, cost_price (zaroori), selling_rate, unit,
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/add_item?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"name": "{{name}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "unit": "{{unit}}", "brand": "{{brand}}"}'
+  -d '{"name": "{{name}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "unit": "{{unit}}", "family": "{{family}}", "brand": "{{brand}}", "type": "{{type}}", "gst_rate": "{{gst_rate}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)
@@ -1152,7 +1166,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/top_items?caller={{call
 
 ### `update_item`
 
-Mojooda item theek karo: naam, unit, cost_price ya selling_rate. args: item (ya sku_id) aur jo badalna hai.
+Mojooda item theek karo: naam, family, brand, type, unit, cost_price, selling_rate ya gst_rate. args: item (ya exact sku_id) aur jo badalna hai.
 
 **Request**
 
@@ -1160,7 +1174,7 @@ Mojooda item theek karo: naam, unit, cost_price ya selling_rate. args: item (ya 
 curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/update_item?caller={{caller_number}}&shop_key={{shop_key}}&secret={{agent_secret}}' \
   -H 'Content-Type: application/json' \
   -H 'X-Agent-Secret: {{SECRET_KEY}}' \
-  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "name": "{{name}}", "unit": "{{unit}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}"}'
+  -d '{"item": "{{item}}", "sku_id": "{{sku_id}}", "name": "{{name}}", "unit": "{{unit}}", "cost_price": "{{cost_price}}", "selling_rate": "{{selling_rate}}", "family": "{{family}}", "brand": "{{brand}}", "type": "{{type}}", "gst_rate": "{{gst_rate}}"}'
 ```
 
 **Reply** (also delivered whole as `facts`)

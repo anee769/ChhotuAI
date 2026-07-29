@@ -348,7 +348,7 @@
   .inventory-modal-confirm:hover { background:#981b13; }
   .inventory-modal-actions button:disabled { cursor:not-allowed; opacity:.58; }
   .customer-metrics {
-    display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-bottom:18px;
+    display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:18px;
   }
   .metric-tile { padding:17px 18px; border:1px solid #d3d7dc; border-radius:12px; background:#fff; }
   .metric-tile .label { color:#696e76; font-size:10px; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
@@ -397,6 +397,63 @@
   .customer-reminder-button:hover { border-color:#969ca4; background:#f6f7f8; }
   .customer-reminder-button:disabled { cursor:wait; opacity:.62; }
   .customer-reminder-button .material-symbols-outlined { font-size:17px; }
+  .customer-create-panel {
+    display:grid; grid-template-columns:minmax(180px,1fr) minmax(180px,1fr) auto;
+    gap:10px; align-items:end; margin-bottom:18px; padding:16px;
+    border:1px solid #cfd4d8; border-radius:12px; background:#fff;
+  }
+  .customer-create-panel label {
+    color:#5e646c; font-size:10px; font-weight:750;
+    letter-spacing:.1em; text-transform:uppercase;
+  }
+  .customer-create-panel input {
+    display:block; width:100%; margin-top:7px; padding:11px 12px;
+  }
+  .customer-delete-button {
+    display:inline-flex; align-items:center; gap:6px; margin-left:auto;
+    padding:8px 10px; border:1px solid #e0b9b5; border-radius:9px;
+    background:#fff7f6; color:#9d1b13; font-size:11px; font-weight:750;
+  }
+  .customer-delete-button .material-symbols-outlined { font-size:16px; }
+  .entity-edit-button {
+    display:inline-flex; align-items:center; gap:6px; padding:8px 10px;
+    border:1px solid #d4d8dd; border-radius:9px; background:#fff;
+    color:#30353c; font-size:11px; font-weight:750;
+  }
+  .entity-edit-button .material-symbols-outlined { font-size:16px; }
+  .customer-profile-actions { display:flex; gap:7px; margin-left:auto; }
+  .entity-form-panel {
+    display:grid; grid-template-columns:repeat(3,minmax(150px,1fr));
+    gap:10px; align-items:end; margin-bottom:16px; padding:16px;
+    border:1px solid #cfd4d8; border-radius:12px; background:#fff;
+  }
+  .entity-form-panel label, .customer-edit-panel label {
+    color:#5e646c; font-size:10px; font-weight:750;
+    letter-spacing:.1em; text-transform:uppercase;
+  }
+  .entity-form-panel input, .entity-form-panel select,
+  .customer-edit-panel input {
+    display:block; width:100%; margin-top:7px; padding:10px 11px;
+  }
+  .customer-edit-panel {
+    display:grid; grid-template-columns:1fr 1fr auto auto; gap:9px;
+    align-items:end; margin:0 0 18px; padding:14px;
+    border:1px solid #d7dade; border-radius:11px; background:#f7f8f9;
+  }
+  .crm-insights {
+    display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px;
+  }
+  .crm-insight-card {
+    overflow:hidden; border:1px solid #d3d7dc; border-radius:12px; background:#fff;
+  }
+  .crm-insight-card h3 { padding:15px 17px 12px; font-size:14px; font-weight:800; }
+  .crm-rank-row {
+    display:grid; grid-template-columns:26px minmax(0,1fr) auto; gap:10px;
+    align-items:center; padding:10px 17px; border-top:1px solid #e4e6e9;
+    font-size:12px;
+  }
+  .crm-rank-row .rank { color:#7a7f87; font-size:10px; font-weight:800; }
+  .inventory-actions { display:flex; gap:6px; }
   .voice-entry-card { max-width:920px; overflow:hidden; }
   .voice-entry-head {
     display:flex; align-items:flex-start; justify-content:space-between; gap:18px;
@@ -557,6 +614,17 @@
   .voice-presentation-stat span { display:block; color:#727780; font-size:10px; }
   .voice-presentation-stat b { display:block; margin-top:3px; color:#111827; font-size:15px; }
   .voice-presentation-alerts { padding:12px 18px; border-top:1px solid #dfe2e5; color:#565b63; font-size:11px; }
+  .voice-presentation-actions {
+    display:flex; justify-content:flex-end; padding:12px 16px;
+    border-top:1px solid #dfe2e5; background:#fff;
+  }
+  .voice-presentation-pdf {
+    display:inline-flex; align-items:center; justify-content:center; gap:7px;
+    min-height:40px; padding:0 14px; border-radius:9px;
+    background:#111827; color:#fff; font-size:12px; font-weight:800;
+  }
+  .voice-presentation-pdf .material-symbols-outlined { font-size:17px; }
+  .voice-presentation-pdf:disabled { cursor:wait; opacity:.6; }
   .voice-current-entry {
     padding:18px 24px 20px; border-top:1px solid #d8dbe0;
     background:#f5f6f7;
@@ -796,6 +864,10 @@
     .dashboard-metrics, .dashboard-grid { grid-template-columns:1fr; }
     .crm-layout { grid-template-columns:1fr; }
     .customer-list { border-right:0; border-bottom:1px solid #cdd1d6; max-height:330px; overflow:auto; }
+    .customer-create-panel { grid-template-columns:1fr; }
+    .entity-form-panel, .customer-edit-panel, .crm-insights { grid-template-columns:1fr; }
+    .customer-profile { align-items:flex-start; flex-wrap:wrap; }
+    .customer-profile-actions { width:100%; margin-left:80px; }
     .balance-panel { grid-template-columns:1fr; }
     .inventory-toolbar { align-items:flex-start; flex-direction:column; }
     .inventory-controls { width:100%; }
@@ -810,7 +882,19 @@
       position:sticky; top:64px; width:100%; height:auto; padding:9px 12px;
       flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid #d4d7db;
     }
-    .shop-card, .nav-label, .nav-footer { display:none; }
+    .shop-card, .nav-label { display:none; }
+    .nav-footer {
+      position:sticky; right:0; z-index:2; display:flex; flex:0 0 auto;
+      gap:6px; margin-top:0; padding:0 0 0 10px; border-top:0;
+      background:#fff; box-shadow:-14px 0 18px #fff;
+    }
+    .nav-footer button {
+      width:auto; min-width:max-content; min-height:40px; padding:0 12px;
+      border-radius:10px;
+    }
+    .nav-footer #logoutBtn {
+      color:#8f1d16; background:#fff; border:1px solid #e4c5c1;
+    }
     .app-nav .tab-btn { width:auto; min-width:max-content; min-height:40px; padding:0 12px; }
     .app-main { margin-left:0; padding:88px 16px 76px; }
     .page-heading { align-items:flex-start; flex-direction:column; }
@@ -1634,8 +1718,29 @@
         <h1>Inventory Ledger</h1>
         <p>Derived stock with full event history and reconciliation.</p>
       </div>
+      <button onclick="openInventoryEditor()" class="btn-primary px-4 py-2.5">
+        <span class="material-symbols-outlined align-middle text-[18px]">add_box</span>
+        Add product
+      </button>
     </div>
     <div id="countPanel" class="hidden mb-5"><div id="voiceUI-count"></div></div>
+    <div id="inventoryEditor" class="entity-form-panel hidden">
+      <input id="inventoryEditSku" type="hidden">
+      <label>Product name<input id="inventoryEditName" type="text" placeholder="UltraTech PPC Cement 50kg"></label>
+      <label>Family
+        <select id="inventoryEditFamily"><option value="other">Other</option><option value="cement">Cement</option><option value="tmt">TMT</option><option value="tiles">Tiles</option><option value="pipe">Pipe</option><option value="paint">Paint</option><option value="fitting">Fitting</option><option value="fastener">Fastener</option></select>
+      </label>
+      <label>Brand<input id="inventoryEditBrand" type="text" placeholder="UltraTech"></label>
+      <label>Type / size<input id="inventoryEditType" type="text" placeholder="PPC · 50kg"></label>
+      <label>Unit<input id="inventoryEditUnit" type="text" placeholder="bori"></label>
+      <label>Cost price<input id="inventoryEditCost" type="number" min="0" step="0.01" placeholder="385"></label>
+      <label>Selling rate<input id="inventoryEditRate" type="number" min="0" step="0.01" placeholder="420"></label>
+      <label>GST %<input id="inventoryEditGst" type="number" min="0" max="100" step="0.01" placeholder="18"></label>
+      <div class="flex gap-2">
+        <button id="inventoryEditSave" onclick="saveInventoryItem()" class="btn-primary px-4 py-3">Save</button>
+        <button onclick="closeInventoryEditor()" class="btn-secondary px-3 py-3">Cancel</button>
+      </div>
+    </div>
     <div class="card overflow-hidden">
       <div class="inventory-toolbar">
         <div><div class="font-semibold">Current stock</div><div class="text-xs text-slate-500">All quantities replayed from the event log</div></div>
@@ -1665,8 +1770,26 @@
         <h1>Customer CRM</h1>
         <p>Manage customer balances, deadlines and received payments.</p>
       </div>
+      <button onclick="toggleCustomerCreate()" class="btn-primary px-4 py-2.5">
+        <span class="material-symbols-outlined align-middle text-[18px]">person_add</span>
+        Add customer
+      </button>
+    </div>
+    <div id="customerCreatePanel" class="customer-create-panel hidden">
+      <label>Customer name
+        <input id="newCustomerName" type="text" autocomplete="name"
+          placeholder="Pankaj Sharma">
+      </label>
+      <label>Mobile number
+        <input id="newCustomerPhone" type="tel" inputmode="numeric"
+          autocomplete="tel" maxlength="13" placeholder="98765 43210"
+          onkeydown="if(event.key==='Enter')createCustomer()">
+      </label>
+      <button id="createCustomerButton" onclick="createCustomer()"
+        class="btn-primary px-5 py-3">Save customer</button>
     </div>
     <div id="customerSummary" class="customer-metrics"></div>
+    <div id="customerInsights" class="crm-insights"></div>
     <div id="customerBody"></div>
   </section>
 
@@ -1675,7 +1798,10 @@
     <div class="card p-6">
       <div class="flex items-center justify-between mb-4">
         <h2 class="text-2xl font-bold">Aaj ka hisaab</h2>
-        <button onclick="speakToday()" class="btn-primary px-4 py-2.5">🔊 Bolo (Hindi)</button>
+        <button onclick="speakToday()" class="btn-primary px-4 py-2.5">
+          <span class="material-symbols-outlined align-middle text-[18px]">mic</span>
+          Ask Chhotu
+        </button>
       </div>
       <div id="todayBody"></div>
       <audio id="todayAudio" class="hidden"></audio>
@@ -1857,6 +1983,28 @@
         onclick="closeInventoryDeleteModal()">Cancel</button>
       <button id="inventoryDeleteConfirm" type="button" class="inventory-modal-confirm"
         onclick="confirmInventoryDelete()">Delete product</button>
+    </div>
+  </section>
+</div>
+
+<div id="customerDeleteModal" class="inventory-modal hidden" aria-hidden="true"
+  onclick="if(event.target===this) closeCustomerDeleteModal()">
+  <section class="inventory-modal-card" role="dialog" aria-modal="true"
+    aria-labelledby="customerDeleteTitle" aria-describedby="customerDeleteMessage">
+    <div class="inventory-modal-body">
+      <div class="inventory-modal-icon">
+        <span class="material-symbols-outlined">person_remove</span>
+      </div>
+      <div class="eyebrow">Customer contact</div>
+      <h3 id="customerDeleteTitle">Remove this customer?</h3>
+      <p id="customerDeleteMessage"></p>
+      <div id="customerDeleteError" class="inventory-modal-error hidden" role="alert"></div>
+    </div>
+    <div class="inventory-modal-actions">
+      <button id="customerDeleteCancel" type="button" class="inventory-modal-cancel"
+        onclick="closeCustomerDeleteModal()">Cancel</button>
+      <button id="customerDeleteConfirm" type="button" class="inventory-modal-confirm"
+        onclick="confirmCustomerDelete()">Remove customer</button>
     </div>
   </section>
 </div>
@@ -2199,6 +2347,13 @@ function renderVoicePresentation(row){
         <div class="voice-presentation-stat"><span>Subtotal</span><b>${inr(p.subtotal)}</b></div>
         <div class="voice-presentation-stat"><span>GST</span><b>${inr(p.gst)}</b></div>
         <div class="voice-presentation-stat"><span>Total</span><b>${inr(p.total)}</b></div>
+      </div>
+      <div class="voice-presentation-actions">
+        <button class="voice-presentation-pdf"
+          onclick="viewPresentationBill('${escHtml(row.presentation_id)}',this)">
+          <span class="material-symbols-outlined">picture_as_pdf</span>
+          View bill PDF
+        </button>
       </div></section>`;
   }
   if(row?.kind==='summary'){
@@ -2221,6 +2376,38 @@ function renderVoicePresentation(row){
     </section>`;
   }
   return '';
+}
+async function viewPresentationBill(presentationId,button){
+  const row=(SAMVAAD.presentations||[]).find(
+    item=>item.presentation_id===presentationId&&item.kind==='bill');
+  if(!row) { toast('Bill preview expire ho gaya',false); return; }
+  const preview=window.open('about:blank','_blank');
+  const original=button?.innerHTML;
+  if(button){ button.disabled=true; button.textContent='Preparing PDF…'; }
+  try{
+    const p=row.payload||{};
+    const response=await fetch('/api/bill',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        customer:p.customer||{},items:p.items||[],payment:p.payment||'cash',
+        payment_deadline:p.payment_deadline||'',
+      }),
+    });
+    if(!response.ok) throw new Error(await response.text());
+    const blob=await response.blob();
+    const url=URL.createObjectURL(blob);
+    if(preview) preview.location.href=url;
+    else{
+      const link=document.createElement('a');
+      link.href=url; link.target='_blank'; link.rel='noopener'; link.click();
+    }
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){
+    if(preview) preview.close();
+    toast('Bill PDF nahi khul saka',false);
+  }finally{
+    if(button){ button.disabled=false; button.innerHTML=original; }
+  }
 }
 async function pollVoicePresentations(){
   if(!SAMVAAD.startedAt||!SAMVAAD.tab) return;
@@ -2810,9 +2997,11 @@ async function makeBill(items,customer=null){
 }
 
 // ---------- Stock & count ----------
+let STOCK_ROWS=[];
 async function loadStock(){
   const fam=document.getElementById('stockFamily').value;
-  const r=await api('/api/stock'); const rows=fam?r.rows.filter(x=>x.family===fam):r.rows;
+  const r=await api('/api/stock'); STOCK_ROWS=r.rows||[];
+  const rows=fam?STOCK_ROWS.filter(x=>x.family===fam):STOCK_ROWS;
   const icons={tmt:'straighten',cement:'architecture',pipe:'horizontal_rule',fitting:'handyman',fastener:'construction',paint:'format_paint'};
   const body=rows.map(x=>{
     const status=x.uncounted?'uncounted':(x.oversold||Number(x.qty)<=5?'attention':'stable');
@@ -2825,18 +3014,68 @@ async function loadStock(){
       <td>${x.type||'—'}</td>
       <td class="amount ${(x.uncounted||x.oversold)?'text-amber-300':'text-slate-950'}">${x.display}</td>
       <td><span class="stock-status ${status}">${label}</span></td>
-      <td><button type="button" class="inventory-delete"
+      <td><div class="inventory-actions"><button type="button" class="entity-edit-button"
+        data-sku="${escHtml(x.sku_id)}" onclick="openInventoryEditor(this.dataset.sku)">
+        <span class="material-symbols-outlined">edit</span>Edit
+      </button><button type="button" class="inventory-delete"
         data-sku="${escHtml(x.sku_id)}" data-name="${escHtml(x.canonical)}"
         onclick="deleteInventoryItem(this.dataset.sku,this.dataset.name)"
         title="Delete ${escHtml(x.canonical)}">
         <span class="material-symbols-outlined text-[16px]">delete</span>Delete
-      </button></td>
+      </button></div></td>
     </tr>`;
   }).join('');
   document.getElementById('stockList').innerHTML=`<div class="overflow-x-auto"><table class="ledger-table">
     <thead><tr><th>Product &amp; SKU</th><th>Family</th><th>Brand</th><th>Type / Size</th><th class="amount">In-stock level</th><th>Status</th><th>Action</th></tr></thead>
     <tbody>${body}</tbody></table></div>`;
   filterStockRows(document.getElementById('stockSearch')?.value);
+}
+function openInventoryEditor(skuId=''){
+  const row=STOCK_ROWS.find(item=>item.sku_id===skuId);
+  document.getElementById('inventoryEditSku').value=row?.sku_id||'';
+  document.getElementById('inventoryEditName').value=row?.canonical||'';
+  document.getElementById('inventoryEditFamily').value=row?.family||'other';
+  document.getElementById('inventoryEditBrand').value=row?.brand||'';
+  document.getElementById('inventoryEditType').value=row?.type||'';
+  document.getElementById('inventoryEditUnit').value=row?.default_unit||'';
+  document.getElementById('inventoryEditCost').value=row?.cost_price??'';
+  document.getElementById('inventoryEditRate').value=row?.selling_rate??'';
+  document.getElementById('inventoryEditGst').value=row?.gst_rate??'';
+  const panel=document.getElementById('inventoryEditor');
+  panel.classList.remove('hidden');
+  requestAnimationFrame(()=>document.getElementById('inventoryEditName').focus());
+}
+function closeInventoryEditor(){
+  document.getElementById('inventoryEditor').classList.add('hidden');
+}
+async function saveInventoryItem(){
+  const skuId=document.getElementById('inventoryEditSku').value;
+  const payload={
+    name:document.getElementById('inventoryEditName').value.trim(),
+    family:document.getElementById('inventoryEditFamily').value,
+    brand:document.getElementById('inventoryEditBrand').value.trim(),
+    type:document.getElementById('inventoryEditType').value.trim(),
+    unit:document.getElementById('inventoryEditUnit').value.trim(),
+    cost_price:document.getElementById('inventoryEditCost').value,
+    selling_rate:document.getElementById('inventoryEditRate').value,
+    gst_rate:document.getElementById('inventoryEditGst').value,
+  };
+  if(!payload.name||!payload.unit||payload.cost_price===''){
+    toast('Name, unit aur cost price required hain',false); return;
+  }
+  const button=document.getElementById('inventoryEditSave');
+  button.disabled=true; button.textContent='Saving…';
+  try{
+    await api(skuId?'/api/stock/'+encodeURIComponent(skuId):'/api/stock',{
+      method:skuId?'PATCH':'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload),
+    });
+    const state=await api('/api/state');
+    STATE.catalogue=state.catalogue; STATE.byId=Object.fromEntries(state.catalogue.map(x=>[x.sku_id,x]));
+    closeInventoryEditor(); await loadStock();
+    toast(skuId?'Product updated':'Product added');
+  }catch(e){ toast(e.message||'Product save nahi hua',false); }
+  finally{ button.disabled=false; button.textContent='Save'; }
 }
 let INVENTORY_DELETE_TARGET=null;
 async function deleteInventoryItem(skuId,name){
@@ -2883,9 +3122,12 @@ async function confirmInventoryDelete(){
   }
 }
 document.addEventListener('keydown',event=>{
-  if(event.key==='Escape' &&
-     !document.getElementById('inventoryDeleteModal').classList.contains('hidden')){
-    closeInventoryDeleteModal();
+  if(event.key==='Escape'){
+    if(!document.getElementById('inventoryDeleteModal').classList.contains('hidden')){
+      closeInventoryDeleteModal();
+    }else if(!document.getElementById('customerDeleteModal').classList.contains('hidden')){
+      closeCustomerDeleteModal();
+    }
   }
 });
 function filterStockRows(q){
@@ -2895,17 +3137,57 @@ function filterStockRows(q){
   });
 }
 // ---------- Customers / credit ----------
-let CRM_CUSTOMERS=[], CRM_SELECTED=null;
+let CRM_CUSTOMERS=[], CRM_SELECTED=null, CRM_ANALYTICS={};
+let CUSTOMER_DELETE_TARGET=null;
+function toggleCustomerCreate(force){
+  const panel=document.getElementById('customerCreatePanel');
+  const show=typeof force==='boolean'?force:panel.classList.contains('hidden');
+  panel.classList.toggle('hidden',!show);
+  if(show) requestAnimationFrame(()=>document.getElementById('newCustomerName').focus());
+}
+async function createCustomer(){
+  const name=document.getElementById('newCustomerName').value.trim();
+  const phone=document.getElementById('newCustomerPhone').value.trim();
+  if(name.length<2){ toast('Customer ka naam daaliye',false); return; }
+  if(phone.replace(/\D/g,'').length<10){ toast('10 digit mobile number daaliye',false); return; }
+  const button=document.getElementById('createCustomerButton');
+  button.disabled=true; button.textContent='Saving…';
+  try{
+    const customer=await api('/api/customers',{method:'POST',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone})});
+    document.getElementById('newCustomerName').value='';
+    document.getElementById('newCustomerPhone').value='';
+    toggleCustomerCreate(false);
+    CRM_SELECTED=customer.customer_id;
+    await loadCustomers();
+    toast(`${customer.name||name} added`);
+  }catch(e){
+    toast(e.message||'Customer add nahi hua',false);
+  }finally{
+    button.disabled=false; button.textContent='Save customer';
+  }
+}
 async function loadCustomers(){
-  const r=await api('/api/customers'); CRM_CUSTOMERS=r.customers||[];
+  const r=await api('/api/customers'); CRM_CUSTOMERS=r.customers||[]; CRM_ANALYTICS=r.analytics||{};
   if(!CRM_SELECTED || !CRM_CUSTOMERS.some(c=>c.customer_id===CRM_SELECTED)) CRM_SELECTED=CRM_CUSTOMERS[0]?.customer_id||null;
   const outstanding=CRM_CUSTOMERS.reduce((n,c)=>n+c.outstanding,0);
-  const open=CRM_CUSTOMERS.filter(c=>c.outstanding>0).length;
+  const growth=CRM_ANALYTICS.acquisition_growth_pct;
   document.getElementById('customerSummary').innerHTML=`
-    <div class="metric-tile"><div class="label">Active customers</div><div class="value">${CRM_CUSTOMERS.length}</div></div>
-    <div class="metric-tile"><div class="label">Open credit accounts</div><div class="value">${open}</div></div>
-    <div class="metric-tile"><div class="label">Total outstanding</div><div class="value text-amber-300">₹${outstanding.toLocaleString('en-IN')}</div></div>`;
+    <div class="metric-tile"><div class="label">New customers · 30 days</div><div class="value">${CRM_ANALYTICS.new_customers||0}</div><div class="muted">${growth==null?'No prior comparison':`${growth>=0?'+':''}${growth}% vs previous 30 days`}</div></div>
+    <div class="metric-tile"><div class="label">Repeat buyers</div><div class="value">${CRM_ANALYTICS.repeat_buyers||0}</div><div class="muted">${CRM_ANALYTICS.repeat_rate_pct||0}% of buyers</div></div>
+    <div class="metric-tile"><div class="label">Average order value</div><div class="value">₹${(CRM_ANALYTICS.average_order_value||0).toLocaleString('en-IN')}</div><div class="muted">${CRM_ANALYTICS.active_buyers||0} active buyers</div></div>
+    <div class="metric-tile"><div class="label">Outstanding credit</div><div class="value text-amber-700">₹${outstanding.toLocaleString('en-IN')}</div><div class="muted">${CRM_CUSTOMERS.filter(c=>c.outstanding>0).length} open accounts</div></div>`;
+  renderCRMInsights();
   renderCustomerCRM(CRM_CUSTOMERS);
+}
+function renderCRMInsights(){
+  const customers=(CRM_ANALYTICS.top_customers||[]).map((row,index)=>`
+    <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.name)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.total_sales.toLocaleString('en-IN')}</b></div>`).join('');
+  const products=(CRM_ANALYTICS.best_products||[]).map((row,index)=>`
+    <div class="crm-rank-row"><span class="rank">#${index+1}</span><span><b>${escHtml(row.canonical)}</b><span class="muted block">${row.order_count} orders</span></span><b>₹${row.revenue.toLocaleString('en-IN')}</b></div>`).join('');
+  document.getElementById('customerInsights').innerHTML=`
+    <div class="crm-insight-card"><h3>Most valuable customers</h3>${customers||'<div class="p-4 muted">Orders record hone par ranking dikhegi.</div>'}</div>
+    <div class="crm-insight-card"><h3>Best products · last 30 days</h3>${products||'<div class="p-4 muted">Recent sales ke baad ranking dikhegi.</div>'}</div>`;
 }
 function renderCustomerCRM(rows){
   const list=rows.map(c=>{
@@ -2941,8 +3223,24 @@ function renderCustomerDetail(){
     <td>${p.note||'Payment received'}</td>
     <td class="amount text-emerald-700">₹${p.amount.toLocaleString('en-IN')}</td>
   </tr>`).join('');
+  const orders=(c.orders||[]).map(order=>`<tr>
+    <td>${dayLabel(order.occurred_on)}<div class="muted">${escHtml(order.order_id)}</div></td>
+    <td>${order.items.map(item=>`${escHtml(item.canonical)} <span class="muted">(${item.qty} ${escHtml(item.unit)})</span>`).join('<br>')}</td>
+    <td><span class="stock-status ${order.payment==='credit'?'uncounted':'stable'}">${order.payment}</span></td>
+    <td class="amount">₹${order.total.toLocaleString('en-IN')}</td>
+  </tr>`).join('');
   return `<div class="customer-profile"><div class="customer-avatar">${initials}</div><div>
-      <h3>${c.name||'Unnamed'}</h3><p>${c.phone} · Customer since ${c.created_at.slice(0,10)}</p></div></div>
+      <h3>${escHtml(c.name||'Unnamed')}</h3><p>${escHtml(c.phone)} · Customer since ${(c.created_at||'').slice(0,10)||'—'} · ${c.order_count||0} orders</p></div>
+      <div class="customer-profile-actions"><button onclick="toggleCustomerEdit(true)"
+        class="entity-edit-button"><span class="material-symbols-outlined">edit</span>Edit</button>
+      <button onclick="openCustomerDeleteModal('${c.customer_id}')"
+        class="customer-delete-button"><span class="material-symbols-outlined">person_remove</span>Remove</button></div></div>
+    <div id="customerEditPanel" class="customer-edit-panel hidden">
+      <label>Customer name<input id="editCustomerName" value="${escHtml(c.name||'')}"></label>
+      <label>Mobile number<input id="editCustomerPhone" inputmode="numeric" value="${escHtml(c.phone)}"></label>
+      <button onclick="saveCustomerEdit('${c.customer_id}')" class="btn-primary px-4 py-3">Save</button>
+      <button onclick="toggleCustomerEdit(false)" class="btn-secondary px-4 py-3">Cancel</button>
+    </div>
     <div class="balance-panel">
       <div class="balance-card"><div class="eyebrow">Lifetime credit</div><div class="value">₹${c.total_credit.toLocaleString('en-IN')}</div><div class="mt-1 text-xs text-emerald-700">₹${c.total_paid.toLocaleString('en-IN')} settled</div></div>
       <div class="balance-card dark"><div class="eyebrow text-slate-400">Udhaar balance</div><div class="value">₹${c.outstanding.toLocaleString('en-IN')}</div><div class="mt-1 text-xs text-slate-400">${c.next_deadline?`Next due ${dayLabel(c.next_deadline)}`:'Account settled'}</div></div>
@@ -2954,12 +3252,32 @@ function renderCustomerDetail(){
         class="customer-reminder-button rounded-lg">
         <span class="material-symbols-outlined">notifications</span><span>Send reminder</span>
       </button></div>`:''}
+    <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Orders</div><span class="text-xs text-slate-500">₹${(c.total_sales||0).toLocaleString('en-IN')} lifetime sales</span></div>
+    <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Date</th><th>Products</th><th>Payment</th><th class="amount">Total</th></tr></thead>
+      <tbody>${orders||'<tr><td colspan="4" class="muted">No linked orders yet.</td></tr>'}</tbody></table></div>
     <div class="mb-2 flex items-center justify-between"><div class="font-semibold">Credit history</div><span class="text-xs text-slate-500">${c.open_dues.length} open entries</span></div>
     <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Deadline</th><th class="amount">Original</th><th class="amount">Balance</th><th>Status</th></tr></thead>
       <tbody>${dues||'<tr><td colspan="4" class="muted">No outstanding credit.</td></tr>'}</tbody></table></div>
     <div class="mb-2 mt-6 flex items-center justify-between"><div class="font-semibold">Payment receipts</div><span class="text-xs text-slate-500">${c.payment_count||0} separate records</span></div>
     <div class="ledger-table-wrap"><table class="ledger-table"><thead><tr><th>Received on</th><th>Note</th><th class="amount">Amount</th></tr></thead>
       <tbody>${payments||'<tr><td colspan="3" class="muted">No payments recorded yet.</td></tr>'}</tbody></table></div>`;
+}
+function toggleCustomerEdit(show){
+  document.getElementById('customerEditPanel')?.classList.toggle('hidden',!show);
+}
+async function saveCustomerEdit(customerId){
+  const name=document.getElementById('editCustomerName').value.trim();
+  const phone=document.getElementById('editCustomerPhone').value.trim();
+  if(name.length<2||phone.replace(/\D/g,'').length<10){
+    toast('Valid name aur 10 digit phone daaliye',false); return;
+  }
+  try{
+    await api('/api/customers/'+encodeURIComponent(customerId),{
+      method:'PATCH',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({name,phone}),
+    });
+    await loadCustomers(); toast('Customer updated');
+  }catch(e){ toast(e.message||'Customer update nahi hua',false); }
 }
 function selectCustomer(customerId){ CRM_SELECTED=customerId; renderCustomerCRM(CRM_CUSTOMERS); }
 function filterCustomers(q){
@@ -2989,6 +3307,50 @@ async function sendCustomerReminder(customerId){
     toast(e.message||'Reminder nahi bhej saka',false);
   }finally{
     if(button){ button.disabled=false; if(label) label.textContent='Send reminder'; }
+  }
+}
+function openCustomerDeleteModal(customerId){
+  const customer=CRM_CUSTOMERS.find(c=>c.customer_id===customerId);
+  if(!customer) return;
+  CUSTOMER_DELETE_TARGET={customerId,name:customer.name||customer.phone};
+  const modal=document.getElementById('customerDeleteModal');
+  document.getElementById('customerDeleteMessage').textContent=
+    `${CUSTOMER_DELETE_TARGET.name} will be removed from the customer list. `+
+    `Customers with sale, credit, or payment history cannot be removed.`;
+  document.getElementById('customerDeleteError').classList.add('hidden');
+  modal.classList.remove('hidden');
+  modal.setAttribute('aria-hidden','false');
+  requestAnimationFrame(()=>document.getElementById('customerDeleteCancel').focus());
+}
+function closeCustomerDeleteModal(){
+  const confirmButton=document.getElementById('customerDeleteConfirm');
+  if(confirmButton.disabled) return;
+  const modal=document.getElementById('customerDeleteModal');
+  modal.classList.add('hidden');
+  modal.setAttribute('aria-hidden','true');
+  CUSTOMER_DELETE_TARGET=null;
+}
+async function confirmCustomerDelete(){
+  if(!CUSTOMER_DELETE_TARGET) return;
+  const {customerId,name}=CUSTOMER_DELETE_TARGET;
+  const confirmButton=document.getElementById('customerDeleteConfirm');
+  const cancelButton=document.getElementById('customerDeleteCancel');
+  const errorBox=document.getElementById('customerDeleteError');
+  confirmButton.disabled=true; cancelButton.disabled=true;
+  confirmButton.textContent='Removing…'; errorBox.classList.add('hidden');
+  try{
+    await api('/api/customers/'+encodeURIComponent(customerId),{method:'DELETE'});
+    CRM_SELECTED=null;
+    confirmButton.disabled=false; cancelButton.disabled=false;
+    confirmButton.textContent='Remove customer';
+    closeCustomerDeleteModal();
+    await loadCustomers();
+    toast(`${name} removed`);
+  }catch(e){
+    errorBox.textContent=e.message||'Customer remove nahi ho saka.';
+    errorBox.classList.remove('hidden');
+    confirmButton.disabled=false; cancelButton.disabled=false;
+    confirmButton.textContent='Try again';
   }
 }
 // ---------- Today ----------
@@ -3024,10 +3386,9 @@ async function loadToday(){
     </div>`;
 }
 async function speakToday(){
-  const proc=document.getElementById('todayBody');
-  const r=await api('/api/today/tts');
-  if(r.audio_b64){ const a=document.getElementById('todayAudio'); a.src='data:audio/mp3;base64,'+r.audio_b64; a.classList.remove('hidden'); a.play(); }
-  toast('🔊 '+r.text, true);
+  showTab('sale');
+  await new Promise(resolve=>requestAnimationFrame(resolve));
+  if(!SAMVAAD.agent) await startSamvaadConversation('sale');
 }
 
 // ---------- Dashboard ----------

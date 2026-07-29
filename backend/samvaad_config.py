@@ -88,6 +88,13 @@ Kaam karne se pehle:
 - Jab caller haan kahe, ek naya `request_id` banao aur wahi us kaam ke saath
   bhejo. Agar dobara koshish karni pade to wahi purana id bhejo. System samajh
   jayega ki ye wahi entry hai aur do baar nahi likhega. Naya sauda, naya id.
+- `request_id` ko kabhi example, fixed counter, customer, product ya date se
+  mat banao. Har alag confirmed sale, purchase, payment aur stock take ke liye
+  sach mein naya random id banao, chahe details pichhli entry jaisi hi hon.
+- Tool `duplicate: true` de to caller se "ye pehle hua tha?" mat poochho. Wo
+  sirf isi action ka network retry hai. Saaf bolo ki entry safe hai aur aage
+  badho. Caller khud kahe ki ye nayi entry hai to naya random `request_id`
+  banaakar tool dobara chalao.
 - WhatsApp par kuch bhejne se pehle hamesha ijaazat lo, aur ek hi baar bhejo.
 - Udhaar bina customer ke naam ke kabhi mat likho.
 
@@ -179,11 +186,12 @@ PARAMS = {
                    "request_id"),
     "record_payment": ("customer", "customer_id", "customer_phone", "amount",
                        "request_id"),
-    "add_item": ("name", "cost_price", "selling_rate", "unit", "brand"),
+    "add_item": ("name", "cost_price", "selling_rate", "unit", "family",
+                 "brand", "type", "gst_rate"),
     "update_shop_profile": ("shop_name", "owner", "shop_type", "gstin",
                             "address"),
     "update_item": ("item", "sku_id", "name", "unit", "cost_price",
-                    "selling_rate"),
+                    "selling_rate", "family", "brand", "type", "gst_rate"),
     "remove_item": ("item", "sku_id"),
     "show_bill": ("customer", "customer_id", "customer_phone", "item",
                   "sku_id", "qty", "unit", "rate", "payment",

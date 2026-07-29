@@ -23,6 +23,7 @@ import auth
 import db
 import store
 import sqlrepo
+from learning import merge_seed_learning
 
 
 def _load_documents(data_dir: Path, force_files: bool = False) -> dict:
@@ -128,11 +129,21 @@ def migrate(phone: str, shop_name: str = "", data_dir: Path = None) -> dict:
         for state, doc in (("day1", docs["learning.json"]),
                            ("day60", docs["learning_day60.json"])):
             if doc:
+                existing = conn.execute(
+                    "SELECT data FROM learning WHERE user_id = %s AND state = %s"
+                    " FOR UPDATE", (uid, state)).fetchone()
+                merged = merge_seed_learning(
+                    (existing[0] if existing else None)
+                    or {"aliases_learned": [], "attribute_priors": [],
+                        "unit_priors": [], "corrections": []},
+                    doc,
+                )
                 conn.execute(
                     "INSERT INTO learning (user_id, state, data)"
                     " VALUES (%s,%s,%s::jsonb)"
-                    " ON CONFLICT (user_id, state) DO NOTHING",
-                    (uid, state, json.dumps(doc, ensure_ascii=False)))
+                    " ON CONFLICT (user_id, state)"
+                    " DO UPDATE SET data = EXCLUDED.data",
+                    (uid, state, json.dumps(merged, ensure_ascii=False)))
 
         cfg = dict(docs["config.json"] or {})
         if effective_shop:

@@ -179,6 +179,66 @@ class ConcurrentInstanceTests(unittest.TestCase):
         self.assertNotEqual(ca["customer_id"], cb["customer_id"])
         self.assertEqual(len(self.R.JsonRepo(self.dir).customers()), 2)
 
+    def test_unused_customer_can_be_deleted(self):
+        a, _ = self._two()
+        customer = a.upsert_customer("9000000001", "Temporary Customer")
+
+        self.assertTrue(a.delete_customer(customer["customer_id"]))
+        self.assertEqual(self.R.JsonRepo(self.dir).customers(), [])
+
+    def test_customer_contact_can_be_edited_without_losing_id(self):
+        a, _ = self._two()
+        customer = a.upsert_customer("9000000001", "Old Name")
+
+        updated = a.update_customer(
+            customer["customer_id"], "9000000009", "New Name")
+
+        self.assertEqual(updated["customer_id"], customer["customer_id"])
+        self.assertEqual(updated["name"], "New Name")
+        self.assertEqual(updated["phone"], "+919000000009")
+
+    def test_customer_with_financial_history_cannot_be_deleted(self):
+        a, _ = self._two()
+        customer = a.upsert_customer("9000000001", "Credit Customer")
+        a.add_receivable(customer["customer_id"], 100, "2026-08-01", [])
+
+        self.assertFalse(a.delete_customer(customer["customer_id"]))
+        self.assertIsNotNone(
+            self.R.JsonRepo(self.dir).customer(customer["customer_id"]))
+
+    def test_learning_strengthens_priors_and_replaces_corrected_aliases(self):
+        a, _ = self._two()
+        a.upsert_learning({
+            "aliases_learned": [{"phrase": "Mota Rod", "sku_id": "TMT_16"}],
+            "unit_priors": [{"sku_id": "TMT_16", "unit": "tonne", "count": 1}],
+        })
+        a.upsert_learning({
+            "aliases_learned": [{"phrase": "mota rod", "sku_id": "TMT_20"}],
+            "unit_priors": [{"sku_id": "TMT_16", "unit": "tonne", "count": 1}],
+        })
+
+        learned = self.R.JsonRepo(self.dir).load_learning()
+        aliases = [row for row in learned["aliases_learned"]
+                   if row["phrase"] == "mota rod"]
+        self.assertEqual(len(aliases), 1)
+        self.assertEqual(aliases[0]["sku_id"], "TMT_20")
+        self.assertEqual(learned["unit_priors"][0]["count"], 2)
+
+    def test_learning_seed_is_idempotent(self):
+        a, _ = self._two()
+        seed = {
+            "aliases_learned": [{"phrase": "mota rod", "sku_id": "TMT_16"}],
+            "attribute_priors": [],
+            "unit_priors": [{"sku_id": "TMT_16", "unit": "tonne", "count": 8}],
+            "corrections": [],
+        }
+        a.seed_learning(seed)
+        a.seed_learning(seed)
+
+        learned = a.load_learning()
+        self.assertEqual(len(learned["aliases_learned"]), 1)
+        self.assertEqual(learned["unit_priors"][0]["count"], 8)
+
     def test_receivables_and_payments_survive_both_instances(self):
         a, b = self._two()
         ra = a.add_receivable("c1", 100, "2026-08-01", [])
