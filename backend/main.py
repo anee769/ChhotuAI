@@ -535,12 +535,15 @@ def voice_session():
     import agent
     user = current_user()
     try:
+        memory = agent.learning_context(repo)
         return {"shop_key": agent.shop_key(user["user_id"]),
                 "shop": user.get("shop_name") or "",
                 "owner": user.get("name") or "",
                 "caller_number": re.sub(r"\D", "", user.get("phone") or ""),
                 "learning_state": repo.learning_state(),
                 "learning_counts": repo.learning_counts(),
+                "learned_product_names": memory["product_aliases"],
+                "learned_product_defaults": memory["attribute_priors"],
                 "samvaad": samvaad_runtime.browser_config()}
     except (agent.AgentError, samvaad_runtime.SamvaadConfigurationError) as e:
         raise HTTPException(503, str(e))

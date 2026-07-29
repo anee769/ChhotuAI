@@ -73,6 +73,12 @@ learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
 tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
 size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
 ye niyam aur bhi zaroori hai.
+`shop_profile.learned_product_names` mein har seekhe hue phrase ka grounded
+`sku_id` aur `product` milta hai. Agar "patla sariya" wahan 12mm TMT se mapped
+hai to 12mm hi use karo; size dobara mat poochho. Ye mapping har dukaan ki
+alag hai, isliye apni taraf se koi universal meaning mat banao. In-app call
+mein yahi JSON `learned_product_names` agent variable mein bhi mil sakta hai.
+Backend tool ka jawab final authority hai.
 
 Yaad rakho: tum khud kuch nahi likh sakte. Har entry, har badlav sirf tool
 chalane se hota hai. Jaise hi caller "haan" kahe, us kaam ka tool turant
@@ -1039,7 +1045,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/send_summary?caller={{c
 
 ### `shop_profile`
 
-Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udhaar. Call ke shuru mein context ke liye.
+Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur customer hain, kul udhaar, Day 1/Day 60 state aur grounded local-name-to-SKU mappings. Call ke shuru mein zaroor chalao.
 
 **Request**
 
@@ -1061,7 +1067,15 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/shop_profile?caller={{c
   "today": "2026-07-28",
   "item_count": 7,
   "customer_count": 10,
-  "total_outstanding": 141400.0
+  "total_outstanding": 141400.0,
+  "learning_state": "day60",
+  "learned_product_names": [
+    {
+      "phrase": "patla sariya",
+      "sku_id": "TMT_12_FE500D_TATA",
+      "product": "Tata Tiscon TMT Bar 12mm Fe500D"
+    }
+  ]
 }
 ```
 

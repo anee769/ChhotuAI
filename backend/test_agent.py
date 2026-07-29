@@ -198,6 +198,36 @@ class AgentToolTests(unittest.TestCase):
         self.assertNotIn("needs", out)
         self.assertEqual(out["lines"][0]["sku_id"], TMT_12)
 
+    def test_day60_profile_returns_grounded_alias_map_to_agent(self):
+        seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
+        self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
+        self.repo._learning_state = "day60"
+        out = self.call("shop_profile")
+        mapping = {row["phrase"]: row for row in out["learned_product_names"]}
+        self.assertEqual(mapping["patla sariya"]["sku_id"], TMT_12)
+        self.assertIn("12mm", mapping["patla sariya"]["product"])
+        self.assertEqual(out["learning_state"], "day60")
+
+    def test_day60_alias_and_asr_variation_resolve_in_read_and_write_tools(self):
+        seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
+        self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
+        self.repo._learning_state = "day60"
+
+        stock = self.call("check_stock", item="patla sariyaa")
+        self.assertTrue(stock["found"], stock)
+        self.assertEqual(stock["sku_id"], TMT_12)
+
+        search = self.call("search_items", query="patla sariya")
+        self.assertEqual(search["count"], 1, search)
+        self.assertEqual(search["items"][0]["sku_id"], TMT_12)
+
+        purchase = self.call(
+            "record_purchase", item="patla sariyaa", qty=1, unit="tonne",
+            rate=50000, request_id="day60-patla-purchase",
+        )
+        self.assertTrue(purchase["recorded"], purchase)
+        self.assertEqual(purchase["lines"][0]["sku_id"], TMT_12)
+
     def test_inventory_lists_every_item_with_stock(self):
         out = self.call("list_inventory")
         self.assertEqual(out["count"], len(self.repo.catalogue))

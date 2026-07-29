@@ -59,10 +59,57 @@ def build_alias_index(catalogue: list, learning: dict) -> dict:
     idx: dict = {}
     for s in catalogue:
         for a in s.get("aliases", []):
-            idx.setdefault(a.lower(), []).append(s["sku_id"])
+            key = normalize(str(a))
+            if key:
+                idx.setdefault(key, []).append(s["sku_id"])
     for la in learning.get("aliases_learned", []):
-        idx.setdefault(la["phrase"].lower(), []).append(la["sku_id"])
+        key = normalize(str(la.get("phrase") or ""))
+        sku_id = la.get("sku_id")
+        if key and sku_id:
+            idx.setdefault(key, []).append(sku_id)
     return idx
+
+
+def fuzzy_learned_alias(phrase: str, learning: dict) -> Optional[dict]:
+    """Resolve strong, unique ASR variations of a learned shop phrase.
+
+    Voice transcription often changes only the spelling ("sariya" to
+    "sariyaa"). We accept that variation for multi-word learned terminology,
+    while a generic bare family word still goes through normal disambiguation.
+    """
+    norm = normalize(phrase)
+    if not norm or len(norm.split()) < 2:
+        return None
+
+    best_by_sku: dict[str, dict] = {}
+    for learned in learning.get("aliases_learned", []):
+        sku_id = learned.get("sku_id")
+        alias = normalize(str(learned.get("phrase") or ""))
+        if not sku_id or len(alias.split()) < 2:
+            continue
+        score = max(
+            fuzz.ratio(norm, alias),
+            fuzz.token_set_ratio(norm, alias),
+            fuzz.WRatio(norm, alias),
+        ) / 100.0
+        current = best_by_sku.get(sku_id)
+        if current is None or score > current["score"]:
+            best_by_sku[sku_id] = {
+                "sku_id": sku_id,
+                "score": score,
+                "alias": alias,
+            }
+
+    ranked = sorted(best_by_sku.values(), key=lambda x: x["score"], reverse=True)
+    if not ranked or ranked[0]["score"] < 0.90:
+        return None
+    if len(ranked) > 1 and ranked[1]["score"] > ranked[0]["score"] - 0.08:
+        return None
+    return {
+        "sku_id": ranked[0]["sku_id"],
+        "score": round(ranked[0]["score"], 3),
+        "alias": ranked[0]["alias"],
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -322,7 +369,8 @@ def match(phrase: str, catalogue: list, learning: dict, flow: str = "live_sale")
                     "stage": "unique_substring"}
 
     # Stage 2 — exact alias: whole phrase, then multiword-substring (learned
-    # phrases like "chhota patla rod"), then single-token scan.
+    # phrases like "chhota patla rod"). Before generic single-token aliases,
+    # tolerate a safe ASR spelling variation of a learned multi-word phrase.
     hit_ids = None
     if norm in alias_idx:
         hit_ids = alias_idx[norm]
@@ -333,6 +381,17 @@ def match(phrase: str, catalogue: list, learning: dict, flow: str = "live_sale")
             if f" {a} " in padded:
                 hit_ids = alias_idx[a]
                 break
+    if hit_ids is None:
+        learned = fuzzy_learned_alias(phrase, learning)
+        if learned and learned["sku_id"] in by_id:
+            return {
+                "status": "matched",
+                "sku_id": learned["sku_id"],
+                "confidence": learned["score"],
+                "assumed": {},
+                "stage": "learned_alias_fuzzy",
+                "learned_alias": learned["alias"],
+            }
     if hit_ids is None:
         for tok in sorted(norm.split(), key=len, reverse=True):
             if tok in alias_idx:

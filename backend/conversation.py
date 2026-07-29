@@ -971,7 +971,8 @@ def _sku_from_learned_alias(name, repo):
     norm = M.normalize(name or "")
     if not norm:
         return None
-    idx = M.build_alias_index(repo.load_catalogue(), repo.load_learning())
+    learning = repo.load_learning()
+    idx = M.build_alias_index(repo.load_catalogue(), learning)
     ids = idx.get(norm)
     if ids is None:
         padded = f" {norm} "
@@ -980,7 +981,10 @@ def _sku_from_learned_alias(name, repo):
                 ids = idx[alias]
                 break
     uniq = list(dict.fromkeys(ids or []))
-    return uniq[0] if len(uniq) == 1 and repo.sku(uniq[0]) else None
+    if len(uniq) == 1 and repo.sku(uniq[0]):
+        return uniq[0]
+    fuzzy = M.fuzzy_learned_alias(name or "", learning)
+    return fuzzy["sku_id"] if fuzzy and repo.sku(fuzzy["sku_id"]) else None
 
 
 def _ask_product(item, state=None):

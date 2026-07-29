@@ -331,6 +331,45 @@ def _item_ref(args: dict) -> str:
     return str(args.get("sku_id") or args.get("item") or "").strip()
 
 
+def learning_context(repo, limit: int = 100) -> dict:
+    """Compact, grounded product memory for the voice agent.
+
+    Tools always resolve aliases deterministically. Returning the same mapping
+    from ``shop_profile`` also prevents a premature LLM clarification before a
+    tool is called.
+    """
+    learning = repo.load_learning()
+    catalogue = {sku["sku_id"]: sku for sku in repo.load_catalogue()}
+    aliases = []
+    for row in learning.get("aliases_learned", []):
+        sku = catalogue.get(row.get("sku_id"))
+        phrase = str(row.get("phrase") or "").strip()
+        if not sku or not phrase:
+            continue
+        aliases.append({
+            "phrase": phrase,
+            "sku_id": sku["sku_id"],
+            "product": sku.get("canonical"),
+        })
+        if len(aliases) >= limit:
+            break
+    priors = [
+        {
+            "family": row.get("family"),
+            "attribute": row.get("attribute"),
+            "value": row.get("value"),
+            "evidence_count": row.get("count", 0),
+        }
+        for row in learning.get("attribute_priors", [])
+        if row.get("family") and row.get("attribute")
+    ][:50]
+    return {
+        "state": repo.learning_state(),
+        "product_aliases": aliases,
+        "attribute_priors": priors,
+    }
+
+
 # What kind of shop this is, in the words a shopkeeper would use. Inferred from
 # the registered name so it works without extra setup, and overridable in
 # config for the shop whose name gives nothing away ("Sharma & Sons").
@@ -551,6 +590,7 @@ def shop_profile(repo, user, args):
     catalogue = repo.load_catalogue()
     accounts = crm.accounts(repo)
     outstanding = round(sum(a["outstanding"] for a in accounts), 2)
+    memory = learning_context(repo)
     return {
         "shop": cfg.get("shop_name") or user.get("shop_name") or "",
         "owner": user.get("name") or "",
@@ -564,10 +604,13 @@ def shop_profile(repo, user, args):
         "total_outstanding": outstanding,
         "learning_state": repo.learning_state(),
         "learning_counts": repo.learning_counts(),
+        "learned_product_names": memory["product_aliases"],
+        "learned_product_defaults": memory["attribute_priors"],
         "product_resolution_policy": (
             "Pass the caller's exact local item phrase to the relevant tool "
             "before asking size, brand, or type. Ask only when that tool "
-            "returns needs."
+            "returns needs. If learned_product_names contains the phrase, use "
+            "its sku_id and product directly."
         ),
         "speak": f"{cfg.get('shop_name') or 'Dukaan'} mein {len(catalogue)} item, "
                  f"{len(accounts)} customer, {_say_number(outstanding)} rupaye "
@@ -657,6 +700,13 @@ def search_items(repo, user, args):
         if sku and sku["sku_id"] not in seen:
             seen.add(sku["sku_id"])
             hits.append(sku)
+
+    # Searching must use the same Day-60 memory as write tools. Otherwise the
+    # agent sees several TMT variants from search and asks "which size?" even
+    # though record_sale itself already knows the local phrase.
+    learned_match = M.match(q, catalogue, repo.load_learning(), "live_sale")
+    if learned_match.get("status") == "matched":
+        _add(repo.sku(learned_match.get("sku_id")))
 
     for form in forms:
         for sku in catalogue:
@@ -1555,7 +1605,8 @@ def send_reminders(repo, user, args):
 TOOLS = {
     "shop_profile": (shop_profile,
                      "Dukaan ka naam, owner, GSTIN, aaj ki date, kitne item aur "
-                     "customer hain, kul udhaar. Call ke shuru mein context ke liye."),
+                     "customer hain, kul udhaar, Day 1/Day 60 state aur grounded "
+                     "local-name-to-SKU mappings. Call ke shuru mein zaroor chalao."),
     "list_inventory": (list_inventory,
                        "Poori inventory: har item ka naam, stock, unit, rate. "
                        "'kya kya hai', 'stock list' jaise sawaal ke liye."),

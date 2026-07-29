@@ -2673,6 +2673,45 @@ function resetAfterSamvaad(tab){
 function samvaadMessageText(msg){
   return String(msg?.content??msg?.text??'').trim();
 }
+async function preflightSamvaadMic(){
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNSUPPORTED');
+  const local=/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+  if(!window.isSecureContext && !local) throw new Error('MIC_INSECURE');
+  if(navigator.permissions?.query){
+    try{
+      const permission=await navigator.permissions.query({name:'microphone'});
+      if(permission.state==='denied') throw new Error('MIC_DENIED');
+    }catch(e){
+      if(String(e?.message||e)==='MIC_DENIED') throw e;
+    }
+  }
+  // Ask while we still have the user's tap. Waiting for the signed URL first
+  // can lose mobile browser activation and leave audio suspended.
+  let stream;
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,
+             autoGainControl:true}
+    });
+  }catch(e){
+    const name=String(e?.name||'');
+    if(name==='NotAllowedError'||name==='SecurityError') throw new Error('MIC_DENIED');
+    if(name==='NotFoundError'||name==='DevicesNotFoundError') throw new Error('MIC_MISSING');
+    throw new Error('MIC_START_FAILED');
+  }
+  stream.getTracks().forEach(track=>track.stop());
+}
+function samvaadErrorText(error){
+  const raw=String(error?.message||error||'');
+  if(raw.includes('MIC_DENIED')) return 'Microphone blocked hai. Browser settings mein Chhotu.ai ko mic allow karein.';
+  if(raw.includes('MIC_MISSING')) return 'Is device par microphone nahi mila.';
+  if(raw.includes('MIC_UNSUPPORTED')) return 'Is browser mein microphone support nahi hai.';
+  if(raw.includes('MIC_INSECURE')) return 'Voice ke liye secure HTTPS connection zaroori hai.';
+  if(raw.includes('MIC_START_FAILED')) return 'Microphone start nahi hua. Dusri call ya recording app band karke phir try karein.';
+  if(raw.toLowerCase().includes('timeout')) return 'Voice agent se connection timeout hua. Network check karke phir try karein.';
+  if(raw.toLowerCase().includes('websocket')||raw.toLowerCase().includes('network')) return 'Live voice connection toot gaya. Network check karke phir try karein.';
+  return 'Live voice start nahi hua. Regular voice mode use ho raha hai.';
+}
 async function refreshAfterSamvaad(){
   try{
     const s=await api('/api/state');
@@ -2699,6 +2738,7 @@ async function startSamvaadConversation(tab){
   }
   const sdk=window.ChhotuSamvaadSDK;
   if(!sdk) throw new Error('Samvaad browser SDK load nahi hua.');
+  await preflightSamvaadMic();
   const session=await api('/api/voice/session');
   if(!session.samvaad?.enabled) throw new Error(session.samvaad?.reason||'Samvaad configured nahi hai.');
   const tok=getToken();
@@ -2726,7 +2766,9 @@ async function startSamvaadConversation(tab){
       shop_name:session.shop||'',
       owner_name:session.owner||'',
       learning_state:session.learning_state||'day1',
-      learned_alias_count:String(session.learning_counts?.aliases||0)
+      learned_alias_count:String(session.learning_counts?.aliases||0),
+      learned_product_names:JSON.stringify(session.learned_product_names||[]),
+      learned_product_defaults:JSON.stringify(session.learned_product_defaults||[])
     }
   };
   if(session.samvaad.version!=null) config.version=Number(session.samvaad.version);
@@ -2769,6 +2811,15 @@ async function startSamvaadConversation(tab){
         renderSamvaadConversation();
       }
     },
+    telemetryCallback:(event)=>{
+      // Lifecycle only: never log transcripts, tool data, customer details,
+      // authentication tokens or agent variables.
+      console.info('[voice]',event?.name,event?.properties||{});
+      if(event?.name==='error'||event?.name==='ws_error'||
+         event?.name==='signed_url_failed'){
+        SAMVAAD.voiceIssue={name:event.name,properties:event.properties||{}};
+      }
+    },
     endCallback:async()=>{
       if(SAMVAAD.ending) return;
       SAMVAAD.agent=null; SAMVAAD.state='idle';
@@ -2792,7 +2843,7 @@ async function convStartVoice(tab, flow){
       stopSamvaadPresentationPoll();
       SAMVAAD.agent=null; SAMVAAD.tab=null;
       document.getElementById('voiceUI-'+tab)?.querySelector('.voice-entry-card')?.classList.remove('conversation-active');
-      toast('Live Chhotu available nahi — regular voice mode use ho raha hai.',false);
+      toast(samvaadErrorText(e),false);
     }
   }
   return convStartVoiceLegacy(tab,flow);

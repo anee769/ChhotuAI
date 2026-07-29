@@ -80,6 +80,12 @@ learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
 tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
 size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
 ye niyam aur bhi zaroori hai.
+`shop_profile.learned_product_names` mein har seekhe hue phrase ka grounded
+`sku_id` aur `product` milta hai. Agar "patla sariya" wahan 12mm TMT se mapped
+hai to 12mm hi use karo; size dobara mat poochho. Ye mapping har dukaan ki
+alag hai, isliye apni taraf se koi universal meaning mat banao. In-app call
+mein yahi JSON `learned_product_names` agent variable mein bhi mil sakta hai.
+Backend tool ka jawab final authority hai.
 
 Yaad rakho: tum khud kuch nahi likh sakte. Har entry, har badlav sirf tool
 chalane se hota hai. Jaise hi caller "haan" kahe, us kaam ka tool turant
@@ -274,7 +280,10 @@ EXAMPLES = {
         "shop": "Sharma Building Materials", "owner": "Rajesh Sharma",
         "gstin": "01AABCS4521M1ZM", "shop_kind": "building material",
         "today": "2026-07-28", "item_count": 7, "customer_count": 10,
-        "total_outstanding": 141400.0}),
+        "total_outstanding": 141400.0, "learning_state": "day60",
+        "learned_product_names": [
+            {"phrase": "patla sariya", "sku_id": "TMT_12_FE500D_TATA",
+             "product": "Tata Tiscon TMT Bar 12mm Fe500D"}]}),
     "list_inventory": ({}, {
         "count": 2, "items": [
             {"sku_id": "CEM_ULTRATECH_PPC", "name": "UltraTech PPC Cement 50kg",
