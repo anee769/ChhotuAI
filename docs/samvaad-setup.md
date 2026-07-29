@@ -64,6 +64,16 @@ Agar tool ke jawab mein `needs` aaye, matlab kuch saaf nahi hai. Aage mat
 badho. Wahi sawaal caller se poochho aur uske jawab ke baad tool dobara
 chalao. Do cement ho to "kaunsa" poochhna sahi hai, apne aap chunna galat.
 
+SHOP LEARNING KO HAMESHA PEHLE MAUKA DO:
+Maalik ke local product naam, jaise "chhota sariya", "mota rod", "safed
+cement" ya dukaan ka koi aur seekha hua naam, backend mein yaad rehte hain.
+In shabdon ko dekh kar apne aap size, brand ya type mat poochho. Pehle relevant
+tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend Day 60 ki
+learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
+tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
+size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
+ye niyam aur bhi zaroori hai.
+
 Yaad rakho: tum khud kuch nahi likh sakte. Har entry, har badlav sirf tool
 chalane se hota hai. Jaise hi caller "haan" kahe, us kaam ka tool turant
 chalao. "Likh deta hoon", "add kar deta hoon" bol kar ruk mat jao, wo sirf
@@ -258,7 +268,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`customer_account`**
@@ -279,7 +289,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`low_stock`**
@@ -292,7 +302,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -317,7 +327,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -329,7 +339,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -345,7 +355,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 
 **`search_items`**
@@ -361,7 +371,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
 | `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -389,7 +399,7 @@ The body must contain only the fields listed below, directly at the top level. M
 | `customer` | Text | MANDATORY: transliterate the complete customer name into English Latin script before the tool call. Never send Devanagari in this field. Transliterate phonetically; do not translate, correct or invent the name. Required for credit. |
 | `customer_id` | Text | Exact customer id, sirf pehle tool se mila ho to bharo. Andaaza mat lagao. |
 | `customer_phone` | Text | Customer ka 10-digit mobile number. Country code optional hai. |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -411,7 +421,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `qty` | Text | Kitna. Ginti ya shabd dono chalte hain. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -430,7 +440,7 @@ The body must contain only the fields listed below, directly at the top level. M
 
 | Field | Type | Description for the model |
 | --- | --- | --- |
-| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. |
+| `item` | Text | Jo caller ne bola, jaisa bola. Hindi, English ya mix. Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size khud poochhne se pehle isi exact phrase ke saath tool chalao. |
 | `sku_id` | Text | Exact SKU id, sirf tab bharo jab kisi pehle tool ne ye id di ho. Andaaza mat lagao. |
 | `name` | Text | Naam. Customer tool mein complete customer name ko English Latin script mein transliterate karo. Never send Devanagari in a customer name field. |
 | `unit` | Text | bori, tonne, piece, kg, box jaisa unit. |
@@ -839,7 +849,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_payment?caller={
 
 ### `record_purchase`
 
-Supplier se aaya stock record karo. Ek item ek call mein. args: item ya sku_id, qty, unit, rate (cost price), occurred_on, request_id.
+Supplier se aaya stock record karo. Ek item ek call mein. Caller ka local naam exact item phrase mein bhejo; tool needs de tabhi size/brand poochho. args: item ya sku_id, qty, unit, rate (cost price), occurred_on, request_id.
 
 **Request**
 
@@ -865,7 +875,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/record_purchase?caller=
 
 ### `record_sale`
 
-Sale record karo. Ek item ek call mein. args: item ya sku_id, qty, unit, rate, payment (cash ya credit), customer (naam, English Latin script mein; credit ke liye zaroori), customer_phone, payment_deadline, occurred_on, request_id.
+Sale record karo. Ek item ek call mein. Caller ka local naam pehle isi tool ko exact item phrase mein bhejo; size/brand khud tab tak mat poochho jab tak tool needs na de. args: item ya sku_id, qty, unit, rate, payment (cash ya credit), customer (naam, English Latin script mein; credit ke liye zaroori), customer_phone, payment_deadline, occurred_on, request_id.
 
 **Request**
 
@@ -1111,7 +1121,7 @@ curl -X POST 'https://chhotuai.vercel.app/api/agent/tool/show_summary?caller={{c
 
 ### `stock_take`
 
-Ginti ke baad stock theek karo. Ek item ek call mein. args: item ya sku_id, qty, unit, occurred_on, request_id.
+Ginti ke baad stock theek karo. Ek item ek call mein. Caller ka local naam exact item phrase mein bhejo; tool needs de tabhi size/brand poochho. args: item ya sku_id, qty, unit, occurred_on, request_id.
 
 **Request**
 

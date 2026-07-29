@@ -71,6 +71,16 @@ Agar tool ke jawab mein `needs` aaye, matlab kuch saaf nahi hai. Aage mat
 badho. Wahi sawaal caller se poochho aur uske jawab ke baad tool dobara
 chalao. Do cement ho to "kaunsa" poochhna sahi hai, apne aap chunna galat.
 
+SHOP LEARNING KO HAMESHA PEHLE MAUKA DO:
+Maalik ke local product naam, jaise "chhota sariya", "mota rod", "safed
+cement" ya dukaan ka koi aur seekha hua naam, backend mein yaad rehte hain.
+In shabdon ko dekh kar apne aap size, brand ya type mat poochho. Pehle relevant
+tool ko `item` mein caller ka bilkul wahi phrase bhejo. Backend Day 60 ki
+learning se us naam ko resolve karega. Sirf tool ke jawab mein `needs` aaye
+tabhi tool ke diye hue options wala sawaal poochho. Tool chalaye bina "kaunsa
+size?" poochhna galat hai. `shop_profile` ka `learning_state` `day60` ho to
+ye niyam aur bhi zaroori hai.
+
 Yaad rakho: tum khud kuch nahi likh sakte. Har entry, har badlav sirf tool
 chalane se hota hai. Jaise hi caller "haan" kahe, us kaam ka tool turant
 chalao. "Likh deta hoon", "add kar deta hoon" bol kar ruk mat jao, wo sirf
@@ -213,7 +223,8 @@ PARAMS = {
 # with no description is a field the model fills badly.
 PARAM_DOCS = {
     "item": ("Text", "Jo caller ne bola, jaisa bola. Hindi, English ya mix. "
-             "Sudhaarne ki koshish mat karo."),
+             "Sudhaarne ki koshish mat karo. Local alias ho sakta hai; size "
+             "khud poochhne se pehle isi exact phrase ke saath tool chalao."),
     "sku_id": ("Text", "Exact SKU id, sirf tab bharo jab kisi pehle tool ne "
                "ye id di ho. Andaaza mat lagao."),
     "query": ("Text", "Dhoondhne ke shabd, jaise caller ne kahe."),

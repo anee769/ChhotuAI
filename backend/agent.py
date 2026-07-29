@@ -562,6 +562,13 @@ def shop_profile(repo, user, args):
         "item_count": len(catalogue),
         "customer_count": len(accounts),
         "total_outstanding": outstanding,
+        "learning_state": repo.learning_state(),
+        "learning_counts": repo.learning_counts(),
+        "product_resolution_policy": (
+            "Pass the caller's exact local item phrase to the relevant tool "
+            "before asking size, brand, or type. Ask only when that tool "
+            "returns needs."
+        ),
         "speak": f"{cfg.get('shop_name') or 'Dukaan'} mein {len(catalogue)} item, "
                  f"{len(accounts)} customer, {_say_number(outstanding)} rupaye "
                  "udhaar baaki.",
@@ -1594,7 +1601,10 @@ TOOLS = {
                     "record kiye. args: item ya sku_id, qty, unit."),
 
     "record_sale": (record_sale,
-                    "Sale record karo. Ek item ek call mein. args: item ya "
+                    "Sale record karo. Ek item ek call mein. Caller ka local "
+                    "naam pehle isi tool ko exact item phrase mein bhejo; "
+                    "size/brand khud tab tak mat poochho jab tak tool needs na de. "
+                    "args: item ya "
                     "sku_id, qty, "
                     "unit, rate, payment (cash ya credit), customer (naam, "
                     "English Latin script mein; credit ke liye zaroori), "
@@ -1602,10 +1612,14 @@ TOOLS = {
                     "payment_deadline, occurred_on, request_id."),
     "record_purchase": (record_purchase,
                         "Supplier se aaya stock record karo. Ek item ek call mein. "
+                        "Caller ka local naam exact item phrase mein bhejo; "
+                        "tool needs de tabhi size/brand poochho. "
                         "args: item ya sku_id, qty, unit, rate (cost price), "
                         "occurred_on, request_id."),
     "stock_take": (stock_take,
                    "Ginti ke baad stock theek karo. Ek item ek call mein. "
+                   "Caller ka local naam exact item phrase mein bhejo; "
+                   "tool needs de tabhi size/brand poochho. "
                    "args: item ya sku_id, qty, unit, occurred_on, request_id."),
     "record_payment": (record_payment,
                        "Customer se udhaar ka paisa mila. args: customer (naam "

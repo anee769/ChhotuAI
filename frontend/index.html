@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Chhotu.ai — Awaaz se hisaab</title>
 <link rel="icon" type="image/svg+xml" href="/assets/chhotu-favicon.svg">
 <link rel="shortcut icon" href="/assets/chhotu-favicon.svg">
@@ -883,34 +883,169 @@
   }
 
   @media (max-width: 900px) {
-    .app-header { height:64px; padding:0 16px; }
+    html, body { width:100%; max-width:100%; overflow-x:hidden; }
+    body { background:#f5f6f7; -webkit-tap-highlight-color:transparent; }
+    .app-header {
+      position:fixed; top:0; left:0; right:0; height:64px;
+      padding:0 max(14px,env(safe-area-inset-left));
+    }
     .app-header > .topbar-inner { grid-template-columns:1fr auto; gap:12px; }
-    .brand-tagline, .day-control { display:none !important; }
+    .brand-tagline, .day-control, .learning-counters { display:none !important; }
     .app-nav {
-      position:sticky; top:64px; width:100%; height:auto; padding:9px 12px;
-      flex-direction:row; overflow-x:auto; border-right:0; border-bottom:1px solid #d4d7db;
+      position:fixed; inset:auto 0 0 0; z-index:60;
+      width:100%; height:calc(68px + env(safe-area-inset-bottom));
+      padding:6px max(4px,env(safe-area-inset-right))
+        env(safe-area-inset-bottom) max(4px,env(safe-area-inset-left));
+      display:grid; grid-template-columns:repeat(6,minmax(0,1fr)); gap:2px;
+      overflow:visible; border:0; border-top:1px solid #d4d7db;
+      background:rgba(255,255,255,.97); box-shadow:0 -8px 28px -22px rgba(15,23,42,.55);
+      backdrop-filter:blur(14px);
     }
     .shop-card, .nav-label { display:none; }
-    .nav-footer {
-      position:sticky; right:0; z-index:2; display:flex; flex:0 0 auto;
-      gap:6px; margin-top:0; padding:0 0 0 10px; border-top:0;
-      background:#fff; box-shadow:-14px 0 18px #fff;
+    .nav-footer { display:none; }
+    .app-nav .tab-btn {
+      width:100%; min-width:0; min-height:54px; padding:5px 1px 4px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center;
+      gap:1px; border-radius:11px; color:#687078;
+      font-size:0; line-height:1; font-weight:700;
     }
-    .nav-footer button {
-      width:auto; min-width:max-content; min-height:40px; padding:0 12px;
-      border-radius:10px;
+    .app-nav .tab-btn .material-symbols-outlined { font-size:22px; }
+    .app-nav .tab-btn > span:last-child::after {
+      content:attr(data-mobile-label); display:block; margin-top:3px;
+      font-size:9px; line-height:10px; letter-spacing:0;
     }
-    .nav-footer #logoutBtn {
-      color:#8f1d16; background:#fff; border:1px solid #e4c5c1;
+    .app-nav .tab-btn.active {
+      color:#006c49; background:#e3f8ee; box-shadow:none;
     }
-    .app-nav .tab-btn { width:auto; min-width:max-content; min-height:40px; padding:0 12px; }
-    .app-main { margin-left:0; padding:88px 16px 76px; }
+    .app-main {
+      width:100%; margin-left:0;
+      padding:80px 12px calc(86px + env(safe-area-inset-bottom));
+    }
+    .workspace-shell, .main-column, .tabpane, .card { width:100%; min-width:0; }
+    .tabpane { overflow:visible; }
     .page-heading { align-items:flex-start; flex-direction:column; }
+    .page-heading { gap:14px; margin-bottom:20px; }
+    .page-heading h1 { font-size:27px; }
+    .page-heading p { font-size:13px; line-height:1.45; }
+    .page-heading > button { width:100%; min-height:46px; }
     .voice-entry-head { flex-direction:column; }
-    .voice-stage { padding:30px 16px 22px; }
+    .voice-entry-card { max-width:none; border-radius:14px; }
+    .voice-entry-card.p-6, .voice-entry-card.md\:p-8 { padding:16px !important; }
+    .voice-entry-head { gap:10px; padding-bottom:16px; }
+    .voice-entry-head h2 { font-size:24px; line-height:1.16; }
+    .voice-entry-head p { font-size:13px; }
+    .voice-stage { margin-top:16px; padding:26px 12px 18px; }
+    .voice-mic-button { width:72px; height:72px; }
+    .voice-command-input { padding:5px; }
+    .voice-command-input input { min-width:0; font-size:16px !important; }
+    .voice-command-input button { min-height:44px; padding-left:14px; padding-right:14px; }
     .voice-conversation-turn, .voice-current-entry { padding-left:16px; padding-right:16px; }
+    .voice-conversation { margin-top:16px; }
+    .voice-conversation-turn { padding-top:18px; padding-bottom:18px; }
+    .voice-assistant-copy { font-size:16px; line-height:1.45; overflow-wrap:anywhere; }
+    .voice-user-utterance { overflow-wrap:anywhere; }
     .voice-draft-item { grid-template-columns:minmax(0,1fr); gap:7px; }
     .voice-draft-status { padding-left:31px; }
+    .voice-draft-name { white-space:normal; overflow-wrap:anywhere; }
+    .voice-presentation-head { gap:10px; padding:14px; }
+    .voice-presentation-title { font-size:15px; overflow-wrap:anywhere; }
+    .voice-presentation-total { font-size:20px; }
+    .voice-presentation-lines td { padding:11px 13px; overflow-wrap:anywhere; }
+    .voice-presentation-stat { padding:11px 10px; }
+    .voice-presentation-stat b { font-size:13px; overflow-wrap:anywhere; }
+    .samvaad-session-actions { align-items:stretch; flex-direction:column; padding:13px 14px; }
+    .samvaad-end-button { width:100%; min-height:44px; justify-content:center; }
+    .voice-confirmation-head { flex-direction:column; gap:14px; padding:18px 16px 14px; }
+    .voice-confirmation-total { width:100%; text-align:left; }
+    .voice-confirmation-total strong { font-size:30px; }
+    .confirmation-customer { margin:0 16px 12px; }
+    .confirmation-lines { margin:0 16px; }
+    .confirmation-action { padding:16px; }
+    .central-mic { display:none !important; }
+    #toast {
+      bottom:calc(78px + env(safe-area-inset-bottom)); width:calc(100% - 24px);
+      max-width:420px; text-align:center;
+    }
+    .ledger-table-wrap, #stockList > .overflow-x-auto {
+      width:100%; max-width:100%; overflow-x:auto;
+      -webkit-overflow-scrolling:touch; overscroll-behavior-inline:contain;
+    }
+    .ledger-table { min-width:620px; }
+    .ledger-table.mobile-compact { min-width:0; }
+    .ledger-table.mobile-compact th, .ledger-table.mobile-compact td {
+      white-space:normal;
+    }
+    .ledger-table th, .ledger-table td { padding:12px 13px; }
+    .inventory-toolbar { padding:14px; }
+    .inventory-controls { align-items:stretch; flex-direction:column; }
+    .inventory-controls select { width:100%; min-height:44px; }
+    .stock-product { min-width:190px; }
+    .inventory-actions { flex-direction:column; align-items:stretch; }
+    .inventory-actions button { justify-content:center; min-height:38px; }
+    .customer-detail { padding:16px; }
+    .customer-profile { align-items:flex-start; gap:12px; padding-bottom:16px; }
+    .customer-avatar { width:52px; height:52px; border-radius:12px; font-size:20px; }
+    .customer-profile h3 { font-size:21px; overflow-wrap:anywhere; }
+    .customer-profile p { overflow-wrap:anywhere; }
+    .customer-profile-actions { width:100%; margin-left:0; }
+    .customer-profile-actions button { flex:1; justify-content:center; min-height:40px; }
+    .payment-bar { align-items:stretch; flex-direction:column; padding:13px; }
+    .payment-bar input { width:100%; min-width:0; flex-basis:auto; }
+    .payment-bar button { width:100%; min-height:44px; }
+    .customer-create-panel button, .customer-edit-panel button,
+    .entity-form-panel button { min-height:44px; }
+    .crm-rank-row { padding:11px 13px; }
+    .metric-tile { padding:15px; }
+    .metric-tile .value { font-size:23px; overflow-wrap:anywhere; }
+    .dashboard-chart { min-height:230px; padding:14px 12px 16px; }
+    .section-card-head { padding:15px 16px; }
+    .setting-row { align-items:stretch; flex-direction:column; gap:10px; }
+    .setting-row .setting-input, .setting-input { width:100% !important; min-height:44px; }
+    #gstBody .setting-row { align-items:center; flex-direction:row; }
+    #gstBody .setting-input { width:72px !important; }
+    input, select, textarea { max-width:100%; font-size:16px !important; }
+    input[type="file"] { width:100%; }
+    #tab-invoice .card { padding:16px !important; }
+    #tab-invoice .card > .flex button { width:100%; min-height:44px; }
+    #tab-today > .card { padding:16px !important; }
+    #tab-today > .card > .flex { align-items:flex-start; flex-direction:column; }
+    #tab-today > .card > .flex button { width:100%; min-height:44px; }
+    .inventory-modal { align-items:end; padding:0; }
+    .inventory-modal-card {
+      width:100%; max-height:88dvh; overflow-y:auto;
+      border-radius:20px 20px 0 0; border-bottom:0;
+    }
+    .inventory-modal-body { padding:22px 18px 18px; }
+    .inventory-modal-actions {
+      position:sticky; bottom:0; display:grid; grid-template-columns:1fr 1fr;
+      padding:12px max(14px,env(safe-area-inset-right))
+        calc(12px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));
+    }
+    .inventory-modal-actions button { width:100%; min-width:0; min-height:44px; }
+  }
+
+  .mobile-account-menu { display:none; position:relative; }
+  @media (max-width: 900px) {
+    .mobile-account-menu { display:block; }
+    .mobile-account-trigger {
+      display:grid; place-items:center; width:40px; height:40px;
+      border:1px solid #d4d7db; border-radius:10px; background:#fff;
+      color:#111827;
+    }
+    .mobile-account-panel {
+      position:fixed; right:12px; top:60px; z-index:90;
+      width:min(240px,calc(100vw - 24px));
+      padding:6px; border:1px solid #d4d7db; border-radius:12px;
+      background:#fff; box-shadow:0 16px 38px -18px rgba(15,23,42,.48);
+    }
+    .mobile-account-panel.hidden { display:none; }
+    .mobile-account-panel button {
+      display:flex; align-items:center; gap:10px; width:100%; min-height:44px;
+      padding:0 11px; border-radius:8px; color:#252a31;
+      font-size:14px; font-weight:650; text-align:left;
+    }
+    .mobile-account-panel button:hover { background:#f1f3f5; }
+    .mobile-account-panel .mobile-logout { color:#9d241c; }
   }
 
   /* Chhotu.ai public landing + authentication */
@@ -1364,6 +1499,22 @@
     .auth-workflow-card { padding:24px; }
     .auth-landing-footer { align-items:flex-start; flex-direction:column; padding:30px 20px; }
   }
+  @media (max-width: 520px) {
+    .auth-hero {
+      padding:32px 16px 48px; gap:34px;
+    }
+    .auth-form-shell { grid-row:1; width:100%; margin-left:0; }
+    .auth-hero-copy { grid-row:2; }
+    .auth-card { padding:24px 18px 22px; }
+    .auth-industrial-stage { display:none; }
+    .auth-display { font-size:40px; line-height:.98; }
+    .auth-lede { margin-top:20px; line-height:1.55; }
+    .auth-live-strip { display:none; }
+    .auth-input, .auth-phone-field input, .ob-row input, .ob-row select {
+      min-height:46px; font-size:16px !important;
+    }
+    .auth-primary { min-height:48px; }
+  }
   @media (prefers-reduced-motion:reduce) {
     .auth-screen::before,.auth-crane-trolley,.auth-crane-cable,
     .auth-conveyor::after,.auth-cargo,.auth-scan,.auth-floating-readout,
@@ -1644,6 +1795,21 @@
         </button>
         <span class="text-xs text-slate-500">Day 60</span>
       </div>
+      <div class="mobile-account-menu">
+        <button id="mobileAccountTrigger" class="mobile-account-trigger"
+                aria-label="Account menu" aria-expanded="false"
+                onclick="toggleMobileAccountMenu(event)">
+          <span class="material-symbols-outlined">more_vert</span>
+        </button>
+        <div id="mobileAccountPanel" class="mobile-account-panel hidden">
+          <button onclick="mobileOpenSettings()">
+            <span class="material-symbols-outlined">settings</span><span>Settings</span>
+          </button>
+          <button class="mobile-logout" onclick="mobileLogout()">
+            <span class="material-symbols-outlined">logout</span><span>Logout</span>
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </header>
@@ -1655,12 +1821,12 @@
     <div><div id="shopName">Sharma Building Materials</div><span>Admin Console</span></div>
   </div>
   <div class="nav-label">Workspace</div>
-  <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span>Dashboard</span></button>
-  <button class="tab-btn" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span>Voice Entry</span></button>
-  <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span>Invoice</span></button>
-  <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span>Inventory</span></button>
-  <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span>Customers</span></button>
-  <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span>Today</span></button>
+  <button class="tab-btn active" data-tab="dashboard" onclick="showTab('dashboard')"><span class="material-symbols-outlined">dashboard</span><span data-mobile-label="Home">Dashboard</span></button>
+  <button class="tab-btn" data-tab="sale" onclick="showTab('sale')"><span class="material-symbols-outlined">mic</span><span data-mobile-label="Voice">Voice Entry</span></button>
+  <button class="tab-btn" data-tab="invoice" onclick="showTab('invoice')"><span class="material-symbols-outlined">receipt_long</span><span data-mobile-label="Invoice">Invoice</span></button>
+  <button class="tab-btn" data-tab="stock" onclick="showTab('stock')"><span class="material-symbols-outlined">inventory_2</span><span data-mobile-label="Stock">Inventory</span></button>
+  <button class="tab-btn" data-tab="customers" onclick="showTab('customers')"><span class="material-symbols-outlined">group</span><span data-mobile-label="People">Customers</span></button>
+  <button class="tab-btn" data-tab="today" onclick="showTab('today')"><span class="material-symbols-outlined">calendar_today</span><span data-mobile-label="Today">Today</span></button>
   <div class="nav-footer">
     <button class="tab-btn" data-tab="settings" onclick="showTab('settings')"><span class="material-symbols-outlined">settings</span><span>Settings</span></button>
     <button onclick="logout()" id="logoutBtn"><span class="material-symbols-outlined">logout</span><span>Logout</span></button>
@@ -2116,11 +2282,36 @@ async function toggleDay(){ const next=STATE.learning_state==='day60'?'day1':'da
 
 function showTab(t){
   if(SAMVAAD?.agent && SAMVAAD.tab && SAMVAAD.tab!==t) endSamvaadConversation(SAMVAAD.tab, false);
+  closeMobileAccountMenu();
   document.querySelectorAll('.tabpane').forEach(p=>p.classList.add('hidden'));
   document.getElementById('tab-'+t).classList.remove('hidden');
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===t));
   if(t==='today') loadToday(); if(t==='dashboard') loadDashboard(); if(t==='stock') loadStock();
   if(t==='customers') loadCustomers(); if(t==='settings') loadSettings(); }
+
+function closeMobileAccountMenu(){
+  const panel=document.getElementById('mobileAccountPanel');
+  const trigger=document.getElementById('mobileAccountTrigger');
+  panel?.classList.add('hidden');
+  trigger?.setAttribute('aria-expanded','false');
+}
+function toggleMobileAccountMenu(event){
+  event?.stopPropagation();
+  const panel=document.getElementById('mobileAccountPanel');
+  const trigger=document.getElementById('mobileAccountTrigger');
+  if(!panel) return;
+  const opening=panel.classList.contains('hidden');
+  panel.classList.toggle('hidden',!opening);
+  trigger?.setAttribute('aria-expanded',String(opening));
+}
+function mobileOpenSettings(){ closeMobileAccountMenu(); showTab('settings'); }
+async function mobileLogout(){ closeMobileAccountMenu(); await logout(); }
+document.addEventListener('click',event=>{
+  if(!event.target.closest('.mobile-account-menu')) closeMobileAccountMenu();
+});
+document.addEventListener('keydown',event=>{
+  if(event.key==='Escape') closeMobileAccountMenu();
+});
 
 // ---------- Unified voice UI (sale / delivery / questions) + stock count ----------
 function renderVoiceUI(tab, flow){
@@ -2533,7 +2724,9 @@ async function startSamvaadConversation(tab){
       caller_number:session.caller_number,
       shop_key:session.shop_key,
       shop_name:session.shop||'',
-      owner_name:session.owner||''
+      owner_name:session.owner||'',
+      learning_state:session.learning_state||'day1',
+      learned_alias_count:String(session.learning_counts?.aliases||0)
     }
   };
   if(session.samvaad.version!=null) config.version=Number(session.samvaad.version);
@@ -3380,7 +3573,7 @@ async function loadToday(){
     </tr>`).join('');
   document.getElementById('todayBody').innerHTML=`
     <div class="ledger-table-wrap">
-      <table class="ledger-table">
+      <table class="ledger-table mobile-compact">
         <thead><tr><th>Summary</th><th class="amount">Amount</th></tr></thead>
         <tbody>
           <tr><td><div class="font-semibold text-slate-900">Aaj ki total sale</div><div class="muted">Cash + udhaar</div></td><td class="amount text-slate-950">₹${m.total.toLocaleString('en-IN')}</td></tr>
@@ -3447,7 +3640,7 @@ async function loadDashboard(){
       <span class="text-slate-500">Total locked capital</span>
       <b class="text-rose-700">₹${d.frozen_total.toLocaleString('en-IN')}</b>
     </div>
-    <div class="ledger-table-wrap"><table class="ledger-table">
+    <div class="ledger-table-wrap"><table class="ledger-table mobile-compact">
       <thead><tr><th>Item</th><th>Stock</th><th class="amount">Value</th></tr></thead>
       <tbody>${frozenRows||'<tr><td colspan="3" class="muted">No frozen stock.</td></tr>'}</tbody>
     </table></div>`;

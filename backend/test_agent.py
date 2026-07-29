@@ -39,6 +39,9 @@ class FakeRepo:
         self.catalogue = json.loads(path.read_text(encoding="utf-8"))
         self.by_id = {r["sku_id"]: r for r in self.catalogue}
         self.events, self._customers, self._recv, self._pay = [], [], [], []
+        self.learning = {"aliases_learned": [], "attribute_priors": [],
+                         "unit_priors": [], "corrections": []}
+        self._learning_state = "day1"
 
     # --- catalogue -------------------------------------------------------
     def load_catalogue(self):
@@ -53,8 +56,18 @@ class FakeRepo:
         self.catalogue.append(sku)
 
     def load_learning(self):
-        return {"aliases_learned": [], "attribute_priors": [],
-                "unit_priors": [], "corrections": []}
+        return self.learning
+
+    def learning_state(self):
+        return self._learning_state
+
+    def learning_counts(self):
+        return {
+            "aliases": len(self.learning.get("aliases_learned", [])),
+            "priors": len(self.learning.get("attribute_priors", []))
+            + len(self.learning.get("unit_priors", [])),
+            "corrections": len(self.learning.get("corrections", [])),
+        }
 
     def load_config(self):
         return {"shop_name": "Test Traders", "gstin": "27ABCDE1234F1Z5"}
@@ -170,6 +183,20 @@ class AgentToolTests(unittest.TestCase):
         out = self.call("shop_profile")
         self.assertEqual(out["shop"], "Test Traders")
         self.assertGreater(out["item_count"], 0)
+        self.assertEqual(out["learning_state"], "day1")
+        self.assertIn("exact local item phrase",
+                      out["product_resolution_policy"])
+
+    def test_day60_local_alias_reaches_record_sale_without_size_question(self):
+        seed = Path(__file__).resolve().parent.parent / "data" / "learning_day60.json"
+        self.repo.learning = json.loads(seed.read_text(encoding="utf-8"))
+        self.repo._learning_state = "day60"
+        out = self.call("record_sale", item="chhota sariya", qty=1,
+                        unit="tonne", payment="cash",
+                        request_id="day60-chhota-sariya-demo")
+        self.assertTrue(out["recorded"])
+        self.assertNotIn("needs", out)
+        self.assertEqual(out["lines"][0]["sku_id"], TMT_12)
 
     def test_inventory_lists_every_item_with_stock(self):
         out = self.call("list_inventory")
