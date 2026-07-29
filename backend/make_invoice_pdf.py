@@ -8,15 +8,19 @@ from reportlab.pdfgen import canvas
 OUT = Path(__file__).resolve().parent.parent / "data" / "sample_invoice.pdf"
 
 rows = [
-    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 MT", "57,500", "1,72,500.00"),
-    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 MT", "56,500", "1,13,000.00"),
-    ("UltraTech OPC 53 Cement 50kg", "100 Bags", "415", "41,500.00"),
-    ("UltraTech PPC Cement 50kg", "80 Bags", "390", "31,200.00"),
+    ("Tata Tiscon TMT Bar 12mm Fe500D", "3.00 tonne", "58,000", "1,74,000.00"),
+    ("Tata Tiscon TMT Bar 16mm Fe500D", "2.00 tonne", "57,000", "1,14,000.00"),
+    ("UltraTech OPC 53 Cement 50kg", "100 bori", "415", "41,500.00"),
+    ("UltraTech PPC Cement 50kg", "100 bori", "390", "39,000.00"),
     ("Kajaria Ceramic Floor Tile 2x2ft", "40 Box", "700", "28,000.00"),
 ]
 freight = "6,500.00"
 taxable = sum(float(r[3].replace(",", "")) for r in rows)
-gst = round(taxable * 0.20, 2)  # blended illustrative rate
+gst = round(
+    (174000 + 114000) * 0.18
+    + (41500 + 39000 + 28000) * 0.28,
+    2,
+)
 grand = taxable + gst + float(freight.replace(",", ""))
 
 c = canvas.Canvas(str(OUT), pagesize=A4)
@@ -26,7 +30,7 @@ c.setFont("Helvetica-Bold", 16)
 c.drawString(20 * mm, h - 20 * mm, "SHREE BALAJI STEEL & CEMENT TRADERS")
 c.setFont("Helvetica", 9)
 c.drawString(20 * mm, h - 26 * mm, "GSTIN: 09ABCDE1234F1Z5   |   Ph: 98xxxxxx21")
-c.drawString(20 * mm, h - 31 * mm, "Tax Invoice No: SB/2026-27/0501        Date: 26-07-2026")
+c.drawString(20 * mm, h - 31 * mm, "Tax Invoice No: SB/2026-27/0501        Date: 30-07-2026")
 c.line(20 * mm, h - 35 * mm, w - 20 * mm, h - 35 * mm)
 
 y = h - 45 * mm

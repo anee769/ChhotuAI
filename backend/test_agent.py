@@ -490,6 +490,42 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(out["total"], 4200)
         self.assertEqual(self.call("check_stock", item="ppc cement")["qty"], 190)
 
+    def test_multi_item_sale_records_every_line_and_updates_every_stock(self):
+        """Samvaad sends arrays as a Text field containing JSON."""
+        out = self.call(
+            "record_sale",
+            items=json.dumps([
+                {"item": "ppc cement", "qty": 10, "unit": "bori",
+                 "rate": 420},
+                {"sku_id": TMT_12, "qty": 1, "unit": "tonne",
+                 "rate": 55000},
+            ]),
+            payment="cash",
+            request_id="multi-sale-1",
+        )
+        self.assertTrue(out["recorded"], out)
+        self.assertEqual(len(out["lines"]), 2)
+        self.assertEqual(out["total"], 59200)
+        self.assertEqual(self.call("check_stock", sku_id=CEMENT_PPC)["qty"], 190)
+        self.assertEqual(self.call("check_stock", sku_id=TMT_12)["qty"], 2)
+
+    def test_unknown_line_blocks_the_entire_multi_item_sale(self):
+        before = list(self.repo.events)
+        out = self.call(
+            "record_sale",
+            items=[
+                {"item": "ppc cement", "qty": 10, "unit": "bori",
+                 "rate": 420},
+                {"item": "Mystery Marble", "qty": 2, "unit": "box",
+                 "rate": 500},
+            ],
+            payment="cash",
+            request_id="multi-sale-unknown",
+        )
+        self.assertFalse(out["recorded"], out)
+        self.assertEqual(self.repo.events, before)
+        self.assertEqual(out["unavailable"], ["Mystery Marble"])
+
     def test_credit_sale_without_a_customer_is_refused(self):
         out = self.call("record_sale", items=[{"item": "ppc cement", "qty": 5}],
                         payment="credit")
@@ -831,6 +867,43 @@ class AgentToolTests(unittest.TestCase):
         self.assertEqual(len(store.call_args.args[2]["items"]), 2)
         send.assert_not_called()
 
+    def test_send_bill_reuses_every_line_from_the_exact_preview(self):
+        import notify
+        import presentations
+        customer = self.repo.upsert_customer("9876543210", "Ramesh Kumar")
+        preview = {
+            "presentation_id": "vp_bill",
+            "kind": "bill",
+            "payload": {
+                "customer": {
+                    "customer_id": customer["customer_id"],
+                    "name": customer["name"],
+                    "phone": customer["phone"],
+                },
+                "items": [
+                    {"sku_id": CEMENT_PPC, "qty": 2, "unit": "bori",
+                     "rate": 420},
+                    {"sku_id": TMT_12, "qty": 1, "unit": "tonne",
+                     "rate": 55000},
+                ],
+                "payment": "cash",
+                "payment_deadline": "",
+            },
+        }
+        with patch.object(presentations, "get", return_value=preview), \
+                patch.object(notify, "send_bill",
+                             return_value={"total": 56075.2,
+                                           "sent_to": customer["phone"],
+                                           "bill_no": "test-bill"}) as send:
+            out = self.call("send_bill", presentation_id="vp_bill")
+
+        self.assertTrue(out["sent"], out)
+        self.assertEqual(out["line_count"], 2)
+        self.assertEqual(out["presentation_id"], "vp_bill")
+        sent_lines = send.call_args.args[3]
+        self.assertEqual([row["sku_id"] for row in sent_lines],
+                         [CEMENT_PPC, TMT_12])
+
     def test_show_bill_card_has_owner_pdf_action(self):
         page = (Path(__file__).resolve().parent.parent
                 / "frontend" / "index.html").read_text(encoding="utf-8")
@@ -1052,6 +1125,38 @@ class DispatchTests(unittest.TestCase):
         for tool in ("add_customer", "customer_account", "record_sale", "record_payment",
                      "show_bill", "send_bill"):
             self.assertIn("Latin script", agent.TOOLS[tool][1])
+
+    def test_every_tool_payload_must_use_english_latin_script(self):
+        import samvaad_config as SC
+        self.assertIn("MANDATORY TOOL PAYLOAD LANGUAGE RULE",
+                      SC.INSTRUCTIONS)
+        self.assertIn("HAR tool ke JSON arguments", SC.INSTRUCTIONS)
+        self.assertIn("POORE payload ko check karo", SC.INSTRUCTIONS)
+        self.assertIn('GALAT: {"item": "पतला सरिया"', SC.INSTRUCTIONS)
+        self.assertIn('SAHI:  {"item": "patla sariya"', SC.INSTRUCTIONS)
+        self.assertIn('GALAT: {"query": "আল্ট্রাটেক সিমেন্ট"}',
+                      SC.INSTRUCTIONS)
+        self.assertIn("CATALOGUE WRITE RULE", SC.INSTRUCTIONS)
+        self.assertIn('"name": "Green Plywood"', SC.INSTRUCTIONS)
+        self.assertIn('"brand": "Ambuja"', SC.INSTRUCTIONS)
+        self.assertIn('"name": "Grin Plaivud"', SC.INSTRUCTIONS)
+        self.assertIn("proper canonical English", SC.INSTRUCTIONS)
+        self.assertNotIn("canonical English", SC.PARAM_DOCS["name"][1])
+        self.assertNotIn("canonical English", SC.PARAM_DOCS["brand"][1])
+        self.assertNotIn("MANDATORY Latin script", SC.PARAM_DOCS["item"][1])
+        self.assertNotIn("MANDATORY English Latin", SC.PARAM_DOCS["query"][1])
+        self.assertNotIn("MANDATORY canonical English",
+                         SC.PARAM_DOCS["unit"][1])
+
+    def test_agent_resolves_unique_customer_first_name_and_disambiguates(self):
+        import samvaad_config as SC
+        self.assertIn("CUSTOMER FIRST-NAME RESOLUTION RULE", SC.INSTRUCTIONS)
+        self.assertIn('{"name": "Ramesh"}', SC.INSTRUCTIONS)
+        self.assertIn("needs.options", SC.INSTRUCTIONS)
+        self.assertIn("ek bhi customer khud select MAT karo", SC.INSTRUCTIONS)
+        self.assertIn("Ramesh Kumar ya Ramesh Gupta", SC.INSTRUCTIONS)
+        self.assertIn("Customer identity hamesha tool result se grounded",
+                      SC.INSTRUCTIONS)
 
     def test_a_description_only_names_arguments_the_body_carries(self):
         """The description is the model's only spec for the arguments. Every
