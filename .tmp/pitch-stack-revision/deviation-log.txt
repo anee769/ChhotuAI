@@ -1,0 +1,8 @@
+No structural deviations from the source template are planned.
+
+The only geometry change is widening the existing Chhotu wordmark text box after
+merging the separate .ai run into it. The former .ai text shape is deleted.
+
+Slide 3 receives copy-only changes inside the existing headline, card headings,
+card bodies, and result line. No new primitives, media, or layout regions are
+introduced.

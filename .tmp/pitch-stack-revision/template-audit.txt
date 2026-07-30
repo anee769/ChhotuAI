@@ -1,0 +1,16 @@
+The source deck is a five-slide, dark, editorial investor pitch with a consistent
+top-left brand lockup, oversized white headlines, mint proof points, orange
+section labels, and restrained rounded cards. Slide 3 uses a three-column
+technology-proof layout: measurable capability at left, two explanatory cards
+at right, and a one-line result statement. The revision preserves every layout,
+visual, background, metric, and footer except for the exact brand lockup and the
+Sarvam explanatory copy requested by the user.
+
+The Chhotu and .ai text were originally two independent shapes, creating a
+visible gap. They will be replaced by a single rich-text shape with adjacent
+white and mint runs, preserving the same font and optical height.
+
+Slide 3 will keep its three-column structure and verified metrics. The card copy
+will describe the actually implemented Sarvam stack: speech-to-text, multilingual
+and code-mixed understanding, grounded Samvaad tool calls, text-to-speech, and
+document digitization from image/PDF into reviewed inventory data.

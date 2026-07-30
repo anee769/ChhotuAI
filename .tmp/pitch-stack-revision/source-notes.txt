@@ -1,0 +1,11 @@
+Slide 3 factual basis:
+- ChhotuAI backend/sarvam_client.py: Saaras v3 speech-to-text, Bulbul v3
+  text-to-speech, Sarvam chat, and Document Intelligence.
+- ChhotuAI frontend/src/samvaad.js and backend/samvaad_runtime.py: live Samvaad
+  conversational runtime in the web app.
+- Sarvam Conversational Agents:
+  https://www.sarvam.ai/products/conversational-agents
+- Sarvam Document Digitization:
+  https://docs.sarvam.ai/api/api-guides-tutorials/document-digitization/overview
+- Sarvam Vision:
+  https://docs.sarvam.ai/api/getting-started/models/sarvam-vision

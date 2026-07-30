@@ -1,0 +1,118 @@
+{"kind":"deck","id":"pr/0nmykr","name":"Deck"}
+{"kind":"layout","layoutId":"/ppt/slideMasters/slideMaster1.xml","name":"Master","type":"master"}
+{"kind":"layout","layoutId":"/ppt/slideLayouts/slideLayout1.xml","name":"Title Slide","type":"title"}
+{"kind":"slide","id":"sl/y90nupkv","slide":1,"title":"Chhotu.ai","textShapes":10}
+{"kind":"textbox","id":"sh/k3yl0zql","slide":1,"text":"Chhotu.ai","textPreview":"Chhotu.ai","textChars":9,"textLines":1,"bbox":[101,46,142,30]}
+{"kind":"textbox","id":"sh/65g3298r","slide":1,"text":"THE AI OPERATING SYSTEM FOR INDIA'S HARDWARE TRADE","textPreview":"THE AI OPERATING SYSTEM FOR INDIA'S HARDWARE TRADE","textChars":50,"textLines":1,"bbox":[52,128,500,24]}
+{"kind":"textbox","id":"sh/ts7md4r2","slide":1,"text":"Your business","textPreview":"Your business","textChars":13,"textLines":1,"bbox":[50,184,560,74]}
+{"kind":"textbox","id":"sh/sryl4zqx","slide":1,"text":"just learned","textPreview":"just learned","textChars":12,"textLines":1,"bbox":[50,257,560,74]}
+{"kind":"textbox","id":"sh/fu94fe98","slide":1,"text":"to listen.","textPreview":"to listen.","textChars":10,"textLines":1,"bbox":[50,330,500,82]}
+{"kind":"textbox","id":"sh/utg3698n","slide":1,"text":"Voice-first operations for hardware retailers, wholesalers and distributors.","textPreview":"Voice-first operations for hardware retailers, wholesalers and distributors.","textChars":76,"textLines":1,"bbox":[53,430,520,64]}
+{"kind":"shape","id":"sh/kratwza5","slide":1,"bbox":[52,560,500,0]}
+{"kind":"textbox","id":"sh/hofulsf2","slide":1,"text":"TEAM","textPreview":"TEAM","textChars":4,"textLines":1,"bbox":[52,582,70,20]}
+{"kind":"textbox","id":"sh/ul4vaxgb","slide":1,"text":"Aneesh Gupta","textPreview":"Aneesh Gupta","textChars":12,"textLines":1,"bbox":[52,610,220,28]}
+{"kind":"textbox","id":"sh/vmdcj2xw","slide":1,"text":"Faizan Sheikh","textPreview":"Faizan Sheikh","textChars":13,"textLines":1,"bbox":[285,610,220,28]}
+{"kind":"textbox","id":"sh/4r6dg7et","slide":1,"text":"INVESTOR / JURY PITCH","textPreview":"INVESTOR / JURY PITCH","textChars":21,"textLines":1,"bbox":[1010,48,218,22]}
+{"kind":"image","id":"im/gnm9s3qp","slide":1,"name":"","bbox":[0,0,1280,720]}
+{"kind":"image","id":"im/vmd8zip4","slide":1,"name":"","bbox":[50,42,40,40]}
+{"kind":"notes","id":"nt/y90nupkv","slide":1,"text":"Speaker 1: Start with the hardware and construction-store beachhead. The warehouse image is the destination, not the first customer segment. Speaker 2 introduces Aneesh Gupta and Faizan Sheikh.\n\n[Sources]\n- /Users/faizansheikh/ChhotuAI/README.md\n- /Users/faizansheikh/ChhotuAI/frontend/index.html\n- /Users/faizansheikh/ChhotuAI/ChhotuAI_Investor_Pitch.pptx (existing embedded OpenAI ImageGen asset)\n[/Sources]"}
+{"kind":"slide","id":"sl/hwbqtkby","slide":2,"title":"Chhotu.ai","textShapes":16}
+{"kind":"textbox","id":"sh/9072xkry","slide":2,"text":"Chhotu.ai","textPreview":"Chhotu.ai","textChars":9,"textLines":1,"bbox":[101,46,142,30]}
+{"kind":"textbox","id":"sh/b29kza94","slide":2,"text":"THE TRADE REALITY","textPreview":"THE TRADE REALITY","textChars":17,"textLines":1,"bbox":[50,112,360,22]}
+{"kind":"textbox","id":"sh/a10jqpsj","slide":2,"text":"Trade moves fast. Records still lag.","textPreview":"Trade moves fast. Records still lag.","textChars":36,"textLines":1,"bbox":[50,145,1000,55]}
+{"kind":"textbox","id":"sh/x4r21kru","slide":2,"text":"2.28 crore","textPreview":"2.28 crore","textChars":10,"textLines":1,"bbox":[50,220,335,55]}
+{"kind":"textbox","id":"sh/w3i1sfa9","slide":2,"text":"trade establishments","textPreview":"trade establishments","textChars":20,"textLines":1,"bbox":[50,278,325,38]}
+{"kind":"shape","id":"sh/ihc3at8z","slide":2,"bbox":[430,230,1,0]}
+{"kind":"textbox","id":"sh/q5wjelsz","slide":2,"text":"34.7%","textPreview":"34.7%","textChars":5,"textLines":1,"bbox":[455,220,335,55]}
+{"kind":"textbox","id":"sh/ove9o7yd","slide":2,"text":"trade establishments using internet","textPreview":"trade establishments using internet","textChars":35,"textLines":1,"bbox":[455,278,325,38]}
+{"kind":"shape","id":"sh/loj294r6","slide":2,"bbox":[835,230,1,0]}
+{"kind":"textbox","id":"sh/mtwrmxg7","slide":2,"text":"₹55,244 cr","textPreview":"₹55,244 cr","textChars":10,"textLines":1,"bbox":[860,220,335,55]}
+{"kind":"textbox","id":"sh/nu58f2hs","slide":2,"text":"delayed-payment claims filed by MSEs","textPreview":"delayed-payment claims filed by MSEs","textChars":36,"textLines":1,"bbox":[860,278,325,38]}
+{"kind":"shape","id":"sh/wjy9sry9","slide":2,"bbox":[50,350,560,270]}
+{"kind":"shape","id":"sh/xk7qlczu","slide":2,"bbox":[650,350,580,270]}
+{"kind":"textbox","id":"sh/ahwrqhgj","slide":2,"text":"RETAIL • WHOLESALE • DISTRIBUTION","textPreview":"RETAIL • WHOLESALE • DISTRIBUTION","textChars":33,"textLines":1,"bbox":[80,382,260,22]}
+{"kind":"textbox","id":"sh/bip8jmho","slide":2,"text":"Variants in notebooks.\nCredit across parties.\nStock split across counter + godown.","textPreview":"Variants in notebooks. | Credit across parties. | Stock split across counter + godown.","textChars":82,"textLines":3,"bbox":[80,425,440,145]}
+{"kind":"textbox","id":"sh/cnupgny5","slide":2,"text":"ONE TRADE OPERATING LAYER","textPreview":"ONE TRADE OPERATING LAYER","textChars":25,"textLines":1,"bbox":[680,382,260,22]}
+{"kind":"textbox","id":"sh/do3q9szq","slide":2,"text":"Speak every movement.\nCustomer + supplier credit linked.\nStock + margin stay live.","textPreview":"Speak every movement. | Customer + supplier credit linked. | Stock + margin stay live.","textChars":82,"textLines":3,"bbox":[680,425,450,145]}
+{"kind":"textbox","id":"sh/t8byxkn2","slide":2,"text":"→","textPreview":"→","textChars":1,"textLines":1,"bbox":[605,460,42,50]}
+{"kind":"textbox","id":"sh/s72xofmh","slide":2,"text":"Sources: MoSPI ASUSE 2023–24; MSME Annual Report 2025–26. Trade includes wholesale + retail.","textPreview":"Sources: MoSPI ASUSE 2023–24; MSME Annual Report 2025–26. Trade includes wholesale + retail.","textChars":92,"textLines":1,"bbox":[50,675,1080,20]}
+{"kind":"textbox","id":"sh/76twva5c","slide":2,"text":"02","textPreview":"02","textChars":2,"textLines":1,"bbox":[1190,670,38,18]}
+{"kind":"image","id":"im/2lczyxon","slide":2,"name":"","bbox":[50,42,40,40]}
+{"kind":"notes","id":"nt/hwbqtkby","slide":2,"text":"Speaker 1: Our first market is not retail alone. MoSPI estimates 2.28 crore unincorporated trade establishments in 2023–24; trade covers wholesale and retail. Only 34.7% of trade establishments used the internet for entrepreneurial work. The Rs 55,244.31 crore figure is not the whole receivables market: it is the value of formal delayed-payment applications filed by micro and small enterprises on MSME Samadhaan through 31 December 2025. Together, the numbers show a very large operating base, uneven digitisation, and a costly credit problem.\n\n[Sources]\n- https://mospi.gov.in/sites/default/files/publication_reports/ASUSE_2023_24_Full_Report-L.pdf\n- https://msme.gov.in/sites/default/files/MSMEANNUALREPORT2025-26ENGLISH_0.pdf\n[/Sources]"}
+{"kind":"slide","id":"sl/ofy9wn61","slide":3,"title":"Chhotu.ai","textShapes":16}
+{"kind":"textbox","id":"sh/cza94vmx","slide":3,"text":"Chhotu.ai","textPreview":"Chhotu.ai","textChars":9,"textLines":1,"bbox":[101,46,142,30]}
+{"kind":"textbox","id":"sh/298ryl4v","slide":3,"text":"WHY SARVAM","textPreview":"WHY SARVAM","textChars":10,"textLines":1,"bbox":[50,112,220,22]}
+{"kind":"textbox","id":"sh/3ah8rqlg","slide":3,"text":"Sarvam turns Indian speech into grounded business actions.","textPreview":"Sarvam turns Indian speech into grounded business actions.","textChars":58,"textLines":1,"bbox":[50,145,920,55]}
+{"kind":"textbox","id":"sh/obq90bml","slide":3,"text":"23","textPreview":"23","textChars":2,"textLines":1,"bbox":[55,245,190,55]}
+{"kind":"textbox","id":"sh/pcjqtg36","slide":3,"text":"STT languages","textPreview":"STT languages","textChars":13,"textLines":1,"bbox":[238,257,220,35]}
+{"kind":"shape","id":"sh/fm90n29w","slide":3,"bbox":[55,323,385,0]}
+{"kind":"textbox","id":"sh/n6ls3alk","slide":3,"text":"11","textPreview":"11","textChars":2,"textLines":1,"bbox":[55,357,190,55]}
+{"kind":"textbox","id":"sh/n2l4fq98","slide":3,"text":"TTS languages","textPreview":"TTS languages","textChars":13,"textLines":1,"bbox":[238,369,220,35]}
+{"kind":"shape","id":"sh/gryhknqx","slide":3,"bbox":[55,435,385,0]}
+{"kind":"textbox","id":"sh/943mhgre","slide":3,"text":"23","textPreview":"23","textChars":2,"textLines":1,"bbox":[55,469,190,55]}
+{"kind":"textbox","id":"sh/83ulovat","slide":3,"text":"document languages","textPreview":"document languages","textChars":18,"textLines":1,"bbox":[238,481,220,35]}
+{"kind":"shape","id":"sh/v6l4jq94","slide":3,"bbox":[485,230,325,360]}
+{"kind":"shape","id":"sh/a5c3ql8z","slide":3,"bbox":[840,230,390,360]}
+{"kind":"textbox","id":"sh/x8nml0ra","slide":3,"text":"THE LIVE VOICE LOOP","textPreview":"THE LIVE VOICE LOOP","textChars":19,"textLines":1,"bbox":[515,264,260,50]}
+{"kind":"textbox","id":"sh/w7ulsvqp","slide":3,"text":"Saaras v3: speech → text\n\nSamvaad: context + tool calls\n\nBulbul v3: text → speech\n\nBarge-in for natural turns","textPreview":"Saaras v3: speech → text |  | Samvaad: context + tool calls |  | Bulbul v3: text → speech |  | Barge-in for natural turns","textChars":109,"textLines":7,"bbox":[515,336,250,210]}
+{"kind":"textbox","id":"sh/ja54na9g","slide":3,"text":"WHY IT FITS INDIA","textPreview":"WHY IT FITS INDIA","textChars":17,"textLines":1,"bbox":[875,264,300,50]}
+{"kind":"textbox","id":"sh/i9w3u58v","slide":3,"text":"Accents + code-mixing\n\nAutomatic language detection\n\nEnglish-normalised tool inputs\n\nVision: invoice → reviewed stock","textPreview":"Accents + code-mixing |  | Automatic language detection |  | English-normalised tool inputs |  | Vision: invoice → reviewed stock","textChars":117,"textLines":7,"bbox":[875,336,300,210]}
+{"kind":"textbox","id":"sh/e10f2twf","slide":3,"text":"Result: owners speak naturally; Chhotu writes only through validated business APIs.","textPreview":"Result: owners speak naturally; Chhotu writes only through validated business APIs.","textChars":83,"textLines":1,"bbox":[485,620,745,34]}
+{"kind":"textbox","id":"sh/f29gbyx0","slide":3,"text":"Sources: Sarvam Samvaad, Sarvam Vision + Document Digitization docs.","textPreview":"Sources: Sarvam Samvaad, Sarvam Vision + Document Digitization docs.","textChars":68,"textLines":1,"bbox":[50,675,1080,20]}
+{"kind":"textbox","id":"sh/03ix43e5","slide":3,"text":"03","textPreview":"03","textChars":2,"textLines":1,"bbox":[1190,670,38,18]}
+{"kind":"image","id":"im/ja5sfmhw","slide":3,"name":"","bbox":[50,42,40,40]}
+{"kind":"notes","id":"nt/ofy9wn61","slide":3,"text":"Speaker 2: Sarvam is the interaction layer we actually use. Saaras v3 converts multilingual and code-mixed speech into text. Samvaad carries the live conversation, interruptions, context, and grounded calls to our inventory, CRM, billing, and reporting tools. Bulbul v3 speaks the verified result back to the owner. In the fallback path, Chhotu.ai calls Saaras and Bulbul directly. For supplier documents, Sarvam Vision digitises images and PDFs; our backend then maps product, quantity, GST, freight, and cost to the shop catalogue and keeps a review gate before stock changes. We do not use a separate generic translation service in the live voice path: code-mixed transcription, transliteration, and English-normalised tool parameters keep backend actions reliable.\n\n[Sources]\n- https://docs.sarvam.ai/api/getting-started/models\n- https://docs.sarvam.ai/api/getting-started/models/saaras\n- https://docs.sarvam.ai/api/getting-started/models/sarvam-vision\n- https://docs.sarvam.ai/api/api-guides-tutorials/document-digitization/overview\n- https://www.sarvam.ai/products/conversational-agents\n- /Users/faizansheikh/ChhotuAI/backend/sarvam_client.py\n- /Users/faizansheikh/ChhotuAI/backend/samvaad_runtime.py\n- /Users/faizansheikh/ChhotuAI/frontend/src/samvaad.js\n[/Sources]"}
+{"kind":"slide","id":"sl/jyx0ra1s","slide":4,"title":"Chhotu.ai","textShapes":19}
+{"kind":"textbox","id":"sh/1cj2d8b6","slide":4,"text":"Chhotu.ai","textPreview":"Chhotu.ai","textChars":9,"textLines":1,"bbox":[101,46,142,30]}
+{"kind":"textbox","id":"sh/rm1k7yt4","slide":4,"text":"LIVE / HARDWARE-FIRST","textPreview":"LIVE / HARDWARE-FIRST","textChars":21,"textLines":1,"bbox":[50,112,260,22]}
+{"kind":"textbox","id":"sh/ql8jytsj","slide":4,"text":"A complete operating system for trade.","textPreview":"A complete operating system for trade.","textChars":38,"textLines":1,"bbox":[50,145,940,55]}
+{"kind":"textbox","id":"sh/doj29oba","slide":4,"text":"For retailers, wholesalers and distributors: voice in front, auditable ledgers underneath.","textPreview":"For retailers, wholesalers and distributors: voice in front, auditable ledgers underneath.","textChars":90,"textLines":1,"bbox":[50,205,800,34]}
+{"kind":"shape","id":"sh/sna103ap","slide":4,"bbox":[50,275,575,145]}
+{"kind":"textbox","id":"sh/3ihk3et8","slide":4,"text":"01 / VOICE","textPreview":"01 / VOICE","textChars":10,"textLines":1,"bbox":[74,295,200,20]}
+{"kind":"textbox","id":"sh/ih8ju9sn","slide":4,"text":"Run the ledger by speaking","textPreview":"Run the ledger by speaking","textChars":26,"textLines":1,"bbox":[74,326,500,34]}
+{"kind":"textbox","id":"sh/kbm987y5","slide":4,"text":"Sales, purchases, stock questions and summaries across supported languages.","textPreview":"Sales, purchases, stock questions and summaries across supported languages.","textChars":75,"textLines":1,"bbox":[74,366,500,38]}
+{"kind":"shape","id":"sh/5cva1cfq","slide":4,"bbox":[660,275,575,145]}
+{"kind":"textbox","id":"sh/i94r6xgz","slide":4,"text":"02 / INVENTORY","textPreview":"02 / INVENTORY","textChars":14,"textLines":1,"bbox":[684,295,200,20]}
+{"kind":"textbox","id":"sh/jadsz2xk","slide":4,"text":"Know what is moving—and stuck","textPreview":"Know what is moving—and stuck","textChars":29,"textLines":1,"bbox":[684,326,500,34]}
+{"kind":"textbox","id":"sh/w72947yt","slide":4,"text":"Derived stock, low-stock alerts, margin, reconciliation and frozen capital.","textPreview":"Derived stock, low-stock alerts, margin, reconciliation and frozen capital.","textChars":75,"textLines":1,"bbox":[684,366,500,38]}
+{"kind":"shape","id":"sh/x8vaxsfe","slide":4,"bbox":[50,445,575,145]}
+{"kind":"textbox","id":"sh/a5kr2xg3","slide":4,"text":"03 / CRM + BILLING","textPreview":"03 / CRM + BILLING","textChars":18,"textLines":1,"bbox":[74,465,200,20]}
+{"kind":"textbox","id":"sh/v6tsv2xo","slide":4,"text":"Every customer and rupee linked","textPreview":"Every customer and rupee linked","textChars":31,"textLines":1,"bbox":[74,496,500,34]}
+{"kind":"textbox","id":"sh/g36tgryd","slide":4,"text":"Customer history, credit, payments, reminders and GST bills.","textPreview":"Customer history, credit, payments, reminders and GST bills.","textChars":60,"textLines":1,"bbox":[74,536,500,38]}
+{"kind":"shape","id":"sh/h4fa9wfy","slide":4,"bbox":[660,445,575,145]}
+{"kind":"textbox","id":"sh/p0batw72","slide":4,"text":"04 / DOCUMENT AI","textPreview":"04 / DOCUMENT AI","textChars":16,"textLines":1,"bbox":[684,465,200,20]}
+{"kind":"textbox","id":"sh/oz29krqh","slide":4,"text":"Turn invoices into usable stock","textPreview":"Turn invoices into usable stock","textChars":31,"textLines":1,"bbox":[684,496,500,34]}
+{"kind":"textbox","id":"sh/3ytsrmpw","slide":4,"text":"Scan supplier invoices; match SKUs, freight and landed cost with review.","textPreview":"Scan supplier invoices; match SKUs, freight and landed cost with review.","textChars":72,"textLines":1,"bbox":[684,536,500,38]}
+{"kind":"shape","id":"sh/2xkrih8b","slide":4,"bbox":[50,625,1185,54]}
+{"kind":"textbox","id":"sh/1wbapc7q","slide":4,"text":"“Aaj ka hisaab batao.”","textPreview":"“Aaj ka hisaab batao.”","textChars":22,"textLines":1,"bbox":[78,642,510,24]}
+{"kind":"textbox","id":"sh/gv29g7q5","slide":4,"text":"VOICE  •  LEDGER  •  CRM  •  DOCUMENTS — GROUNDED","textPreview":"VOICE  •  LEDGER  •  CRM  •  DOCUMENTS — GROUNDED","textChars":49,"textLines":1,"bbox":[650,642,550,24]}
+{"kind":"textbox","id":"sh/fu9sn2p0","slide":4,"text":"04","textPreview":"04","textChars":2,"textLines":1,"bbox":[1190,670,38,18]}
+{"kind":"image","id":"im/x83qdojq","slide":4,"name":"","bbox":[50,42,40,40]}
+{"kind":"notes","id":"nt/jyx0ra1s","slide":4,"text":"Both: This is the live product for hardware and construction stores. Keep orders and provider-managed deliveries for the next slide because they are on the dev roadmap, not the production claim. The important technical point is that the agent never becomes the ledger: grounded backend tools validate and store every stock or money action.\n\n[Sources]\n- /Users/faizansheikh/ChhotuAI/README.md\n- /Users/faizansheikh/ChhotuAI/frontend/index.html\n- /Users/faizansheikh/ChhotuAI/backend/main.py\n[/Sources]"}
+{"kind":"slide","id":"sl/i107q5of","slide":5,"title":"Chhotu.ai","textShapes":19}
+{"kind":"textbox","id":"sh/dgbulwnm","slide":5,"text":"Chhotu.ai","textPreview":"Chhotu.ai","textChars":9,"textLines":1,"bbox":[101,46,142,30]}
+{"kind":"textbox","id":"sh/z2tcnm5s","slide":5,"text":"ROADMAP / TRADE → WAREHOUSE","textPreview":"ROADMAP / TRADE → WAREHOUSE","textChars":27,"textLines":1,"bbox":[50,112,260,22]}
+{"kind":"textbox","id":"sh/yhkbe1o7","slide":5,"text":"From trade assistant to fulfilment network.","textPreview":"From trade assistant to fulfilment network.","textChars":43,"textLines":1,"bbox":[50,145,940,55]}
+{"kind":"textbox","id":"sh/l4bupwny","slide":5,"text":"Orders become promises. Deliveries become movement. The ledger stays the truth.","textPreview":"Orders become promises. Deliveries become movement. The ledger stays the truth.","textChars":79,"textLines":1,"bbox":[50,205,800,34]}
+{"kind":"shape","id":"sh/032tgr6d","slide":5,"bbox":[50,275,575,145]}
+{"kind":"textbox","id":"sh/n6dcr65o","slide":5,"text":"01 / ORDERS","textPreview":"01 / ORDERS","textChars":11,"textLines":1,"bbox":[74,295,200,20]}
+{"kind":"textbox","id":"sh/m5kbi1oj","slide":5,"text":"Take orders on voice and calls","textPreview":"Take orders on voice and calls","textChars":30,"textLines":1,"bbox":[74,326,500,34]}
+{"kind":"textbox","id":"sh/w32dkbuh","slide":5,"text":"Multi-item drafts, confirmation, reservations and customer order status.","textPreview":"Multi-item drafts, confirmation, reservations and customer order status.","textChars":72,"textLines":1,"bbox":[74,366,500,38]}
+{"kind":"shape","id":"sh/x4vedgvm","slide":5,"bbox":[660,275,575,145]}
+{"kind":"textbox","id":"sh/ahkvi1cb","slide":5,"text":"02 / DELIVERY","textPreview":"02 / DELIVERY","textChars":13,"textLines":1,"bbox":[684,295,200,20]}
+{"kind":"textbox","id":"sh/v2twb6dw","slide":5,"text":"Track fulfilment end to end","textPreview":"Track fulfilment end to end","textChars":27,"textLines":1,"bbox":[684,326,500,34]}
+{"kind":"textbox","id":"sh/k7mxovud","slide":5,"text":"Dispatch queue, own-fleet or provider adapters, proof and reattempts.","textPreview":"Dispatch queue, own-fleet or provider adapters, proof and reattempts.","textChars":69,"textLines":1,"bbox":[684,366,500,38]}
+{"kind":"shape","id":"sh/58vehgvy","slide":5,"bbox":[50,445,575,145]}
+{"kind":"textbox","id":"sh/i54fmlc7","slide":5,"text":"03 / RESTOCK","textPreview":"03 / RESTOCK","textChars":12,"textLines":1,"bbox":[74,465,200,20]}
+{"kind":"textbox","id":"sh/j6dwfqds","slide":5,"text":"Chhotu calls suppliers","textPreview":"Chhotu calls suppliers","textChars":22,"textLines":1,"bbox":[74,496,500,34]}
+{"kind":"textbox","id":"sh/sb6xsvu9","slide":5,"text":"Reorder suggestions, purchase orders, rates, lead times and goods receipts.","textPreview":"Reorder suggestions, purchase orders, rates, lead times and goods receipts.","textChars":75,"textLines":1,"bbox":[74,536,500,38]}
+{"kind":"shape","id":"sh/tcfel0vu","slide":5,"bbox":[660,445,575,145]}
+{"kind":"textbox","id":"sh/hgrmpwj2","slide":5,"text":"04 / WAREHOUSE SCALE","textPreview":"04 / WAREHOUSE SCALE","textChars":20,"textLines":1,"bbox":[684,465,200,20]}
+{"kind":"textbox","id":"sh/gfi5grih","slide":5,"text":"Reconcile every hand-off","textPreview":"Reconcile every hand-off","textChars":24,"textLines":1,"bbox":[684,496,500,34]}
+{"kind":"textbox","id":"sh/fe94nm1w","slide":5,"text":"PO ↔ receipt ↔ invoice checks, provider webhooks and fulfilment analytics.","textPreview":"PO ↔ receipt ↔ invoice checks, provider webhooks and fulfilment analytics.","textChars":74,"textLines":1,"bbox":[684,536,500,38]}
+{"kind":"shape","id":"sh/ud0ne10b","slide":5,"bbox":[50,625,1185,54]}
+{"kind":"textbox","id":"sh/pkr6tgjy","slide":5,"text":"“Hey Chhotu…”","textPreview":"“Hey Chhotu…”","textChars":13,"textLines":1,"bbox":[78,642,510,24]}
+{"kind":"textbox","id":"sh/4ji5kbid","slide":5,"text":"OPT-IN WAKE WORD  •  ON-DEVICE TRIGGER  •  FUTURE","textPreview":"OPT-IN WAKE WORD  •  ON-DEVICE TRIGGER  •  FUTURE","textChars":49,"textLines":1,"bbox":[650,642,550,24]}
+{"kind":"textbox","id":"sh/3i94r61s","slide":5,"text":"05","textPreview":"05","textChars":2,"textLines":1,"bbox":[1190,670,38,18]}
+{"kind":"image","id":"im/9kbyhg7e","slide":5,"name":"","bbox":[50,42,40,40]}
+{"kind":"notes","id":"nt/i107q5of","slide":5,"text":"Speaker 2: Phase 1 and Phase 2—manual order lifecycle and grounded Sarvam order tools—are implemented on dev and still require isolated preview acceptance before production. Later phases add dispatch, inbound customer calls, supplier restocking, invoice reconciliation and provider adapters. A 'Hey Chhotu' experience is feasible, but should be opt-in and privacy-preserving: use an on-device wake-word detector, then open the Samvaad session only after the local trigger. Reliable always-on listening is best delivered through an installed mobile/PWA, kiosk or native companion; ordinary mobile browsers may suspend background audio.\n\n[Sources]\n- /Users/faizansheikh/ChhotuAI/docs/order-fulfilment-roadmap.md\n- /Users/faizansheikh/ChhotuAI/README.md\n[/Sources]"}

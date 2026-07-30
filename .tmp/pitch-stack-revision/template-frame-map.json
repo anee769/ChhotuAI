@@ -1,0 +1,60 @@
+{
+  "outputSlides": [
+    {
+      "outputSlide": 1,
+      "sourceSlide": 1,
+      "narrativeRole": "brand opening",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [
+        {"shapeId": "sh/k3yl0zql", "action": "rewrite-and-reposition"},
+        {"shapeId": "sh/7qp4be9c", "action": "delete"}
+      ]
+    },
+    {
+      "outputSlide": 2,
+      "sourceSlide": 2,
+      "narrativeRole": "market problem and solution",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [
+        {"shapeId": "sh/9072xkry", "action": "rewrite-and-reposition"},
+        {"shapeId": "sh/ozy1ofad", "action": "delete"}
+      ]
+    },
+    {
+      "outputSlide": 3,
+      "sourceSlide": 3,
+      "narrativeRole": "Sarvam technology proof",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [
+        {"shapeId": "sh/cza94vmx", "action": "rewrite-and-reposition"},
+        {"shapeId": "sh/d0jax03i", "action": "delete"},
+        {"shapeId": "sh/3ah8rqlg", "action": "rewrite"},
+        {"shapeId": "sh/x8nml0ra", "action": "rewrite"},
+        {"shapeId": "sh/w7ulsvqp", "action": "rewrite"},
+        {"shapeId": "sh/ja54na9g", "action": "rewrite"},
+        {"shapeId": "sh/i9w3u58v", "action": "rewrite"},
+        {"shapeId": "sh/e10f2twf", "action": "rewrite"}
+      ]
+    },
+    {
+      "outputSlide": 4,
+      "sourceSlide": 4,
+      "narrativeRole": "product capabilities",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [
+        {"shapeId": "sh/1cj2d8b6", "action": "rewrite-and-reposition"},
+        {"shapeId": "sh/0ba143al", "action": "delete"}
+      ]
+    },
+    {
+      "outputSlide": 5,
+      "sourceSlide": 5,
+      "narrativeRole": "product roadmap",
+      "reuseMode": "duplicate-slide",
+      "editTargets": [
+        {"shapeId": "sh/dgbulwnm", "action": "rewrite-and-reposition"},
+        {"shapeId": "sh/cf2tcr61", "action": "delete"}
+      ]
+    }
+  ]
+}
