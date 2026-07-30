@@ -4255,14 +4255,7 @@ async function loadDashboard(){
   const d=await api('/api/dashboard');
   const crm=d.customer_analytics||{};
   const labels=d.margin_trend.map(x=>x.date.slice(5)); const data=d.margin_trend.map(x=>x.margin);
-  const riseIdx=d.margin_trend.findIndex(x=>x.date===d.steel_rise_date);
   if(trendChartObj) trendChartObj.destroy();
-  const risePlugin={id:'rise',afterDraw(c){ if(riseIdx<0) return; const x=c.scales.x.getPixelForValue(riseIdx);
-    const ctx=c.ctx, top=c.chartArea.top, bot=c.chartArea.bottom; ctx.save();
-    ctx.strokeStyle='#c98b25'; ctx.setLineDash([5,4]); ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bot); ctx.stroke();
-    ctx.setLineDash([]); ctx.fillStyle='#9a650d'; ctx.font='600 10px Inter,system-ui';
-    ctx.fillText('STEEL RATE ↑',x+6,top+12); ctx.restore(); }};
   const trendCanvas=document.getElementById('trendChart');
   const trendGradient=trendCanvas.getContext('2d').createLinearGradient(0,0,0,230);
   trendGradient.addColorStop(0,'rgba(0,168,112,.25)');
@@ -4279,7 +4272,7 @@ async function loadDashboard(){
         ticks:{color:'#7b8580',font:{size:10,weight:'600'},maxTicksLimit:8}},
         y:{border:{display:false},grid:{color:'rgba(15,23,42,.06)'},
           ticks:{color:'#7b8580',font:{size:10},callback:v=>`₹${Number(v).toLocaleString('en-IN')}`}}}},
-    plugins:[risePlugin]});
+    plugins:[]});
   const mp=d.money_position;
   document.getElementById('dashboardMetrics').innerHTML=`
     <div class="metric-tile metric-tile--hero">
