@@ -463,7 +463,8 @@ def agent_tool(request: Request,
           f"args={json.dumps(shown, ensure_ascii=False)[:300]}", flush=True)
     return agent.handle(payload.get("tool") or "",
                         payload.get("caller") or payload.get("From") or "",
-                        args, key=payload.get("shop_key") or "")
+                        args, key=payload.get("shop_key") or "",
+                        dialled=payload.get("dialled") or payload.get("To") or "")
 
 
 @app.post("/api/agent/tool/{tool_name}")
@@ -509,7 +510,10 @@ def agent_tool_named(tool_name: str, request: Request,
     }
     result = agent.handle(
         tool_name, q.get("caller") or q.get("from") or "",
-        clean_args, key=q.get("shop_key") or "")
+        clean_args, key=q.get("shop_key") or "",
+        # The number the caller RANG: what identifies the shop when the caller
+        # is a customer rather than the registered owner.
+        dialled=q.get("dialled") or q.get("to") or "")
     if str(q.get("debug") or "").lower() in ("1", "true", "yes"):
         # Opt-in and sanitised. This is intentionally absent from normal tool
         # replies, but lets a dashboard test prove what crossed the HTTP

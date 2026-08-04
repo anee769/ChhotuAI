@@ -1029,6 +1029,83 @@ class AgentToolTests(unittest.TestCase):
         self.assertFalse(out["added"])
 
 
+class InboundCallTests(unittest.TestCase):
+    """A customer ringing the shop's own line.
+
+    The owner is identified by the number they call FROM. A customer never can
+    be, so the shop is identified by the number they RANG. That distinction is
+    the whole of inbound: it decides whose books open, and how far in.
+    """
+
+    SHOP = {"user_id": "u_shop", "phone": "+919999999999",
+            "shop_name": "Test Traders"}
+    LINE = "+911234500000"
+
+    def setUp(self):
+        self.repo = FakeRepo()
+        _opening(self.repo, CEMENT_PPC, 200, "bori", 385)
+        self.repo.load_config = lambda: {"shop_name": "Test Traders",
+                                         "phone_line": self.LINE}
+        main._CURRENT.set(self.repo)
+        main._CURRENT_USER.set(self.SHOP)
+        started = [patch.object(agent.auth, "all_users", return_value=[self.SHOP]),
+                   patch.object(agent.sqlrepo, "SqlRepo", return_value=self.repo),
+                   patch.object(main, "bind_user")]
+        for p in started:
+            p.start()
+        self.addCleanup(lambda: [p.stop() for p in started])
+
+    def test_an_unknown_caller_on_the_shops_line_becomes_a_customer(self):
+        out = agent.handle("check_stock", "+918888800000",
+                           {"item": "ppc cement"}, dialled=self.LINE)
+        self.assertTrue(out["authorised"])
+        self.assertEqual(out["role"], "customer")
+        self.assertEqual(out["qty"], 200)
+
+    def test_a_customer_cannot_touch_the_ledger_or_the_books(self):
+        for tool in ("record_sale", "record_payment", "stock_take",
+                     "record_purchase", "send_bill", "business_summary",
+                     "dues", "list_customers", "confirm_order",
+                     "update_shop_profile"):
+            out = agent.handle(tool, "+918888800000",
+                               {"item": "ppc cement", "qty": 5},
+                               dialled=self.LINE)
+            self.assertEqual(out.get("error"), "owner_only", tool)
+        self.assertEqual([e for e in self.repo.events
+                          if e["type"] == "sale"], [])
+
+    def test_a_customer_cannot_read_another_customers_order(self):
+        """show_order and get_order_status take an id, and one id in hand is
+        enough to walk the range and read other people's names and totals."""
+        for tool in ("show_order", "get_order_status", "list_orders"):
+            out = agent.handle(tool, "+918888800000", {"order_id": "ord_1"},
+                               dialled=self.LINE)
+            self.assertEqual(out.get("error"), "owner_only", tool)
+
+    def test_the_owner_calling_their_own_line_keeps_every_tool(self):
+        out = agent.handle("business_summary", self.SHOP["phone"], {},
+                           dialled=self.LINE)
+        self.assertEqual(out["role"], "owner")
+        self.assertTrue(out["ok"])
+
+    def test_a_stranger_on_an_unknown_line_still_gets_nothing(self):
+        out = agent.handle("check_stock", "+918888800000",
+                           {"item": "ppc cement"}, dialled="+910000000000")
+        self.assertFalse(out["authorised"])
+
+    def test_a_customer_order_needs_the_owner_to_confirm_it(self):
+        out = agent.handle("create_order_draft", "+918888800000",
+                           {"items": [{"item": "ppc cement", "qty": 10}],
+                            "customer_name": "Ramesh",
+                            "customer_phone": "9876543210"},
+                           dialled=self.LINE)
+        self.assertEqual(out["role"], "customer")
+        if out.get("created"):
+            self.assertTrue(out.get("requires_confirmation"))
+            self.assertEqual([e for e in self.repo.events
+                              if e["type"] == "sale"], [])
+
+
 class DispatchTests(unittest.TestCase):
     """handle() is the only entry point, so identity is enforced there."""
 
@@ -1227,7 +1304,7 @@ class DispatchTests(unittest.TestCase):
         client = TestClient(main.app)
         received = []
 
-        def capture(tool, caller, args, key=""):
+        def capture(tool, caller, args, key="", dialled=""):
             received.append((tool, caller, args, key))
             return {"ok": True, "tool": tool, "received": args}
 

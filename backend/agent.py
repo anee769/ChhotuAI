@@ -113,6 +113,41 @@ def shop_for_caller(phone: str = "", key: str = ""):
     return None, None
 
 
+def shop_for_line(dialled: str):
+    """Resolve the shop from the number the caller DIALLED.
+
+    An owner ringing in is identified by the number they call FROM. A customer
+    never can be: they are not registered and never will be. What identifies
+    the shop for them is the line they rang, which is the shop's own published
+    number.
+
+    Kept in the shop's config as `phone_line`, so pointing a number at Chhotu
+    needs no schema change.
+    """
+    norm = auth.normalize_phone(_resolved(dialled))
+    if not norm:
+        return None, None
+    for u in auth.all_users():
+        repo = sqlrepo.SqlRepo(u["user_id"])
+        line = auth.normalize_phone((repo.load_config() or {}).get("phone_line") or "")
+        if line and line == norm:
+            return u, repo
+    return None, None
+
+
+# What a caller who is not the owner may do: what anyone could ask across the
+# counter, plus placing an order the owner still has to confirm. Everything
+# else reads the books or moves stock and money.
+#
+# Order reads are deliberately absent. show_order and get_order_status take an
+# id, and a customer holding one id could walk the range and read other
+# people's orders, names and totals.
+CUSTOMER_TOOLS = frozenset({
+    "shop_profile", "list_inventory", "check_stock", "item_details",
+    "search_items", "price_quote", "create_order_draft",
+})
+
+
 # ---------------------------------------------------------------------------
 # Shared helpers
 # ---------------------------------------------------------------------------
@@ -1993,8 +2028,17 @@ def manifest() -> list:
             for name, (_, desc) in sorted(TOOLS.items())]
 
 
-def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
+def handle(tool: str, caller: str, args: dict, key: str = "",
+           dialled: str = "") -> dict:
     user, repo = shop_for_caller(caller, key)
+    role = "owner"
+    if not user and dialled:
+        # Not a registered owner, but they rang a shop's own line. That makes
+        # them a customer OF THAT SHOP: enough to ask what is in stock and what
+        # it costs, nowhere near enough to touch the ledger.
+        user, repo = shop_for_line(dialled)
+        if user:
+            role = "customer"
     if not user:
         # Never fall back to "some" shop: a wrong guess reads another
         # business's books aloud to a stranger.
@@ -2015,6 +2059,16 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
     repo = main.repo
 
     name = _ALIASES.get(tool, tool)
+    if role == "customer" and name not in CUSTOMER_TOOLS:
+        # Refused by role, and phrased as a shopkeeper would: the caller is a
+        # customer, not an intruder.
+        denial = {"ok": False, "authorised": True, "role": role,
+                  "error": "owner_only", "recorded": False, "added": False,
+                  "updated": False, "sent": False, "created": False,
+                  "speak": "Ye kaam sirf dukaan maalik kar sakte hain. Main "
+                           "aapko stock aur bhaav bata sakta hoon, ya order "
+                           "likh sakta hoon."}
+        return {**denial, "facts": _facts(denial)}
     entry = TOOLS.get(name)
     if not entry:
         # Deliberately no tool listing here. The agent already has its own
@@ -2033,7 +2087,7 @@ def handle(tool: str, caller: str, args: dict, key: str = "") -> dict:
               f"{type(e).__name__}: {e}", flush=True)
         return {"speak": "Isme kuch gadbad ho gayi, dobara boliye.",
                 "error": type(e).__name__, "authorised": True}
-    out = {"ok": True, **out, "tool": name, "authorised": True,
+    out = {"ok": True, **out, "tool": name, "authorised": True, "role": role,
            "shop": user.get("shop_name") or ""}
     return {**out, "facts": _facts(out)}
 
